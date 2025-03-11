@@ -47,7 +47,7 @@ public class HomeController : Controller
 
     [HttpGet]
     [Route("Home/Project/{projectId}")]
-    async public Task<IActionResult> Project(string projectId)
+    async public Task<IActionResult> Project(Guid projectId)
     {
         Project project = await _projectService.GetProjectAsync(projectId) ?? new Project();
         return View(project);
@@ -55,7 +55,7 @@ public class HomeController : Controller
 
     [HttpGet]
     [Route("Home/ProjectProperties/{projectId}")]
-    async public Task<IActionResult> ProjectProperties(string projectId)
+    async public Task<IActionResult> ProjectProperties(Guid projectId)
     {
         ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(projectId) ?? new ProjectProperties();
         //string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;

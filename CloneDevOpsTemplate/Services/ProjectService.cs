@@ -14,12 +14,12 @@ public class ProjectService(IHttpClientFactory httpClientFactory, IHttpContextAc
         return _client.GetFromJsonAsync<Projects>($"https://dev.azure.com/{_organizationName}/_apis/projects?stateFilter=wellFormed&$top=1000");
     }
 
-    public Task<Project?> GetProjectAsync(string projectId)
+    public Task<Project?> GetProjectAsync(Guid projectId)
     {
         return _client.GetFromJsonAsync<Project>($"https://dev.azure.com/{_organizationName}/_apis/projects/{projectId}");
     }
 
-    public Task<ProjectProperties?> GetProjectPropertiesAsync(string projectId)
+    public Task<ProjectProperties?> GetProjectPropertiesAsync(Guid projectId)
     {
         return _client.GetFromJsonAsync<ProjectProperties>($"https://dev.azure.com/{_organizationName}/_apis/projects/{projectId}/properties");
     }
