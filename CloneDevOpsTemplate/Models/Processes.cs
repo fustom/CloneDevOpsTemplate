@@ -1,19 +1,19 @@
 namespace CloneDevOpsTemplate.Models;
 
-class Processes
+public class Processes
 {
-    int Count { get; set; }
-    Process[] Value { get; set; } = [];
+    public int Count { get; set; }
+    public Process[] Value { get; set; } = [];
 }
 
-class Process
+public class Process
 {
-    string TypeId { get; set; } = string.Empty;
-    string Name { get; set; } = string.Empty;
-    string ReferenceName { get; set; } = string.Empty;
-    string Description { get; set; } = string.Empty;
-    string ParentProcessTypeId { get; set; } = string.Empty;
-    bool IsEnabled { get; set; }
-    bool IsDefault { get; set; }
-    string CustomizationType { get; set; } = string.Empty;
+    public string TypeId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string ReferenceName { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string ParentProcessTypeId { get; set; } = string.Empty;
+    public bool IsEnabled { get; set; }
+    public bool IsDefault { get; set; }
+    public string CustomizationType { get; set; } = string.Empty;
 }

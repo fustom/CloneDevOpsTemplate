@@ -22,6 +22,18 @@ public class ProjectService(IHttpClientFactory httpClientFactory, IHttpContextAc
         return client.GetFromJsonAsync<ProjectProperties>($"https://dev.azure.com/{_organizationName}/_apis/projects/{projectId}/properties");
     }
 
+    public Task<Processes?> GetProcessesAsync()
+    {
+        HttpClient client = _httpClientFactory.CreateClientWithCredentials(_accessToken);
+        return client.GetFromJsonAsync<Processes>($"https://dev.azure.com/{_organizationName}/_apis/work/processes");
+    }
+
+    public Task<Process?> GetProcessAsync(string processTemplateType)
+    {
+        HttpClient client = _httpClientFactory.CreateClientWithCredentials(_accessToken);
+        return client.GetFromJsonAsync<Process>($"https://dev.azure.com/{_organizationName}/_apis/work/processes/{processTemplateType}");
+    }
+
     public Task<HttpResponseMessage> CreateProjectAsync(string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description")
     {
         HttpClient client = _httpClientFactory.CreateClientWithCredentials(_accessToken);

@@ -39,6 +39,7 @@ public class HomeController : Controller
     async public Task<IActionResult> ProjectProperties(string projectId)
     {
         ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(projectId) ?? new ProjectProperties();
+        //string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
         return View(projectProperties.Value);
     }
 
@@ -55,12 +56,6 @@ public class HomeController : Controller
                 HttpContext.Session.SetString(Const.SessionKeyAccessToken, loginModel.AccessToken);
 
                 return Redirect("Projects");
-                
-                //string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
-                //await _projectService.CreateProjectAsync(processTemplateType);
-
-                // requestUri = $"https://dev.azure.com/{orgName}/_apis/work/processes/{processTemplateType}";
-                // Processes processes = await client.GetFromJsonAsync<Processes>(requestUri) ?? new Processes();
             }
             catch (Exception)
             {
