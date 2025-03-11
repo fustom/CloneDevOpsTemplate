@@ -7,6 +7,7 @@ builder.Services.AddMvc();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<IIterationService, IterationService>();
 
 builder.Services.AddSession(options =>
 {

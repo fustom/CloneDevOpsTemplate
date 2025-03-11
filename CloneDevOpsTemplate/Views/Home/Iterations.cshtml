@@ -1,0 +1,28 @@
+@model Iteration[]
+@{
+    ViewData["Title"] = "Iterations";
+}
+
+<h1>Iterations</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Path</th>
+            <th>Start Date</th>
+            <th>Finish Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var iteration in Model)
+        {
+            <tr>
+                <td>@iteration.Name</td>
+                <td>@iteration.Path</td>
+                <td>@iteration.IterationAttributes.StartDate</td>
+                <td>@iteration.IterationAttributes.FinishDate</td>
+            </tr>
+        }
+    </tbody>
+</table>

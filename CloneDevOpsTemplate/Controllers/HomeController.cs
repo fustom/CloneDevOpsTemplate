@@ -9,11 +9,13 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly IProjectService _projectService;
+    private readonly IIterationService _iterationService;
 
-    public HomeController(ILogger<HomeController> logger, IProjectService projectService)
+    public HomeController(ILogger<HomeController> logger, IProjectService projectService, IIterationService iterationService)
     {
         _logger = logger;
         _projectService = projectService;
+        _iterationService = iterationService;
     }
 
     public IActionResult Index()
@@ -25,6 +27,15 @@ public class HomeController : Controller
     {
         return View();
     }
+
+    [HttpGet]
+    [Route("Home/Iterations/{projectId}")]
+    async public Task<IActionResult> Iterations(Guid projectId)
+    {
+        Iterations iterations = await _iterationService.GetIterationsAsync(projectId) ?? new Iterations();
+        return View(iterations.Value);
+    }
+
 
     [HttpGet]
     [Route("Home/Projects")]
