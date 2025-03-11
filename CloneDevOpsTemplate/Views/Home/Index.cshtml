@@ -12,7 +12,7 @@
     </div>
     <div class="form-group">
         @Html.LabelFor(m => m.AccessToken)
-        @Html.TextBoxFor(m => m.AccessToken, new { @class = "form-control" })
+        @Html.PasswordFor(m => m.AccessToken, new { @class = "form-control" })
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
 }
