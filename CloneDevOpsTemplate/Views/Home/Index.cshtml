@@ -1,0 +1,13 @@
+﻿@model LoginModel
+
+@{
+    ViewData["Title"] = "Clone devops template";
+}
+
+<form asp-controller="Home" asp-action="Login" method="post">
+    <input asp-for="@Model.OrganizationName" />
+    <label asp-for="@Model.OrganizationName">Enter your Azure DevOps organization name</label>
+    <input asp-for="@Model.AccessToken" />
+    <label asp-for="@Model.AccessToken">Enter your Azure DevOps personal access token</label>
+    <button type="submit">Submit</button>
+</form>

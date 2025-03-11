@@ -1,0 +1,24 @@
+@model ProjectProperty[]
+@{
+    ViewData["Title"] = "Project Properties";
+}
+
+<h1>Project Properties</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var property in Model)
+        {
+            <tr>
+                <td>@property.Name</td>
+                <td>@property.Value</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,26 @@
+@model Project[]
+@{
+    ViewData["Title"] = "Projects";
+}
+
+<h1>Projects</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Visibility</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var project in Model)
+        {
+            <tr>
+                <td>@project.Name</td>
+                <td>@project.Description</td>
+                <td>@project.Visibility</td>
+            </tr>
+        }
+    </tbody>
+</table>
