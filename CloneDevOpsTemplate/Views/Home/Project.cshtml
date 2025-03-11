@@ -1,0 +1,14 @@
+@model Project
+@{
+    ViewData["Title"] = "Project";
+}
+
+<h1>@Model.Name</h1>
+
+<p>@Model.Description</p>
+<p>@Model.Url</p>
+<p>@Model.State</p>
+<p>@Model.Revision</p>
+<p>@Model.Visibility</p>
+<p>@Model.LastUpdateTime</p>
+<p>@Html.ActionLink("ProjectProperties", "ProjectProperties", new { id = Model.Id })</p>

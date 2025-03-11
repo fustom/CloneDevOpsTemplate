@@ -35,6 +35,14 @@ public class HomeController : Controller
     }
 
     [HttpGet]
+    [Route("Home/Project/{projectId}")]
+    async public Task<IActionResult> Project(string projectId)
+    {
+        Project project = await _projectService.GetProjectAsync(projectId) ?? new Project();
+        return View(project);
+    }
+
+    [HttpGet]
     [Route("Home/ProjectProperties/{projectId}")]
     async public Task<IActionResult> ProjectProperties(string projectId)
     {
