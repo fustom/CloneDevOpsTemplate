@@ -40,13 +40,11 @@ public class HomeController : Controller
         {
             try
             {
-                if (string.IsNullOrEmpty(HttpContext.Session.GetString(SessionKeyOrganizationName)))
-                {
-                    HttpContext.Session.SetString(SessionKeyOrganizationName, loginModel.OrganizationName);
-                    HttpContext.Session.SetString(SessionKeyAccessToken, loginModel.AccessToken);
-                }
-                var orgName = HttpContext.Session.GetString(SessionKeyOrganizationName);
-                var accToken = HttpContext.Session.GetString(SessionKeyAccessToken);
+                // update session with user credentials
+                var orgName = loginModel.OrganizationName;
+                var accToken = loginModel.AccessToken;
+                HttpContext.Session.SetString(SessionKeyOrganizationName, orgName);
+                HttpContext.Session.SetString(SessionKeyAccessToken, accToken);
                 
                 HttpClient client = _httpClientFactory.CreateClient();
                 string _credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format(":{0}", accToken)));
