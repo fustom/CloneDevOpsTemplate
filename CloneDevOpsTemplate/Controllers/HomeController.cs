@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using CloneDevOpsTemplate.Models;
 using System.Net.Http.Headers;
 using System.Text;
+using CloneDevOpsTemplate.Services;
 
 namespace CloneDevOpsTemplate.Controllers;
 
@@ -44,7 +45,11 @@ public class HomeController : Controller
                 requestUri = $"https://dev.azure.com/{loginModel.OrganizationName}/_apis/projects/{id}/properties";
                 ProjectProperties projectProperties = await client.GetFromJsonAsync<ProjectProperties>(requestUri) ?? new ProjectProperties();
                 
-                // string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
+                string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
+
+                ProjectService projectService = new();
+                projectService.CreateProject(client, processTemplateType);
+
                 // requestUri = $"https://dev.azure.com/{loginModel.OrganizationName}/_apis/work/processes/{processTemplateType}";
                 // Processes processes = await client.GetFromJsonAsync<Processes>(requestUri) ?? new Processes();
                 
