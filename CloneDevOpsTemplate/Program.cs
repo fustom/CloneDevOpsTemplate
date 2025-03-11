@@ -1,7 +1,11 @@
+using CloneDevOpsTemplate.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
 var app = builder.Build();
 

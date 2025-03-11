@@ -2,11 +2,13 @@ using CloneDevOpsTemplate.Models;
 
 namespace CloneDevOpsTemplate.Services;
 
-public class ProjectService
+public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectService
 {
-    public async void CreateProject(HttpClient client, string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description")
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+
+    public Task<HttpResponseMessage> CreateProjectAsync(string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description")
     {
-        CreateProject createProject = new CreateProject
+        CreateProject createProject = new()
         {
             Name = name,
             Capabilities = new Capabilities
@@ -23,6 +25,6 @@ public class ProjectService
             Description = description
         };
 
-        await client.PostAsJsonAsync("https://dev.azure.com/{loginModel.OrganizationName}/_apis/projects", createProject);
+        return _httpClientFactory.CreateClient().PostAsJsonAsync("https://dev.azure.com/{loginModel.OrganizationName}/_apis/projects", createProject);
     }
 }

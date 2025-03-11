@@ -10,10 +10,14 @@ namespace CloneDevOpsTemplate.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IProjectService _projectService;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory, IProjectService projectService)
     {
         _logger = logger;
+        _httpClientFactory = httpClientFactory;
+        _projectService = projectService;
     }
 
     public IActionResult Index()
@@ -27,13 +31,14 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    async public Task<IActionResult> Login(LoginModel loginModel, HttpClient client)
+    async public Task<IActionResult> Login(LoginModel loginModel)
     {
         if (ModelState.IsValid)
         {
             try
             {
                 string _credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format(":{0}", loginModel.AccessToken))); ;
+                HttpClient client = _httpClientFactory.CreateClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _credentials);
 
                 string requestUri = string.Empty;
@@ -47,8 +52,7 @@ public class HomeController : Controller
                 
                 string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
 
-                ProjectService projectService = new();
-                projectService.CreateProject(client, processTemplateType);
+                await _projectService.CreateProjectAsync(processTemplateType);
 
                 // requestUri = $"https://dev.azure.com/{loginModel.OrganizationName}/_apis/work/processes/{processTemplateType}";
                 // Processes processes = await client.GetFromJsonAsync<Processes>(requestUri) ?? new Processes();
