@@ -4,10 +4,15 @@
     ViewData["Title"] = "Clone devops template";
 }
 
-<form asp-controller="Home" asp-action="Login" method="post">
-    <input asp-for="@Model.OrganizationName" />
-    <label asp-for="@Model.OrganizationName">Enter your Azure DevOps organization name</label>
-    <input asp-for="@Model.AccessToken" />
-    <label asp-for="@Model.AccessToken">Enter your Azure DevOps personal access token</label>
-    <button type="submit">Submit</button>
-</form>
+@using (Html.BeginForm("Login", "Home", FormMethod.Post))
+{
+    <div class="form-group">
+        @Html.LabelFor(m => m.OrganizationName)
+        @Html.TextBoxFor(m => m.OrganizationName, new { @class = "form-control" })
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.AccessToken)
+        @Html.TextBoxFor(m => m.AccessToken, new { @class = "form-control" })
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+}
