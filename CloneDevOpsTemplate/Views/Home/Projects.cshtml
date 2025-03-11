@@ -17,7 +17,7 @@
         @foreach (var project in Model)
         {
             <tr>
-                <td>@project.Name</td>
+                <td>@Html.ActionLink(project.Name, "ProjectProperties", new { id = project.Id })</td>
                 <td>@project.Description</td>
                 <td>@project.Visibility</td>
             </tr>

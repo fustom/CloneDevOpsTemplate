@@ -1,5 +1,5 @@
-using CloneDevOpsTemplate.Controllers;
 using CloneDevOpsTemplate.Extensions;
+using System.Text;
 using CloneDevOpsTemplate.Models;
 
 namespace CloneDevOpsTemplate.Services;
@@ -7,10 +7,25 @@ namespace CloneDevOpsTemplate.Services;
 public class ProjectService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor) : IProjectService
 {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
-    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+    private readonly string _accessToken = httpContextAccessor?.HttpContext?.Session.GetString(Const.SessionKeyAccessToken) ?? string.Empty;
+    private readonly string _organizationName = httpContextAccessor?.HttpContext?.Session.GetString(Const.SessionKeyOrganizationName) ?? string.Empty;
+
+    public Task<Projects?> GetAllProjectsAsync()
+    {
+        HttpClient client = _httpClientFactory.CreateClientWithCredentials(_accessToken);
+        return client.GetFromJsonAsync<Projects>($"https://dev.azure.com/{_organizationName}/_apis/projects?stateFilter=wellFormed&$top=1000");
+    }
+
+    public Task<ProjectProperties?> GetProjectPropertiesAsync(string projectId)
+    {
+        HttpClient client = _httpClientFactory.CreateClientWithCredentials(_accessToken);
+        return client.GetFromJsonAsync<ProjectProperties>($"https://dev.azure.com/{_organizationName}/_apis/projects/{projectId}/properties");
+    }
 
     public Task<HttpResponseMessage> CreateProjectAsync(string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description")
     {
+        HttpClient client = _httpClientFactory.CreateClientWithCredentials(_accessToken);
+
         CreateProject createProject = new()
         {
             Name = name,
@@ -28,9 +43,6 @@ public class ProjectService(IHttpClientFactory httpClientFactory, IHttpContextAc
             Description = description
         };
 
-        var orgName = _httpContextAccessor?.HttpContext?.Session.GetString(HomeController.SessionKeyOrganizationName);
-        var accToken = _httpContextAccessor?.HttpContext?.Session.GetString(HomeController.SessionKeyAccessToken);
-
-        return _httpClientFactory.CreateClientWithCredentials(accToken).PostAsJsonAsync($"https://dev.azure.com/{orgName}/_apis/projects", createProject);
+        return client.PostAsJsonAsync($"https://dev.azure.com/{_organizationName}/_apis/projects", createProject);
     }
 }
