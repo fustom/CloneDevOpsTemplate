@@ -9,6 +9,9 @@ namespace CloneDevOpsTemplate.Controllers;
 
 public class HomeController : Controller
 {
+    public const string SessionKeyOrganizationName = "OrganizationName";
+    public const string SessionKeyAccessToken = "AccessToken";
+    
     private readonly ILogger<HomeController> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IProjectService _projectService;
@@ -37,24 +40,32 @@ public class HomeController : Controller
         {
             try
             {
-                string _credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format(":{0}", loginModel.AccessToken))); ;
+                if (string.IsNullOrEmpty(HttpContext.Session.GetString(SessionKeyOrganizationName)))
+                {
+                    HttpContext.Session.SetString(SessionKeyOrganizationName, loginModel.OrganizationName);
+                    HttpContext.Session.SetString(SessionKeyAccessToken, loginModel.AccessToken);
+                }
+                var orgName = HttpContext.Session.GetString(SessionKeyOrganizationName);
+                var accToken = HttpContext.Session.GetString(SessionKeyAccessToken);
+                
                 HttpClient client = _httpClientFactory.CreateClient();
+                string _credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format(":{0}", accToken)));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _credentials);
 
                 string requestUri = string.Empty;
-                // requestUri = $"https://dev.azure.com/{loginModel.OrganizationName}/_apis/projects?stateFilter=wellFormed&$top=1000";
+                // requestUri = $"https://dev.azure.com/{orgName}/_apis/projects?stateFilter=wellFormed&$top=1000";
                 // Projects projects = await client.GetFromJsonAsync<Projects>(requestUri) ?? new Projects();
                 // return View("Projects", projects.Value);                
 
                 string id = "454fb150-83f5-4336-b491-1cfe5bf9739b";
-                requestUri = $"https://dev.azure.com/{loginModel.OrganizationName}/_apis/projects/{id}/properties";
+                requestUri = $"https://dev.azure.com/{orgName}/_apis/projects/{id}/properties";
                 ProjectProperties projectProperties = await client.GetFromJsonAsync<ProjectProperties>(requestUri) ?? new ProjectProperties();
                 
                 string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
 
                 await _projectService.CreateProjectAsync(processTemplateType);
 
-                // requestUri = $"https://dev.azure.com/{loginModel.OrganizationName}/_apis/work/processes/{processTemplateType}";
+                // requestUri = $"https://dev.azure.com/{orgName}/_apis/work/processes/{processTemplateType}";
                 // Processes processes = await client.GetFromJsonAsync<Processes>(requestUri) ?? new Processes();
                 
                  return View("ProjectProperties", projectProperties.Value);
