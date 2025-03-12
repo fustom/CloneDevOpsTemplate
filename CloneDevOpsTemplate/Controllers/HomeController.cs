@@ -46,8 +46,6 @@ public class HomeController(IIterationService iterationService) : Controller
         return View("Index");
     }
 
-    [HttpGet]
-    [Route("Home/Logout")]
     public IActionResult Logout()
     {
         if (ModelState.IsValid)
