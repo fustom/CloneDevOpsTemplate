@@ -1,20 +1,18 @@
-using CloneDevOpsTemplate.Extensions;
 using CloneDevOpsTemplate.Models;
 
 namespace CloneDevOpsTemplate.Services;
 
-public class IterationService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor) : IIterationService
+public class IterationService(IHttpClientFactory httpClientFactory) : IIterationService
 {
-    private readonly HttpClient _client = httpClientFactory.CreateClientWithCredentials(httpContextAccessor?.HttpContext?.Session.GetString(Const.SessionKeyAccessToken) ?? string.Empty);
-    private readonly string _organizationName = httpContextAccessor?.HttpContext?.Session.GetString(Const.SessionKeyOrganizationName) ?? string.Empty;
+    private readonly HttpClient _client = httpClientFactory.CreateClient("DevOpsServer");
 
     public async Task<Iteration?> GetIterationAsync(Guid projectId, Guid iterationId)
     {
-        return await _client.GetFromJsonAsync<Iteration>($"{_organizationName}/{projectId}/_apis/work/teamsettings/iterations/{iterationId}");
+        return await _client.GetFromJsonAsync<Iteration>($"{projectId}/_apis/work/teamsettings/iterations/{iterationId}");
     }
 
     public async Task<Iterations?> GetIterationsAsync(Guid projectId)
     {
-        return await _client.GetFromJsonAsync<Iterations>($"{_organizationName}/{projectId}/_apis/work/teamsettings/iterations");
+        return await _client.GetFromJsonAsync<Iterations>($"{projectId}/_apis/work/teamsettings/iterations");
     }
 }

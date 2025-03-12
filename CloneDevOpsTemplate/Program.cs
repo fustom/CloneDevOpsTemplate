@@ -5,7 +5,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddMvc();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddHttpClient();
+builder.Services.AddTransient<DevOpsAuthorizationHandler>();
+builder.Services.AddHttpClient("DevOpsServer", client => {
+    client.BaseAddress = new Uri("https://dev.azure.com");
+}).AddHttpMessageHandler<DevOpsAuthorizationHandler>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IIterationService, IterationService>();
 
