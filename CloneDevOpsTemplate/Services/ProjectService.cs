@@ -11,27 +11,27 @@ public class ProjectService(IHttpClientFactory httpClientFactory, IHttpContextAc
 
     public Task<Projects?> GetAllProjectsAsync()
     {
-        return _client.GetFromJsonAsync<Projects>($"https://dev.azure.com/{_organizationName}/_apis/projects?stateFilter=wellFormed&$top=1000");
+        return _client.GetFromJsonAsync<Projects>($"{_organizationName}/_apis/projects?stateFilter=wellFormed&$top=1000");
     }
 
     public Task<Project?> GetProjectAsync(Guid projectId)
     {
-        return _client.GetFromJsonAsync<Project>($"https://dev.azure.com/{_organizationName}/_apis/projects/{projectId}");
+        return _client.GetFromJsonAsync<Project>($"{_organizationName}/_apis/projects/{projectId}");
     }
 
     public Task<ProjectProperties?> GetProjectPropertiesAsync(Guid projectId)
     {
-        return _client.GetFromJsonAsync<ProjectProperties>($"https://dev.azure.com/{_organizationName}/_apis/projects/{projectId}/properties");
+        return _client.GetFromJsonAsync<ProjectProperties>($"{_organizationName}/_apis/projects/{projectId}/properties");
     }
 
     public Task<Processes?> GetProcessesAsync()
     {
-        return _client.GetFromJsonAsync<Processes>($"https://dev.azure.com/{_organizationName}/_apis/work/processes");
+        return _client.GetFromJsonAsync<Processes>($"{_organizationName}/_apis/work/processes");
     }
 
     public Task<Process?> GetProcessAsync(string processTemplateType)
     {
-        return _client.GetFromJsonAsync<Process>($"https://dev.azure.com/{_organizationName}/_apis/work/processes/{processTemplateType}");
+        return _client.GetFromJsonAsync<Process>($"{_organizationName}/_apis/work/processes/{processTemplateType}");
     }
 
     public Task<HttpResponseMessage> CreateProjectAsync(string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description")
@@ -53,6 +53,6 @@ public class ProjectService(IHttpClientFactory httpClientFactory, IHttpContextAc
             Description = description
         };
 
-        return _client.PostAsJsonAsync($"https://dev.azure.com/{_organizationName}/_apis/projects", createProject);
+        return _client.PostAsJsonAsync($"{_organizationName}/_apis/projects", createProject);
     }
 }

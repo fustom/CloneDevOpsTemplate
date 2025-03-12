@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using CloneDevOpsTemplate.Controllers;
+using CloneDevOpsTemplate.Services;
 
 namespace CloneDevOpsTemplate.Extensions
 {
@@ -13,6 +14,7 @@ namespace CloneDevOpsTemplate.Extensions
             HttpClient client = factory.CreateClient();
             string _credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format(":{0}", accessToken)));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _credentials);
+            client.BaseAddress = new Uri(Const.ServiceRootUrl);
 
             return client;
         }

@@ -10,11 +10,11 @@ public class IterationService(IHttpClientFactory httpClientFactory, IHttpContext
 
     public async Task<Iteration?> GetIterationAsync(Guid projectId, Guid iterationId)
     {
-        return await _client.GetFromJsonAsync<Iteration>($"https://dev.azure.com/{_organizationName}/{projectId}/_apis/work/teamsettings/iterations/{iterationId}");
+        return await _client.GetFromJsonAsync<Iteration>($"{_organizationName}/{projectId}/_apis/work/teamsettings/iterations/{iterationId}");
     }
 
     public async Task<Iterations?> GetIterationsAsync(Guid projectId)
     {
-        return await _client.GetFromJsonAsync<Iterations>($"https://dev.azure.com/{_organizationName}/{projectId}/_apis/work/teamsettings/iterations");
+        return await _client.GetFromJsonAsync<Iterations>($"{_organizationName}/{projectId}/_apis/work/teamsettings/iterations");
     }
 }
