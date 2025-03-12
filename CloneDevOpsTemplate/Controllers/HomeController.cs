@@ -46,6 +46,28 @@ public class HomeController(IIterationService iterationService) : Controller
         return View("Index");
     }
 
+    [HttpGet]
+    [Route("Home/Logout")]
+    public IActionResult Logout()
+    {
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                HttpContext.Session.Clear();
+                ViewBag.Loggedout = true;
+
+                return View("Index");
+            }
+            catch (Exception)
+            {
+                return Redirect("Error");
+            }
+        }
+
+        return View("Index");
+    }
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

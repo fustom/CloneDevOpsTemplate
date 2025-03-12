@@ -20,3 +20,8 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.form-container-login {
+  width: 30%;
+  margin: 0 auto;
+}
