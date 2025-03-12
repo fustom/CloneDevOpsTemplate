@@ -1,3 +1,4 @@
+using CloneDevOpsTemplate.Middlewares;
 using CloneDevOpsTemplate.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +39,8 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.UseSession();
+
+app.UseMiddleware<DevOpsAuthorizationMiddleware>();
 
 app.MapControllerRoute(
     name: "default",
