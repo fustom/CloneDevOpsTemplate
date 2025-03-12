@@ -4,25 +4,14 @@
     ViewData["Title"] = "Clone devops template";
 }
 
-<div class="form-container-login" style="margin-top: 50px;">
-    @if (ViewBag.Loggedout == true)
+<div class="form-container-login">
+    <div class="login-message">@ViewBag.LoginMessage</div>
+    @using (Html.BeginForm("Login", "Home", FormMethod.Post, new { @class = "form" }))
     {
-        <div style="font-size: large; font-weight: bold;">You have logged out.</div>
-    }
-    else
-    {
-        <div style="font-size: large; font-weight: bold;">Please log in.</div>
-    }
-    @using (Html.BeginForm("Login", "Home", FormMethod.Post, new { @style = "margin-top: 30px;" }))
-    {
-        <div class="form-group" style="margin-top: 10px;">
-            @Html.LabelFor(m => m.OrganizationName)
-            @Html.TextBoxFor(m => m.OrganizationName, new { @class = "form-control" })
-        </div>
-        <div class="form-group" style="margin-top: 10px;">
-            @Html.LabelFor(m => m.AccessToken)
-            @Html.PasswordFor(m => m.AccessToken, new { @class = "form-control" })
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Login</button>
+        @Html.LabelFor(m => m.OrganizationName)
+        @Html.TextBoxFor(m => m.OrganizationName, new { @class = "form-control" })
+        @Html.LabelFor(m => m.AccessToken)
+        @Html.PasswordFor(m => m.AccessToken, new { @class = "form-control" })
+        <button type="submit" class="btn btn-primary form-button">Login</button>
     }
 </div>

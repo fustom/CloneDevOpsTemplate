@@ -11,6 +11,7 @@ public class HomeController(IIterationService iterationService) : Controller
 
     public IActionResult Index()
     {
+        ViewBag.LoginMessage = "Please login to continue.";
         return View();
     }
 
@@ -25,40 +26,35 @@ public class HomeController(IIterationService iterationService) : Controller
         return View(iterations.Value);
     }
 
+    [HttpGet]
+    public IActionResult Login()
+    {
+        ViewBag.LoginMessage = "Please login to continue.";
+        return View("Index");
+    }
+
+    [HttpPost]
     public IActionResult Login(LoginModel loginModel)
     {
         if (ModelState.IsValid)
         {
-            try
-            {
-                // update session with user credentials
-                HttpContext.Session.SetString(Const.SessionKeyOrganizationName, loginModel.OrganizationName);
-                HttpContext.Session.SetString(Const.SessionKeyAccessToken, loginModel.AccessToken);
+            // update session with user credentials
+            HttpContext.Session.SetString(Const.SessionKeyOrganizationName, loginModel.OrganizationName);
+            HttpContext.Session.SetString(Const.SessionKeyAccessToken, loginModel.AccessToken);
 
-                return RedirectToAction("Projects", "Project");
-            }
-            catch (Exception)
-            {
-                return Redirect("Error");
-            }
+            return RedirectToAction("Projects", "Project");
         }
 
+        ViewBag.LoginMessage = "Login failed. Please try again.";
         return View("Index");
     }
 
     public IActionResult Logout()
     {
-        try
-        {
-            HttpContext.Session.Clear();
-            ViewBag.Loggedout = true;
+        HttpContext.Session.Clear();
+        ViewBag.LoginMessage = "You have been logged out.";
 
-            return View("Index");
-        }
-        catch (Exception)
-        {
-            return Redirect("Error");
-        }
+        return View("Index");
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
