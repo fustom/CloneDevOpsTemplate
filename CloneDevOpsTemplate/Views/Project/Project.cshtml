@@ -11,5 +11,5 @@
 <p>@Model.Revision</p>
 <p>@Model.Visibility</p>
 <p>@Model.LastUpdateTime</p>
-<p>@Html.ActionLink("ProjectProperties", "ProjectProperties", new { id = Model.Id })</p>
-<p>@Html.ActionLink("Iterations", "Iterations", new { id = Model.Id })</p>
+<p>@Html.ActionLink("ProjectProperties", "ProjectProperties", new { projectId = Model.Id })</p>
+<p>@Html.ActionLink("Iterations", "Iterations", "Home", new { projectId = Model.Id })</p>

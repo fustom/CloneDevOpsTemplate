@@ -1,0 +1,26 @@
+@model Team[]
+@{
+    ViewData["Title"] = "Teams";
+}
+
+<h1>Teams</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>ProjectName</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var team in Model)
+        {
+            <tr>
+                <td>@Html.ActionLink(team.Name, "Team", new { projectId = team.ProjectId, teamId = team.Id })</td>
+                <td>@team.Description</td>
+                <td>@team.ProjectName</td>
+            </tr>
+        }
+    </tbody>
+</table>

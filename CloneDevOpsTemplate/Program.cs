@@ -11,6 +11,7 @@ builder.Services.AddHttpClient("DevOpsServer", client => {
 }).AddHttpMessageHandler<DevOpsAuthorizationHandler>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IIterationService, IterationService>();
+builder.Services.AddScoped<ITeamsService, TeamsService>();
 
 builder.Services.AddSession(options =>
 {
