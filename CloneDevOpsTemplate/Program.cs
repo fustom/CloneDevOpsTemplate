@@ -7,7 +7,7 @@ builder.Services.AddMvc();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<DevOpsAuthorizationHandler>();
 builder.Services.AddHttpClient("DevOpsServer", client => {
-    client.BaseAddress = new Uri("https://dev.azure.com");
+    client.BaseAddress = new Uri(Const.ServiceRootUrl);
 }).AddHttpMessageHandler<DevOpsAuthorizationHandler>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IIterationService, IterationService>();
