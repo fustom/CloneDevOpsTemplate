@@ -8,6 +8,7 @@ public interface IProjectService
     Task<Process?> GetProcessAsync(string processTemplateType);
     Task<Projects?> GetAllProjectsAsync();
     Task<Project?> GetProjectAsync(Guid projectId);
+    Task<Project?> GetProjectAsync(string projectName);
     Task<ProjectProperties?> GetProjectPropertiesAsync(Guid projectId);
-    Task<CreateProjectResponse?> CreateProjectAsync(string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description");
+    Task<CreateProjectResponse?> CreateProjectAsync(string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description", string visibility = "private");
 }

@@ -16,6 +16,11 @@ public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectServ
         return _client.GetFromJsonAsync<Project>($"_apis/projects/{projectId}");
     }
 
+    public Task<Project?> GetProjectAsync(string projectName)
+    {
+        return _client.GetFromJsonAsync<Project>($"_apis/projects/{projectName}");
+    }
+
     public Task<ProjectProperties?> GetProjectPropertiesAsync(Guid projectId)
     {
         return _client.GetFromJsonAsync<ProjectProperties>($"_apis/projects/{projectId}/properties");
@@ -31,26 +36,27 @@ public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectServ
         return _client.GetFromJsonAsync<Process>($"_apis/work/processes/{processTemplateType}");
     }
 
-    public async Task<CreateProjectResponse?> CreateProjectAsync(string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description")
+    public async Task<CreateProjectResponse?> CreateProjectAsync(string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description", string visibility = "private")
     {
         CreateProject createProject = new()
         {
-            Name = name,
-            Capabilities = new Capabilities
+            name = name,
+            capabilities = new Capabilities
             {
-                VersionControl = new VersionControl
+                versioncontrol = new VersionControl
                 {
-                    SourceControlType = sourceControlType
+                    sourceControlType = sourceControlType
                 },
-                ProcessTemplate = new ProcessTemplate
+                processTemplate = new ProcessTemplate
                 {
-                    TemplateTypeId = processTemplateType
+                    templateTypeId = processTemplateType
                 }
             },
-            Description = description
+            description = description,
+            visibility = visibility
         };
 
-        var result = await _client.PostAsJsonAsync($"_apis/projects", createProject);
+        var result = await _client.PostAsJsonAsync($"_apis/projects?api-version=7.1", createProject);
         result.EnsureSuccessStatusCode();
         return await result.Content.ReadFromJsonAsync<CreateProjectResponse>();
     }
