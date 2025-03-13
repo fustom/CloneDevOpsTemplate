@@ -26,13 +26,27 @@ public class ProjectController(IProjectService projectService) : Controller
         return View(projectProperties.Value);
     }
 
-    async public Task<IActionResult> CreateProject(Guid templateProjectId, string newProjectName)
+    [HttpGet]
+    async public Task<IActionResult> CreateProject()
     {
-        ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(templateProjectId) ?? new ProjectProperties();
-        string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
-        CreateProjectResponse project = await _projectService.CreateProjectAsync(processTemplateType, newProjectName) ?? new CreateProjectResponse();
-        //TODO: Wait for project to be created
+        Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
+        return View(projects.Value);
+    }
 
-        return RedirectToAction($"Project/{project.Id}");
+    [HttpPost]
+    async public Task<IActionResult> CreateProject(Guid templateProjectId, string newProjectName, string description, string visibility)
+    {
+        ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(templateProjectId) ?? new();
+        string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
+        await _projectService.CreateProjectAsync(processTemplateType, newProjectName, "Git", description, visibility);
+
+        Project project = new();
+        while (project.State != "wellFormed")
+        {
+            await Task.Delay(1000);
+            project = await _projectService.GetProjectAsync(newProjectName) ?? new();
+        }
+
+        return RedirectToAction($"Project?projectId={project.Id}");
     }
 }
