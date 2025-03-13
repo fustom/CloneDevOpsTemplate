@@ -8,10 +8,16 @@
     <div class="login-message">@ViewBag.LoginMessage</div>
     @using (Html.BeginForm("Login", "Home", FormMethod.Post, new { @class = "form" }))
     {
-        @Html.LabelFor(m => m.OrganizationName)
-        @Html.TextBoxFor(m => m.OrganizationName, new { @class = "form-control" })
-        @Html.LabelFor(m => m.AccessToken)
-        @Html.PasswordFor(m => m.AccessToken, new { @class = "form-control" })
+        <div>
+            @Html.LabelFor(m => m.OrganizationName)
+            @Html.TextBoxFor(m => m.OrganizationName, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.OrganizationName, "", new { @class = "text-danger" })
+        </div>
+        <div>
+            @Html.LabelFor(m => m.AccessToken)
+            @Html.PasswordFor(m => m.AccessToken, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.AccessToken, "", new { @class = "text-danger" })
+        </div>
         <button type="submit" class="btn btn-primary form-button">Login</button>
     }
 </div>

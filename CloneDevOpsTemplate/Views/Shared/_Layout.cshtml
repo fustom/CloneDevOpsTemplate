@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="~/CloneDevOpsTemplate.styles.css" asp-append-version="true" />
 </head>
 <body>
-    @await Html.PartialAsync("_Header.cshtml")    
+    @await Html.PartialAsync("_Header")    
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -25,5 +25,6 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 </body>
 </html>
