@@ -5,11 +5,11 @@
 
 <h1>Create project from template</h1>
 
-@using (Html.BeginForm("CreateProject", "Project", FormMethod.Post, new { @class = "form" }))
+@using (Html.BeginForm("CreateProject", "Project", FormMethod.Post, new { @class = "form, form-container-login" }))
 {
     @Html.DropDownList("templateProjectId", new SelectList(Model, "Id", "Name"), "Select a project", new { @class = "form-control" })
-    @Html.TextBox("newProjectName", "New Project", new { @class = "form-control" })
-    @Html.TextBox("description", "New Project Description", new { @class = "form-control" })
+    @Html.TextBox("newProjectName", "My New Project", new { @class = "form-control" })
+    @Html.TextBox("description", "My New Project Description", new { @class = "form-control" })
     @Html.DropDownList("visibility", new SelectList(new List<string> { "private", "public" }), "Select a visibility", new { @class = "form-control" })
     <button type="submit" class="btn btn-primary form-button">Create</button> 
 }
