@@ -1,3 +1,8 @@
+@using CloneDevOpsTemplate.Services
+@{ 
+    var isLoggedin = Context.Session.GetString(Const.SessionKeyAccessToken) != null;
+}
+
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
@@ -19,11 +24,14 @@
                     </li>
                 </ul>
             </div>
-            <div style="float:left">
-                <a asp-area="" asp-controller="Home" asp-action="Logout">
-                    <button class="btn btn-primary">Logout</button>
-                </a>
-            </div>
+            @if(isLoggedin)
+            {
+                <div style="float:left">
+                    <a asp-area="" asp-controller="Home" asp-action="Logout">
+                        <button class="btn btn-primary">Logout</button>
+                    </a>
+                </div>
+            }
         </div>
     </nav>
 </header>
