@@ -23,7 +23,16 @@ public class ProjectController(IProjectService projectService) : Controller
     async public Task<IActionResult> ProjectProperties(Guid projectId)
     {
         ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(projectId) ?? new ProjectProperties();
-        //string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
         return View(projectProperties.Value);
+    }
+
+    async public Task<IActionResult> CreateProject(Guid templateProjectId, string newProjectName)
+    {
+        ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(templateProjectId) ?? new ProjectProperties();
+        string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
+        CreateProjectResponse project = await _projectService.CreateProjectAsync(processTemplateType, newProjectName) ?? new CreateProjectResponse();
+        //TODO: Wait for project to be created
+
+        return RedirectToAction($"Project/{project.Id}");
     }
 }
