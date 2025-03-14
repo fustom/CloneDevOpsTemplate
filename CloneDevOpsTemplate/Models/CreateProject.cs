@@ -24,7 +24,7 @@ public class ProcessTemplate
     public string templateTypeId { get; set; } = string.Empty;
 }
 
-public class CreateProjectResponse
+public class CreateProjectResponse : ErrorResponse
 {
     public Guid Id { get; set; }
     public string Status { get; set; } = string.Empty;

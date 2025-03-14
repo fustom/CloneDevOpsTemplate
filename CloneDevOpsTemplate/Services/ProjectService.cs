@@ -1,3 +1,4 @@
+using System.Net;
 using CloneDevOpsTemplate.Models;
 
 namespace CloneDevOpsTemplate.Services;
@@ -36,7 +37,7 @@ public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectServ
         return _client.GetFromJsonAsync<Process>($"_apis/work/processes/{processTemplateType}");
     }
 
-    public async Task<CreateProjectResponse?> CreateProjectAsync(string processTemplateType, string name = "New Project", string sourceControlType = "Git", string description = "New Project Description", string visibility = "private")
+    public async Task<CreateProjectResponse?> CreateProjectAsync(string name = "New Project", string description = "New Project Description", string processTemplateType = "Basic", string sourceControlType = "Git", string visibility = "private")
     {
         CreateProject createProject = new()
         {
@@ -57,7 +58,10 @@ public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectServ
         };
 
         var result = await _client.PostAsJsonAsync($"_apis/projects?api-version=7.1", createProject);
-        result.EnsureSuccessStatusCode();
-        return await result.Content.ReadFromJsonAsync<CreateProjectResponse>();
+        if (result.IsSuccessStatusCode || result.StatusCode == HttpStatusCode.BadRequest)
+        {
+            return await result.Content.ReadFromJsonAsync<CreateProjectResponse>();
+        }
+        return null;
     }
 }

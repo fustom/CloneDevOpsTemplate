@@ -38,8 +38,15 @@ public class ProjectController(IProjectService projectService) : Controller
     {
         ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(templateProjectId) ?? new();
         string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
-        await _projectService.CreateProjectAsync(processTemplateType, newProjectName, "Git", description, visibility);
+        CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(newProjectName, description, processTemplateType, "Git", visibility) ?? new();
 
+        if (createProjectResponse.TypeKey is not null)
+        {
+            ModelState.AddModelError("ErrorMessage", createProjectResponse.TypeKey);
+            Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
+            return View(projects.Value);
+        }
+        
         Project project = new();
         while (project.State != "wellFormed")
         {
@@ -47,6 +54,6 @@ public class ProjectController(IProjectService projectService) : Controller
             project = await _projectService.GetProjectAsync(newProjectName) ?? new();
         }
 
-        return RedirectToAction($"Project?projectId={project.Id}");
+        return RedirectToAction("Project", new { projectId = project.Id });
     }
 }
