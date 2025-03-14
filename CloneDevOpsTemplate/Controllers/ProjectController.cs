@@ -40,9 +40,9 @@ public class ProjectController(IProjectService projectService) : Controller
         string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
         CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(newProjectName, description, processTemplateType, "Git", visibility) ?? new();
 
-        if (createProjectResponse.TypeKey is not null)
+        if (createProjectResponse.Message is not null)
         {
-            ModelState.AddModelError("ErrorMessage", createProjectResponse.TypeKey);
+            ModelState.AddModelError("ErrorMessage", createProjectResponse.Message);
             Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
             return View(projects.Value);
         }
