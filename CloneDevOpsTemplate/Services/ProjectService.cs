@@ -41,20 +41,20 @@ public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectServ
     {
         CreateProject createProject = new()
         {
-            name = name,
-            capabilities = new Capabilities
+            Name = name,
+            Capabilities = new Capabilities
             {
-                versioncontrol = new VersionControl
+                Versioncontrol = new VersionControl
                 {
-                    sourceControlType = sourceControlType
+                    SourceControlType = sourceControlType
                 },
-                processTemplate = new ProcessTemplate
+                ProcessTemplate = new ProcessTemplate
                 {
-                    templateTypeId = processTemplateType
+                    TemplateTypeId = processTemplateType
                 }
             },
-            description = description,
-            visibility = visibility
+            Description = description,
+            Visibility = visibility
         };
 
         var result = await _client.PostAsJsonAsync($"_apis/projects?api-version=7.1", createProject);
