@@ -4,9 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CloneDevOpsTemplate.Controllers;
 
-public class ProjectController(IProjectService projectService) : Controller
+public class ProjectController(IProjectService projectService, IIterationService iterationService) : Controller
 {
     private readonly IProjectService _projectService = projectService;
+    private readonly IIterationService _iterationService = iterationService;
 
     async public Task<IActionResult> Projects()
     {
@@ -46,13 +47,17 @@ public class ProjectController(IProjectService projectService) : Controller
             Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
             return View(projects.Value);
         }
-        
+
         Project project = new();
         while (project.State != "wellFormed")
         {
             await Task.Delay(1000);
             project = await _projectService.GetProjectAsync(newProjectName) ?? new();
         }
+
+        Iteration templateIterations = await _iterationService.GetIterationsAsync(templateProjectId) ?? new();
+        Iteration iterations = await _iterationService.CreateIterationAsync(project.Id, templateIterations);
+        await _iterationService.MoveIteration(project.Id, iterations);
 
         return RedirectToAction("Project", new { projectId = project.Id });
     }

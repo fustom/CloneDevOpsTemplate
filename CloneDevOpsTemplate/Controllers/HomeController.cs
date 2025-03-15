@@ -5,10 +5,8 @@ using CloneDevOpsTemplate.Services;
 
 namespace CloneDevOpsTemplate.Controllers;
 
-public class HomeController(IIterationService iterationService) : Controller
+public class HomeController : Controller
 {
-    private readonly IIterationService _iterationService = iterationService;
-
     public IActionResult Index()
     {
         ViewBag.LoginMessage = "Please login to continue.";
@@ -18,12 +16,6 @@ public class HomeController(IIterationService iterationService) : Controller
     public IActionResult Privacy()
     {
         return View();
-    }
-
-    async public Task<IActionResult> Iterations(Guid projectId)
-    {
-        Iterations iterations = await _iterationService.GetIterationsAsync(projectId) ?? new Iterations();
-        return View(iterations.Value);
     }
 
     [HttpGet]
