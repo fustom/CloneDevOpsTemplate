@@ -31,7 +31,7 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         return new();
     }
 
-    public async Task<Iteration> CreateIterationAsync(Guid projectId, Iteration iterations)
+    public async Task<Iteration> CreateIterationAsync(Guid projectId, string projectName, Iteration iterations)
     {
         var response = new Iteration();
 
@@ -41,7 +41,9 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
             {
                 Name = iteration.Name
             });
-            Iteration child = await CreateIterationAsync(projectId, iteration);
+            resp.Path = iteration.Path.Replace(iterations.Name, projectName);
+
+            Iteration child = await CreateIterationAsync(projectId, projectName, iteration);
             if (child.Id > 0)
             {
                 resp.Children.Add(child);
