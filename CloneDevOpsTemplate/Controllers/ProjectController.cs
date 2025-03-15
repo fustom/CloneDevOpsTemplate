@@ -56,7 +56,7 @@ public class ProjectController(IProjectService projectService, IIterationService
         }
 
         Iteration templateIterations = await _iterationService.GetIterationsAsync(templateProjectId) ?? new();
-        Iteration iterations = await _iterationService.CreateIterationAsync(project.Id, templateIterations);
+        Iteration iterations = await _iterationService.CreateIterationAsync(project.Id, project.Name, templateIterations);
         await _iterationService.MoveIteration(project.Id, iterations);
 
         return RedirectToAction("Project", new { projectId = project.Id });
