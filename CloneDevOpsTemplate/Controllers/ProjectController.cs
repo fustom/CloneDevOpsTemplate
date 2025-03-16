@@ -37,14 +37,13 @@ public class ProjectController(IProjectService projectService, IIterationService
     [HttpPost]
     async public Task<IActionResult> CreateProject(Guid templateProjectId, string newProjectName, string description, string visibility)
     {
-        ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(templateProjectId) ?? new();
-        string processTemplateType = projectProperties.Value.Where(x => x.Name == "System.ProcessTemplateType").FirstOrDefault()?.Value.ToString() ?? string.Empty;
-        CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(newProjectName, description, processTemplateType, "Git", visibility) ?? new();
+        Project templateProject = await _projectService.GetProjectAsync(templateProjectId) ?? new();
+        CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(newProjectName, description, templateProject.Capabilities.ProcessTemplate.TemplateTypeId, templateProject.Capabilities.Versioncontrol.SourceControlType, visibility) ?? new();
 
         if (createProjectResponse.Message is not null)
         {
             ModelState.AddModelError("ErrorMessage", createProjectResponse.Message);
-            Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
+            Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
             return View(projects.Value);
         }
 

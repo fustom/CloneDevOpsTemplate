@@ -14,12 +14,12 @@ public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectServ
 
     public Task<Project?> GetProjectAsync(Guid projectId)
     {
-        return _client.GetFromJsonAsync<Project>($"_apis/projects/{projectId}");
+        return _client.GetFromJsonAsync<Project>($"_apis/projects/{projectId}?includeCapabilities=true");
     }
 
     public Task<Project?> GetProjectAsync(string projectName)
     {
-        return _client.GetFromJsonAsync<Project>($"_apis/projects/{projectName}");
+        return _client.GetFromJsonAsync<Project>($"_apis/projects/{projectName}?includeCapabilities=true");
     }
 
     public Task<ProjectProperties?> GetProjectPropertiesAsync(Guid projectId)
