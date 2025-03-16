@@ -1,4 +1,6 @@
 using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using CloneDevOpsTemplate.Models;
 
 namespace CloneDevOpsTemplate.Services;
@@ -57,7 +59,11 @@ public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectServ
             Visibility = visibility
         };
 
-        var result = await _client.PostAsJsonAsync($"_apis/projects?api-version=7.1", createProject);
+        var result = await _client.PostAsJsonAsync($"_apis/projects?api-version=7.1", createProject, new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        });
         if (result.IsSuccessStatusCode || result.StatusCode == HttpStatusCode.BadRequest)
         {
             return await result.Content.ReadFromJsonAsync<CreateProjectResponse>();

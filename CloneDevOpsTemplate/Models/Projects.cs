@@ -33,12 +33,12 @@ public class Capabilities
 public class VersionControl
 {
     public string SourceControlType { get; set; } = string.Empty;
-    public string GitEnabled { get; set; } = string.Empty;
-    public string TfvcEnabled { get; set; } = string.Empty;
+    public string? GitEnabled { get; set; }
+    public string? TfvcEnabled { get; set; }
 }
 
 public class ProcessTemplate
 {
-    public string TemplateName { get; set; } = string.Empty;
+    public string? TemplateName { get; set; }
     public string TemplateTypeId { get; set; } = string.Empty;
 }
