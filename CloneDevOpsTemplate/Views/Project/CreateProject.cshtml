@@ -1,4 +1,4 @@
-@model Project[]
+@model ProjectBase[]
 @{
     ViewData["Title"] = "Create project from template";
 }
@@ -12,5 +12,5 @@
     @Html.TextBox("newProjectName", "My New Project", new { @class = "form-text form-control" })
     @Html.TextBox("description", "My New Project Description", new { @class = "form-text form-control" })
     @Html.DropDownList("visibility", new SelectList(new List<string> { "private", "public" }), "Select a visibility", new { @class = "form-select form-control form-text" })
-    <button type="submit" class="btn btn-primary form-button form-text">Create</button> 
+    <button type="submit" class="btn btn-primary form-button form-text">Create</button>
 }
