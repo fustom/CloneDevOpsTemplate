@@ -1,4 +1,4 @@
-@model Project[]
+@model ProjectBase[]
 @{
     ViewData["Title"] = "Create project from template";
 }
@@ -6,11 +6,16 @@
 <h1>Create project from template</h1>
 
 @Html.ValidationMessage("ErrorMessage", "", new { @class = "text-danger" })
-@using (Html.BeginForm("CreateProject", "Project", FormMethod.Post, new { @class = "form-container card input-group-lg" }))
+@using (Html.BeginForm("CreateProject", "Project", FormMethod.Post, new
 {
-    @Html.DropDownList("templateProjectId", new SelectList(Model, "Id", "Name"), "Select a project", new { @class = "form-select form-control" })
-    @Html.TextBox("newProjectName", "My New Project", new { @class = "form-text form-control" })
-    @Html.TextBox("description", "My New Project Description", new { @class = "form-text form-control" })
-    @Html.DropDownList("visibility", new SelectList(new List<string> { "private", "public" }), "Select a visibility", new { @class = "form-select form-control form-text" })
-    <button type="submit" class="btn btn-primary form-button form-text">Create</button> 
+    @class = "form-container card input-group-lg"
+}))
+{
+    @Html.DropDownList("templateProjectId", new SelectList(Model, "Id", "Name"), "Select a project", new { @class =
+    "form-select form-control" })
+@Html.TextBox("newProjectName", "My New Project", new { @class = "form-text form-control" })
+@Html.TextBox("description", "My New Project Description", new { @class = "form-text form-control" })
+@Html.DropDownList("visibility", new SelectList(new List<string> { "private", "public" }), "Select a visibility", new {
+@class = "form-select form-control form-text" })
+<button type="submit" class="btn btn-primary form-button form-text">Create</button>
 }
