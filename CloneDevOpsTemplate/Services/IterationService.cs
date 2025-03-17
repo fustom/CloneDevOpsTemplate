@@ -68,7 +68,7 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
             await MoveIteration(projectId, name, iteration.Id);
             if (iteration.Children.Count > 0) 
             {
-                await MoveIteration(projectId, iteration.Children, name + iteration.Name);
+                await MoveIteration(projectId, iteration.Children, $"{name}/{iteration.Name}");
             }
         }
     }
