@@ -3,6 +3,7 @@
     ViewData["Title"] = "TeamSettings";
 }
 
+<h1>Team settings</h1>
 <table class="table table-striped">
     <tr>
         <td>BugsBehavior</td>
@@ -19,5 +20,13 @@
     <tr>
         <td>RequirementCategory</td>
         <td>@Model.BacklogVisibilities.RequirementCategory</td>
+    </tr>
+    <tr>
+        <td>DefaultIterationMacro</td>
+        <td>@Model.DefaultIterationMacro</td>
+    </tr>
+    <tr>
+        <td>WorkingDays</td>
+        <td>@string.Join(",", Model.WorkingDays)</td>
     </tr>
 </table>
