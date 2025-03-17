@@ -1,0 +1,23 @@
+@model TeamSettings
+@{
+    ViewData["Title"] = "TeamSettings";
+}
+
+<table class="table table-striped">
+    <tr>
+        <td>BugsBehavior</td>
+        <td>@Model.BugsBehavior</td>
+    </tr>
+    <tr>
+        <td>EpicCategory</td>
+        <td>@Model.BacklogVisibilities.EpicCategory</td>
+    </tr>
+    <tr>
+        <td>FeatureCategory</td>
+        <td>@Model.BacklogVisibilities.FeatureCategory</td>
+    </tr>
+    <tr>
+        <td>RequirementCategory</td>
+        <td>@Model.BacklogVisibilities.RequirementCategory</td>
+    </tr>
+</table>
