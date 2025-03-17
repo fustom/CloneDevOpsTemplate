@@ -4,8 +4,8 @@ namespace CloneDevOpsTemplate.Services;
 
 public interface IIterationService
 {
-    Task<Iteration> GetIterationAsync(Guid projectId, string name);
-    Task<Iteration> GetIterationsAsync(Guid projectId);
+    Task<Iteration?> GetIterationAsync(Guid projectId, string name);
+    Task<Iteration?> GetIterationsAsync(Guid projectId);
     Task<Iteration> CreateIterationAsync(Guid projectId, CreateIterationRequest iteration);
     Task<Iteration> CreateIterationAsync(Guid projectId, Iteration iterations);
     Task MoveIteration(Guid projectId, List<Iteration> iterations, string name = "");

@@ -7,14 +7,14 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
 {
     private readonly HttpClient _client = httpClientFactory.CreateClient("DevOpsServer");
 
-    public async Task<Iteration> GetIterationAsync(Guid projectId, string name)
+    public Task<Iteration?> GetIterationAsync(Guid projectId, string name)
     {
-        return await _client.GetFromJsonAsync<Iteration>($"{projectId}/_apis/wit/classificationNodes/iterations/{name}") ?? new();
+        return _client.GetFromJsonAsync<Iteration>($"{projectId}/_apis/wit/classificationNodes/iterations/{name}");
     }
 
-    public async Task<Iteration> GetIterationsAsync(Guid projectId)
+    public Task<Iteration?> GetIterationsAsync(Guid projectId)
     {
-        return await _client.GetFromJsonAsync<Iteration>($"{projectId}/_apis/wit/classificationNodes/iterations?$depth=10") ?? new();
+        return _client.GetFromJsonAsync<Iteration>($"{projectId}/_apis/wit/classificationNodes/iterations?$depth=10");
     }
 
     public async Task<Iteration> CreateIterationAsync(Guid projectId, CreateIterationRequest iteration)
@@ -26,7 +26,7 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         }
         if (result.StatusCode == HttpStatusCode.Conflict)
         {
-            return await GetIterationAsync(projectId, iteration.Name);
+            return await GetIterationAsync(projectId, iteration.Name) ?? new();
         }
         return new();
     }
