@@ -2,7 +2,20 @@
 @{
     ViewData["Title"] = "Team";
 }
-
-<h1>@Model.Name</h1>
-<p>@Model.Description</p>
-<p>@Model.ProjectName</p>
+<table class="table table-striped">
+    <tr class="table-primary">
+        <td>Name</td>
+        <td>@Model.Name</td>
+    </tr>
+    <tr>
+        <td>Description</td>
+        <td>@Model.Description</td>
+    </tr>
+    <tr>
+        <td>ProjectName</td>
+        <td>@Model.ProjectName</td>
+    </tr>
+    <tr>
+        <td colspan="2">@Html.ActionLink("Team settings", "TeamSettings", "TeamSettings", new { projectId = Model.ProjectId, teamId = Model.Id })</td>
+    </tr>
+</table>

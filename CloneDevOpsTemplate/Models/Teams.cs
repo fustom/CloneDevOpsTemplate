@@ -8,7 +8,7 @@ public class Teams
 
 public class BaseTeam
 {
-    public string Id { get; set; } = string.Empty;
+    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
 }
@@ -19,4 +19,9 @@ public class Team : BaseTeam
     public string IdentityUrl { get; set; } = string.Empty;
     public string ProjectName { get; set; } = string.Empty;
     public string ProjectId { get; set; } = string.Empty;
+}
+
+public class MapTeams
+{
+    public Dictionary<Guid, Guid> Teams { get; set; } = [];
 }
