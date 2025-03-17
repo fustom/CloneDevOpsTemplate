@@ -14,7 +14,7 @@ public class TeamsService(IHttpClientFactory httpClientFactory) : ITeamsService
     {
         return _client.GetFromJsonAsync<Team>($"_apis/projects/{projectId}/teams/{teamId}");
     }
-    public Task<HttpResponseMessage> CreateTeamAsync(Guid projectId, string name = "New Team", string description = "New Team Description")
+    public async Task<Team> CreateTeamAsync(Guid projectId, string name = "New Team", string description = "New Team Description")
     {
         Team createTeam = new()
         {
@@ -22,7 +22,30 @@ public class TeamsService(IHttpClientFactory httpClientFactory) : ITeamsService
             Description = description
         };
 
-        return _client.PostAsJsonAsync($"_apis/projects/{projectId}/teams", createTeam);
+        var result = await _client.PostAsJsonAsync($"_apis/projects/{projectId}/teams?api-version=7.1", createTeam);
+        if (result.IsSuccessStatusCode)
+        {
+            return await result.Content.ReadFromJsonAsync<Team>() ?? new();
+        }
+        return new();
+    }
+    public async Task<Dictionary<Guid, Guid>> CreateTeamFromTemplateAsync(Guid projectId, Team[] templateTeams, Guid defaultTeamId, Guid newDefaultTeamId)
+    {
+        Dictionary<Guid, Guid> mapTeams = [];
+        foreach(Team templateTeam in templateTeams)
+        {
+            if (templateTeam.Id != defaultTeamId)
+            {
+                var newTeam = await CreateTeamAsync(projectId, templateTeam.Name, templateTeam.Description);
+                mapTeams.Add(templateTeam.Id, newTeam.Id);
+            }
+            else
+            {
+                mapTeams.Add(templateTeam.Id, newDefaultTeamId);
+            }
+        }
+
+        return mapTeams;
     }
     public Task<HttpResponseMessage> UpdateTeamAsync(Guid projectId, string teamId, string name = "New Team", string description = "New Team Description")
     {

@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CloneDevOpsTemplate.Controllers;
 
-public class ProjectController(IProjectService projectService, IIterationService iterationService) : Controller
+public class ProjectController(IProjectService projectService, IIterationService iterationService, ITeamsService teamsService, ITeamSettingsService teamSettingsService) : Controller
 {
     private readonly IProjectService _projectService = projectService;
     private readonly IIterationService _iterationService = iterationService;
+    private readonly ITeamsService _teamsService = teamsService;
+    private readonly ITeamSettingsService _teamSettingsService = teamSettingsService;
 
     async public Task<IActionResult> Projects()
     {
@@ -57,7 +59,19 @@ public class ProjectController(IProjectService projectService, IIterationService
         Iteration templateIterations = await _iterationService.GetIterationsAsync(templateProjectId) ?? new();
         Iteration iterations = await _iterationService.CreateIterationAsync(project.Id, templateIterations);
         await _iterationService.MoveIteration(project.Id, iterations.Children);
+        // TODO: Areas
 
-         return RedirectToAction("Project", new { projectId = project.Id });
+        Teams templateTeams = await _teamsService.GetTeamsAsync(templateProjectId) ?? new();
+        // TODO: TeamIterationMap
+        Dictionary<Guid, Guid> mapTeams = await _teamsService.CreateTeamFromTemplateAsync(project.Id, templateTeams.Value, templateProject.DefaultTeam.Id, project.DefaultTeam.Id);
+        // TODO: UpdateBoardRows
+
+        foreach (Team templateTeam in templateTeams.Value)
+        {
+            var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProjectId, templateTeam.Id) ?? new();
+            await _teamSettingsService.UpdateTeamSettings(project.Id, mapTeams.GetValueOrDefault(templateTeam.Id), templateTeamSettings);
+        }
+
+        return RedirectToAction("Project", new { projectId = project.Id });
     }
 }

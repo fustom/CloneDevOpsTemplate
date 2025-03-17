@@ -19,4 +19,10 @@ public class TeamController(ITeamsService teamsService) : Controller
         Team team = await _teamsService.GetTeamAsync(projectId, teamId) ?? new Team();
         return View(team);
     }
+
+    async public Task<IActionResult> ProjectTeams(Guid projectId)
+    {
+        Teams teams = await _teamsService.GetTeamsAsync(projectId) ?? new Teams();
+        return View("Teams", teams.Value);
+    }
 }
