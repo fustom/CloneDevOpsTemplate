@@ -31,9 +31,9 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         return new();
     }
 
-    public async Task<Iteration> CreateIterationAsync(Guid projectId, string projectName, Iteration iterations)
+    public async Task<Iteration> CreateIterationAsync(Guid projectId, Iteration iterations)
     {
-        var response = new Iteration();
+        Iteration response = new();
 
         foreach (Iteration iteration in iterations.Children)
         {
@@ -41,12 +41,11 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
             {
                 Name = iteration.Name
             });
-            resp.Path = iteration.Path.Replace(iterations.Name, projectName);
 
-            Iteration child = await CreateIterationAsync(projectId, projectName, iteration);
-            if (child.Id > 0)
+            Iteration child = await CreateIterationAsync(projectId, iteration);
+            if (child.Children.Count > 0)
             {
-                resp.Children.Add(child);
+                resp.Children.AddRange(child.Children);
             }
             if (resp.Id > 0)
             {
@@ -57,11 +56,20 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         return response;
     }
 
-    public async Task MoveIteration(Guid projectId, Iteration iterations)
+    public Task MoveIteration(Guid projectId, string path, int Id)
     {
-        foreach (Iteration iteration in iterations.Children)
+        return _client.PostAsJsonAsync($"{projectId}/_apis/wit/classificationNodes/iterations/{path}?api-version=7.1", new { id = Id });
+    }
+
+    public async Task MoveIteration(Guid projectId, List<Iteration> iterations, string name)
+    {
+        foreach (Iteration iteration in iterations)
         {
-            await _client.PostAsJsonAsync($"{projectId}/_apis/wit/classificationNodes/{iteration.Path}iterations?api-version=7.1", new { Id = iteration.Id });
+            await MoveIteration(projectId, name, iteration.Id);
+            if (iteration.Children.Count > 0) 
+            {
+                await MoveIteration(projectId, iteration.Children, name + iteration.Name);
+            }
         }
     }
 }
