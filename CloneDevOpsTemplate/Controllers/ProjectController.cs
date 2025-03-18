@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CloneDevOpsTemplate.Models;
 using CloneDevOpsTemplate.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -62,16 +63,20 @@ public class ProjectController(IProjectService projectService, IIterationService
         Iteration templateIterations = await _iterationService.GetIterationsAsync(templateProjectId) ?? new();
         Iteration iterations = await _iterationService.CreateIterationAsync(project.Id, templateIterations);
         await _iterationService.MoveIteration(project.Id, iterations.Children);
-        
-        // Clone the boards from the template project
+
+        // Query our new team and boards for later use
+        Teams projectTeams = await _teamsService.GetTeamsAsync(project.Id) ?? new();
+        string projectTeamId = projectTeams.Value.First().Id;
+        Boards projectBoards = await _boardService.GetBoardsAsync(project.Id, projectTeamId) ?? new();
+
+        // Loop through the teams in the template project
         Teams templateTeams = await _teamsService.GetTeamsAsync(templateProjectId) ?? new();
         foreach (Team templateTeam in templateTeams.Value)
         {
-            Boards templateBoards = await _boardService.GetBoardsAsync(templateProjectId, templateTeam.Id) ?? new();
-            foreach (Board templateBoard in templateBoards.Value)
-            {
-                BoardColumns templateBoardColumns = await _boardService.GetBoardColumnsAsync(templateProjectId, templateTeam.Id, templateBoard.Id) ?? new();
-            }
+            // Clone the boards from the template project
+            await _boardService.MoveBoardColumnsAsync(project.Id, projectTeamId, templateProjectId, templateTeam.Id, projectBoards);
+
+            //TODO: Clone cards from the template project
         }
 
          return RedirectToAction("Project", new { projectId = project.Id });
