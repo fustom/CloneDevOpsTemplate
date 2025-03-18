@@ -9,17 +9,17 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
 {
     private readonly HttpClient _client = httpClientFactory.CreateClient("DevOpsServer");
 
-    public async Task<Boards> GetBoardsAsync(Guid projectId, string teamId)
+    public async Task<Boards> GetBoardsAsync(Guid projectId, Guid teamId)
     {
         return await _client.GetFromJsonAsync<Boards>($"{projectId}/{teamId}/_apis/work/boards?api-version=7.1") ?? new();
     }
 
-    public async Task<BoardColumns> GetBoardColumnsAsync(Guid projectId, string teamId, string boardId)
+    public async Task<BoardColumns> GetBoardColumnsAsync(Guid projectId, Guid teamId, string boardId)
     {
         return await _client.GetFromJsonAsync<BoardColumns>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/columns?api-version=7.1") ?? new();
     }
 
-    public async Task UpdateBoardColumnsAsync(Guid projectId, string teamId, string boardId, BoardColumns boardColumns)
+    public async Task UpdateBoardColumnsAsync(Guid projectId, Guid teamId, string boardId, BoardColumns boardColumns)
     {
         await _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/columns?api-version=7.1", boardColumns.Value, new JsonSerializerOptions
         {
@@ -28,7 +28,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         });
     }
 
-    public async Task MoveBoardColumnsAsync(Guid projectId, string projectTeamId, Guid templateProjectId, string templateTeamId, Boards projectBoards)
+    public async Task MoveBoardColumnsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards)
     {
         Boards templateBoards = await GetBoardsAsync(templateProjectId, templateTeamId) ?? new();
         foreach (Board templateBoard in templateBoards.Value)

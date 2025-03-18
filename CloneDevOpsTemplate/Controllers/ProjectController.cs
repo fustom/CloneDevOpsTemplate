@@ -68,7 +68,7 @@ public class ProjectController(IProjectService projectService, IIterationService
 
         // Query our new team and boards for later use
         Teams projectTeams = await _teamsService.GetTeamsAsync(project.Id) ?? new();
-        string projectTeamId = projectTeams.Value.First().Id;
+        Guid projectTeamId = projectTeams.Value.First().Id;
         Boards projectBoards = await _boardService.GetBoardsAsync(project.Id, projectTeamId) ?? new();
 
         Teams templateTeams = await _teamsService.GetTeamsAsync(templateProjectId) ?? new();
@@ -89,5 +89,5 @@ public class ProjectController(IProjectService projectService, IIterationService
         }
 
         return RedirectToAction("Project", new { projectId = project.Id });
->   }
+    }
 }
