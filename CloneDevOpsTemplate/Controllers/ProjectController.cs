@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using CloneDevOpsTemplate.Models;
 using CloneDevOpsTemplate.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -66,11 +65,6 @@ public class ProjectController(IProjectService projectService, IIterationService
         await _iterationService.MoveIteration(project.Id, iterations.Children);
         // TODO: Areas
 
-        // Query our new team and boards for later use
-        Teams projectTeams = await _teamsService.GetTeamsAsync(project.Id) ?? new();
-        Guid projectTeamId = projectTeams.Value.First().Id;
-        Boards projectBoards = await _boardService.GetBoardsAsync(project.Id, projectTeamId) ?? new();
-
         Teams templateTeams = await _teamsService.GetTeamsAsync(templateProjectId) ?? new();
         // TODO: TeamIterationMap
         Dictionary<Guid, Guid> mapTeams = await _teamsService.CreateTeamFromTemplateAsync(project.Id, templateTeams.Value, templateProject.DefaultTeam.Id, project.DefaultTeam.Id);
@@ -79,9 +73,11 @@ public class ProjectController(IProjectService projectService, IIterationService
         // Loop through the teams in the template project
         foreach (Team templateTeam in templateTeams.Value)
         {
+            var projectTeamId = mapTeams.GetValueOrDefault(templateTeam.Id);
             var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProjectId, templateTeam.Id) ?? new();
-            await _teamSettingsService.UpdateTeamSettings(project.Id, mapTeams.GetValueOrDefault(templateTeam.Id), templateTeamSettings);
+            await _teamSettingsService.UpdateTeamSettings(project.Id, projectTeamId, templateTeamSettings);
 
+            Boards projectBoards = await _boardService.GetBoardsAsync(project.Id, projectTeamId) ?? new();
             // Clone the board columns from the template project
             await _boardService.MoveBoardColumnsAsync(project.Id, projectTeamId, templateProjectId, templateTeam.Id, projectBoards);
 

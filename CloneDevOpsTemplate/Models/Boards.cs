@@ -1,12 +1,12 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace CloneDevOpsTemplate.Models;
 
-public enum BoardColumnType
+public static class BoardColumnType
 {
-    inProgress,
-    incoming,
-    outgoing
+    public const string InProgress = "inProgress";
+    public const string Incoming = "incoming";
+    public const string Outgoing = "outgoing";
 }
 
 public class Board
@@ -60,14 +60,14 @@ public class BoardRows
 
 public class StateMappings
 {
-    [JsonProperty(PropertyName = "Product Backlog Item")]
+    [JsonPropertyName("Product Backlog Item")]
     public string PBI { get; set; } = string.Empty;
-    [JsonProperty(PropertyName = "Bug")]
-    public string bug { get; set; } = string.Empty;
-    [JsonProperty(PropertyName = "Epic")]
-    public string epic { get; set; } = string.Empty;
-    [JsonProperty(PropertyName = "Feature")]
-    public string feature { get; set; } = string.Empty;
-    [JsonProperty(PropertyName = "User Story")]
+    [JsonPropertyName("Bug")]
+    public string Bug { get; set; } = string.Empty;
+    [JsonPropertyName("Epic")]
+    public string Epic { get; set; } = string.Empty;
+    [JsonPropertyName("Feature")]
+    public string Feature { get; set; } = string.Empty;
+    [JsonPropertyName("User Story")]
     public string UserStory { get; set; } = string.Empty;
 }
