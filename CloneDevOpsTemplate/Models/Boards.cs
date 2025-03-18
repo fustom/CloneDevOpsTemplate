@@ -45,6 +45,19 @@ public class BoardColumns
     public BoardColumn[] Value { get; set; } = [];
 }
 
+public class BoardRow
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty;
+}
+
+public class BoardRows
+{
+    public int Count { get; set; }
+    public BoardRow[] Value { get; set; } = [];
+}
+
 public class StateMappings
 {
     [JsonProperty(PropertyName = "Product Backlog Item")]

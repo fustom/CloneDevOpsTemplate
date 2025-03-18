@@ -82,10 +82,11 @@ public class ProjectController(IProjectService projectService, IIterationService
             var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProjectId, templateTeam.Id) ?? new();
             await _teamSettingsService.UpdateTeamSettings(project.Id, mapTeams.GetValueOrDefault(templateTeam.Id), templateTeamSettings);
 
-            // Clone the boards from the template project
+            // Clone the board columns from the template project
             await _boardService.MoveBoardColumnsAsync(project.Id, projectTeamId, templateProjectId, templateTeam.Id, projectBoards);
 
-            //TODO: Clone cards from the template project
+            // Clone the board rows from the template project
+            await _boardService.MoveBoardRowsAsync(project.Id, projectTeamId, templateProjectId, templateTeam.Id, projectBoards);
         }
 
         return RedirectToAction("Project", new { projectId = project.Id });

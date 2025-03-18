@@ -34,7 +34,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         foreach (Board templateBoard in templateBoards.Value)
         {
             BoardColumns templateBoardColumns = await GetBoardColumnsAsync(templateProjectId, templateTeamId, templateBoard.Id) ?? new();
-            var matchingProjectBoard = projectBoards.Value.SingleOrDefault(b => b.Name == templateBoard.Name);
+            var matchingProjectBoard = projectBoards.Value.SingleOrDefault(b => string.Compare(b.Name, templateBoard.Name, StringComparison.InvariantCultureIgnoreCase) == 0);
             if (matchingProjectBoard != null)
             {
                 BoardColumns currentBoardColumns = await GetBoardColumnsAsync(projectId, projectTeamId, matchingProjectBoard.Id) ?? new();
@@ -57,6 +57,34 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
                 }
 
                 await UpdateBoardColumnsAsync(projectId, projectTeamId, matchingProjectBoard.Id, templateBoardColumns);
+            }
+        }
+    }
+
+    public async Task<BoardRows> GetBoardRowsAsync(Guid projectId, Guid teamId, string boardId)
+    {
+        return await _client.GetFromJsonAsync<BoardRows>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/rows?api-version=7.1") ?? new();
+    }
+
+    public async Task UpdateBoardRowsAsync(Guid projectId, Guid teamId, string boardId, BoardRows boardRows)
+    {
+        await _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/rows?api-version=7.1", boardRows.Value, new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        });
+    }
+
+    public async Task MoveBoardRowsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards)
+    {
+        Boards templateBoards = await GetBoardsAsync(templateProjectId, templateTeamId) ?? new();
+        foreach (Board templateBoard in templateBoards.Value)
+        {
+            BoardRows templateBoardRows = await GetBoardRowsAsync(templateProjectId, templateTeamId, templateBoard.Id) ?? new();
+            var matchingProjectBoard = projectBoards.Value.SingleOrDefault(b => string.Compare(b.Name, templateBoard.Name, StringComparison.InvariantCultureIgnoreCase) == 0);
+            if (matchingProjectBoard != null)
+            {
+                await UpdateBoardRowsAsync(projectId, projectTeamId, matchingProjectBoard.Id, templateBoardRows);
             }
         }
     }
