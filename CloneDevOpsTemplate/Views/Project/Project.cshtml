@@ -3,16 +3,53 @@
     ViewData["Title"] = "Project";
 }
 
-<h1>@Model.Name</h1>
-
-<p>@Model.Description</p>
-<p>@Model.Url</p>
-<p>@Model.State</p>
-<p>@Model.Revision</p>
-<p>@Model.Visibility</p>
-<p>@Model.LastUpdateTime</p>
-<p>@Model.DefaultTeam.Name</p>
-<p>@Model.Capabilities.ProcessTemplate.TemplateName</p>
-<p>@Model.Capabilities.Versioncontrol.SourceControlType</p>
-<p>@Html.ActionLink("ProjectProperties", "ProjectProperties", new { projectId = Model.Id })</p>
-<p>@Html.ActionLink("Iterations", "Iterations", "Iteration", new { projectId = Model.Id })</p>
+<table class="table table-striped">
+    <tr class="table-primary">
+        <td colspan="2"><h1>@Model.Name</h1></td>
+    </tr>
+    <tr>
+        <td>Description</td>
+        <td>@Model.Description</td>
+    </tr>
+    <tr>
+        <td>Url</td>
+        <td>@Model.Url</td>
+    </tr>
+    <tr>
+        <td>State</td>
+        <td>@Model.State</td>
+    </tr>
+    <tr>
+        <td>Revision</td>
+        <td>@Model.Revision</td>
+    </tr>
+    <tr>
+        <td>Visibility</td>
+        <td>@Model.Visibility</td>
+    </tr>
+    <tr>
+        <td>LastUpdateTime</td>
+        <td>@Model.LastUpdateTime</td>
+    </tr>
+    <tr>
+        <td>DefaultTeam.Name</td>
+        <td>@Model.DefaultTeam.Name</td>
+    </tr>
+    <tr>
+        <td>Capabilities.ProcessTemplate.TemplateName</td>
+        <td>@Model.Capabilities.ProcessTemplate.TemplateName</td>
+    </tr>
+    <tr>
+        <td>Capabilities.Versioncontrol.SourceControlType</td>
+        <td>@Model.Capabilities.Versioncontrol.SourceControlType</td>
+    </tr>
+    <tr>
+        <td colspan="2">@Html.ActionLink("ProjectProperties", "ProjectProperties", new { projectId = Model.Id })</td>
+    </tr>
+    <tr>
+        <td colspan="2">@Html.ActionLink("Iterations", "Iterations", "Iteration", new { projectId = Model.Id })</td>
+    </tr>
+    <tr>
+        <td colspan="2">@Html.ActionLink("Teams", "ProjectTeams", "Team", new { projectId = Model.Id })</td>
+    </tr>
+</table>

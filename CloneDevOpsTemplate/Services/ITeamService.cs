@@ -4,7 +4,8 @@ namespace CloneDevOpsTemplate.Services;
 
 public interface ITeamsService
 {
-    Task<HttpResponseMessage> CreateTeamAsync(Guid projectId, string name = "New Team", string description = "New Team Description");
+    Task<Team> CreateTeamAsync(Guid projectId, string name = "New Team", string description = "New Team Description");
+    Task<Dictionary<Guid, Guid>> CreateTeamFromTemplateAsync(Guid projectId, Team[] templateTeams, Guid defaultTeamId, Guid newDefaultTeamId);
     Task<HttpResponseMessage> DeleteTeamAsync(Guid projectId, string teamId);
     Task<Teams?> GetAllTeamsAsync();
     Task<Team?> GetTeamAsync(Guid projectId, string teamId);
