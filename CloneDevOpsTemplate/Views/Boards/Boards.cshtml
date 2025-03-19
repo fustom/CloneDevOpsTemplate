@@ -1,0 +1,36 @@
+﻿@model Board[]
+@{
+    ViewData["Title"] = "Boards";
+}
+
+<h1>Boards</h1>
+
+@foreach (var board in Model)
+{
+    <h2>@board.Name</h2>
+
+    <table class="table">
+        <thead>
+            <tr>
+                @foreach (var column in board.Columns)
+                {
+                    <th style='min-width:80px'>@column.Name</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in board.Rows)
+            {
+                <tr style='background:@row.Color' height="20px">
+                    <td colspan="@board.Columns.Length">@row.Name</td>
+                </tr>
+                <tr height="80px">
+                    @foreach (var column in board.Columns)
+                    {
+                        <td style='background:rgb(230,230,230);padding:10px'></td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}

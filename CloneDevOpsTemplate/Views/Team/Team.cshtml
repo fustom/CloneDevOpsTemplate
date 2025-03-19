@@ -17,4 +17,7 @@
     <tr>
         <td colspan="2">@Html.ActionLink("Team settings", "TeamSettings", "TeamSettings", new { projectId = Model.ProjectId, teamId = Model.Id })</td>
     </tr>
+    <tr>
+        <td colspan="2">@Html.ActionLink("Boards", "Boards", "Boards", new { projectId = Model.ProjectId, teamId = Model.Id })</td>
+    </tr>
 </table>
