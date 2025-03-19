@@ -13,6 +13,11 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         return _client.GetFromJsonAsync<Boards>($"{projectId}/{teamId}/_apis/work/boards?api-version=7.1");
     }
 
+    public Task<Board?> GetBoardAsync(Guid projectId, Guid teamId, string boardId)
+    {
+        return _client.GetFromJsonAsync<Board>($"{projectId}/{teamId}/_apis/work/boards/{boardId}?api-version=7.1");
+    }
+
     public Task<BoardColumns?> GetBoardColumnsAsync(Guid projectId, Guid teamId, string boardId)
     {
         return _client.GetFromJsonAsync<BoardColumns>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/columns?api-version=7.1");
@@ -30,7 +35,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
     public async Task MoveBoardColumnsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards)
     {
         Boards templateBoards = await GetBoardsAsync(templateProjectId, templateTeamId) ?? new();
-        foreach (Board templateBoard in templateBoards.Value)
+        foreach (BoardValue templateBoard in templateBoards.Value)
         {
             BoardColumns templateBoardColumns = await GetBoardColumnsAsync(templateProjectId, templateTeamId, templateBoard.Id) ?? new();
             var matchingProjectBoard = projectBoards.Value.SingleOrDefault(b => string.Compare(b.Name, templateBoard.Name, StringComparison.InvariantCultureIgnoreCase) == 0);
@@ -77,7 +82,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
     public async Task MoveBoardRowsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards)
     {
         Boards templateBoards = await GetBoardsAsync(templateProjectId, templateTeamId) ?? new();
-        foreach (Board templateBoard in templateBoards.Value)
+        foreach (BoardValue templateBoard in templateBoards.Value)
         {
             BoardRows templateBoardRows = await GetBoardRowsAsync(templateProjectId, templateTeamId, templateBoard.Id) ?? new();
             var matchingProjectBoard = projectBoards.Value.SingleOrDefault(b => string.Compare(b.Name, templateBoard.Name, StringComparison.InvariantCultureIgnoreCase) == 0);

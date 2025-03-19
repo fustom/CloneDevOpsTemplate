@@ -9,7 +9,7 @@ public static class BoardColumnType
     public const string Outgoing = "outgoing";
 }
 
-public class Board
+public class BoardValue
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
@@ -19,7 +19,19 @@ public class Board
 public class Boards
 {
     public int Count { get; set; }
-    public Board[] Value { get; set; } = [];
+    public BoardValue[] Value { get; set; } = [];
+}
+
+public class Board
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
+    public bool IsValid { get; set; }
+    public bool CanEdit { get; set; }
+    public BoardColumn[] Columns { get; set; } = new BoardColumn[0];
+    public BoardRow[] Rows { get; set; } = new BoardRow[0];
+    public int Revision { get; set; }
 }
 
 public class BoardStateMapping

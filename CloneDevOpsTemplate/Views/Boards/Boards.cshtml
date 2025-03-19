@@ -1,0 +1,30 @@
+﻿@model Board[]
+@{
+    ViewData["Title"] = "Boards";
+}
+
+<h1>Boards</h1>
+
+@foreach (var board in Model)
+{
+    <h2>@board.Name</h2>
+
+    <table class="table">
+        <thead>
+            <tr>
+                @foreach (var column in board.Columns)
+                {
+                    <th>@column.Name</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in board.Rows)
+            {
+                <tr>
+                    <td>@row.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
