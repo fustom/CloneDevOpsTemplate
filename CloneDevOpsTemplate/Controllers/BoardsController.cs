@@ -17,6 +17,9 @@ namespace CloneDevOpsTemplate.Controllers
                 var currentBoard = await _boardService.GetBoardAsync(projectId, teamId, board.Id);
                 if (currentBoard != null)
                 {
+                    // Query rows separately, since row colors are ALWAYS null from the GetBoard call
+                    var rows = await _boardService.GetBoardRowsAsync(projectId, teamId, currentBoard.Id);
+                    currentBoard.Rows = rows.Value;
                     boards.Add(currentBoard);
                 }
             }
