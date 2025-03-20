@@ -2,11 +2,12 @@ using System.Text.Json.Serialization;
 
 namespace CloneDevOpsTemplate.Models;
 
-public static class BoardColumnType
+[JsonConverter(typeof(JsonStringEnumConverter<BoardColumnType>))]
+public enum BoardColumnType
 {
-    public const string InProgress = "inProgress";
-    public const string Incoming = "incoming";
-    public const string Outgoing = "outgoing";
+    InProgress,
+    Incoming,
+    Outgoing
 }
 
 public class BoardValue
@@ -34,9 +35,20 @@ public class Board
     public int Revision { get; set; }
 }
 
-public class BoardStateMapping
+public class StateMappings
 {
-    public string Issue { get; set; } = string.Empty;
+    [JsonPropertyName("Product Backlog Item")]
+    public string? PBI { get; set; }
+    [JsonPropertyName("Bug")]
+    public string? Bug { get; set; }
+    [JsonPropertyName("Epic")]
+    public string? Epic { get; set; }
+    [JsonPropertyName("Feature")]
+    public string? Feature { get; set; }
+    [JsonPropertyName("User Story")]
+    public string? UserStory { get; set; }
+    [JsonPropertyName("Issue")]
+    public string? Issue { get; set; }
 }
 
 public class BoardColumn
@@ -44,9 +56,8 @@ public class BoardColumn
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public int ItemLimit { get; set; }
-    public BoardStateMapping StateMappings { get; set; } = new();
-    //public BoardColumnType ColumnType { get; set; } = BoardColumnType.InProgress;
-    public string ColumnType { get; set; } = string.Empty;
+    public StateMappings StateMappings { get; set; } = new();
+    public BoardColumnType ColumnType { get; set; } = BoardColumnType.InProgress;
     public bool IsSplit { get; set; }
     public string Description { get; set; } = string.Empty;
 }
@@ -68,18 +79,4 @@ public class BoardRows
 {
     public int Count { get; set; }
     public BoardRow[] Value { get; set; } = [];
-}
-
-public class StateMappings
-{
-    [JsonPropertyName("Product Backlog Item")]
-    public string PBI { get; set; } = string.Empty;
-    [JsonPropertyName("Bug")]
-    public string Bug { get; set; } = string.Empty;
-    [JsonPropertyName("Epic")]
-    public string Epic { get; set; } = string.Empty;
-    [JsonPropertyName("Feature")]
-    public string Feature { get; set; } = string.Empty;
-    [JsonPropertyName("User Story")]
-    public string UserStory { get; set; } = string.Empty;
 }
