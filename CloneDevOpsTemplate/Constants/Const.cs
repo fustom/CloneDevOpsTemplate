@@ -1,4 +1,4 @@
-namespace CloneDevOpsTemplate.Services;
+namespace CloneDevOpsTemplate.Constants;
 
 public static class Const
 {
