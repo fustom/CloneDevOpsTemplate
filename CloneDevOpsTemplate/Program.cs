@@ -16,6 +16,7 @@ builder.Services.AddScoped<IIterationService, IterationService>();
 builder.Services.AddScoped<ITeamsService, TeamsService>();
 builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ITeamSettingsService, TeamSettingsService>();
+builder.Services.AddScoped<IRepositoryService, RepositoryService>();
 
 builder.Services.AddSession(options =>
 {

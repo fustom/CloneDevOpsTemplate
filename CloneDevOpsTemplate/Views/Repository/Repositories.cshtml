@@ -1,0 +1,30 @@
+@model Repository[]
+@{
+    ViewData["Title"] = "Repositories";
+}
+
+<h1>Repositories</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>DefaultBranch</th>
+            <th>ProjectName</th>
+            <th>Size</th>
+            <th>Url</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var repository in Model)
+        {
+            <tr>
+                <td>@repository.Name</td>
+                <td>@repository.DefaultBranch</td>
+                <td>@repository.Project.Name</td>
+                <td>@repository.Size</td>
+                <td>@repository.Url</td>
+            </tr>
+        }
+    </tbody>
+</table>
