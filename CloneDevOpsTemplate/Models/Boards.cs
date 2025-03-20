@@ -30,8 +30,8 @@ public class Board
     public string Url { get; set; } = string.Empty;
     public bool IsValid { get; set; }
     public bool CanEdit { get; set; }
-    public BoardColumn[] Columns { get; set; } = new BoardColumn[0];
-    public BoardRow[] Rows { get; set; } = new BoardRow[0];
+    public BoardColumn[] Columns { get; set; } = [];
+    public BoardRow[] Rows { get; set; } = [];
     public int Revision { get; set; }
 }
 
