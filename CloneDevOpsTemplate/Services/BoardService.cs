@@ -27,7 +27,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
     {
         return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/columns?api-version=7.1", boardColumns.Value, new JsonSerializerOptions
         {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         });
     }
@@ -65,14 +65,14 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         }
     }
 
-    public async Task<BoardRows> GetBoardRowsAsync(Guid projectId, Guid teamId, string boardId)
+    public Task<BoardRows?> GetBoardRowsAsync(Guid projectId, Guid teamId, string boardId)
     {
-        return await _client.GetFromJsonAsync<BoardRows>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/rows?api-version=7.1") ?? new();
+        return _client.GetFromJsonAsync<BoardRows>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/rows?api-version=7.1");
     }
 
-    public async Task UpdateBoardRowsAsync(Guid projectId, Guid teamId, string boardId, BoardRows boardRows)
+    public Task UpdateBoardRowsAsync(Guid projectId, Guid teamId, string boardId, BoardRows boardRows)
     {
-        await _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/rows?api-version=7.1", boardRows.Value, new JsonSerializerOptions
+        return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/rows?api-version=7.1", boardRows.Value, new JsonSerializerOptions
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

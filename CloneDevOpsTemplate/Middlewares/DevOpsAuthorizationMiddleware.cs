@@ -1,4 +1,4 @@
-using CloneDevOpsTemplate.Services;
+using CloneDevOpsTemplate.Constants;
 
 namespace CloneDevOpsTemplate.Middlewares
 {
