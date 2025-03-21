@@ -62,7 +62,7 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         return _client.PostAsJsonAsync($"{projectId}/_apis/wit/classificationNodes/iterations/{path}?api-version=7.1", new { id = Id });
     }
 
-    public async Task MoveIteration(Guid projectId, List<Iteration> iterations, string name)
+    public async Task MoveIteration(Guid projectId, List<Iteration> iterations, string name = "")
     {
         foreach (Iteration iteration in iterations)
         {
