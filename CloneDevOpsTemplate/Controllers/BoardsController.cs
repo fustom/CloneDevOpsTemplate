@@ -1,5 +1,5 @@
-﻿using CloneDevOpsTemplate.Models;
-using CloneDevOpsTemplate.Services;
+﻿using CloneDevOpsTemplate.IServices;
+using CloneDevOpsTemplate.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloneDevOpsTemplate.Controllers

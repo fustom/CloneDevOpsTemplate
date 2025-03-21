@@ -1,6 +1,6 @@
 using CloneDevOpsTemplate.Models;
 
-namespace CloneDevOpsTemplate.Services;
+namespace CloneDevOpsTemplate.IServices;
 
 public interface ITeamSettingsService
 {
