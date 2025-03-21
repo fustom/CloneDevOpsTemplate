@@ -37,13 +37,14 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         Boards templateBoards = await GetBoardsAsync(templateProjectId, templateTeamId) ?? new();
         foreach (BoardValue templateBoard in templateBoards.Value)
         {
-            BoardColumns templateBoardColumns = await GetBoardColumnsAsync(templateProjectId, templateTeamId, templateBoard.Id) ?? new();
             var matchingProjectBoard = projectBoards.Value.SingleOrDefault(b => string.Compare(b.Name, templateBoard.Name, StringComparison.InvariantCultureIgnoreCase) == 0);
             if (matchingProjectBoard != null)
             {
                 BoardColumns currentBoardColumns = await GetBoardColumnsAsync(projectId, projectTeamId, matchingProjectBoard.Id) ?? new();
                 var incomingColumnId = currentBoardColumns.Value.FirstOrDefault(c => c.ColumnType == BoardColumnType.Incoming)?.Id;
                 var outgoingColumnId = currentBoardColumns.Value.FirstOrDefault(c => c.ColumnType == BoardColumnType.Outgoing)?.Id;
+
+                BoardColumns templateBoardColumns = await GetBoardColumnsAsync(templateProjectId, templateTeamId, templateBoard.Id) ?? new();
                 foreach (var templateBoardColumn in templateBoardColumns.Value)
                 {
                     if (templateBoardColumn.ColumnType == BoardColumnType.Incoming && incomingColumnId is not null)
@@ -84,11 +85,39 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         Boards templateBoards = await GetBoardsAsync(templateProjectId, templateTeamId) ?? new();
         foreach (BoardValue templateBoard in templateBoards.Value)
         {
-            BoardRows templateBoardRows = await GetBoardRowsAsync(templateProjectId, templateTeamId, templateBoard.Id) ?? new();
             var matchingProjectBoard = projectBoards.Value.SingleOrDefault(b => string.Compare(b.Name, templateBoard.Name, StringComparison.InvariantCultureIgnoreCase) == 0);
             if (matchingProjectBoard != null)
             {
+                BoardRows templateBoardRows = await GetBoardRowsAsync(templateProjectId, templateTeamId, templateBoard.Id) ?? new();
                 await UpdateBoardRowsAsync(projectId, projectTeamId, matchingProjectBoard.Id, templateBoardRows);
+            }
+        }
+    }
+
+    public Task<BoardCards?> GetCardSettingsAsync(Guid projectId, Guid teamId, string boardId)
+    { 
+        return _client.GetFromJsonAsync<BoardCards>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardsettings?api-version=7.1");
+    }
+
+    public Task UpdateCardSettingsAsync(Guid projectId, Guid teamId, string boardId, BoardCards boardCards)
+    {
+        return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardsettings?api-version=7.1", boardCards, new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        });
+    }
+
+    public async Task MoveCardSettingsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards)
+    {
+        Boards templateBoards = await GetBoardsAsync(templateProjectId, templateTeamId) ?? new();
+        foreach (BoardValue templateBoard in templateBoards.Value)
+        {
+            var matchingProjectBoard = projectBoards.Value.SingleOrDefault(b => string.Compare(b.Name, templateBoard.Name, StringComparison.InvariantCultureIgnoreCase) == 0);
+            if (matchingProjectBoard != null)
+            {
+                BoardCards templateBoardCards = await GetCardSettingsAsync(templateProjectId, templateTeamId, templateBoard.Id) ?? new();
+                await UpdateCardSettingsAsync(projectId, projectTeamId, matchingProjectBoard.Id, templateBoardCards);
             }
         }
     }
