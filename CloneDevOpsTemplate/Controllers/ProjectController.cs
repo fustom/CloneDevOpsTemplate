@@ -86,7 +86,8 @@ public class ProjectController(IProjectService projectService, IIterationService
             // Clone the card settings from the template project
             await _boardService.MoveCardSettingsAsync(project.Id, projectTeamId, templateProjectId, templateTeam.Id, projectBoards);
 
-            //TODO: Clone the card styles from the template project
+            // Clone the card styles from the template project
+            await _boardService.MoveCardStylesAsync(project.Id, projectTeamId, templateProjectId, templateTeam.Id, projectBoards);
         }
 
         return RedirectToAction("Project", new { projectId = project.Id });

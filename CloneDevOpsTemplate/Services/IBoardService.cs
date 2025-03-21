@@ -18,4 +18,8 @@ public interface IBoardService
     Task<BoardCards?> GetCardSettingsAsync(Guid projectId, Guid teamId, string boardId);
     Task UpdateCardSettingsAsync(Guid projectId, Guid teamId, string boardId, BoardCards cards);
     Task MoveCardSettingsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards);
+
+    Task<CardStyle?> GetCardStylesAsync(Guid projectId, Guid teamId, string boardId);
+    Task UpdateCardStylesAsync(Guid projectId, Guid teamId, string boardId, CardStyle cardStyle);
+    Task MoveCardStylesAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards);
 }
