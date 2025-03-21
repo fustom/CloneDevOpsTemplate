@@ -1,0 +1,32 @@
+@model ServiceModel[]
+@{
+    ViewData["Title"] = "Sevices";
+}
+
+<h1>Sevices</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Id</th>
+            <th>Description</th>
+            <th>IsReady</th>
+            <th>CreationDate</th>
+            <th>CreatedByName</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var service in Model)
+        {
+            <tr>
+                <td>@service.Name</td>
+                <td>@service.Id</td>
+                <td>@service.Description</td>
+                <td>@service.IsReady</td>
+                <td>@service.CreationDate</td>
+                <td>@service.CreatedBy.DisplayName</td>
+            </tr>
+        }
+    </tbody>
+</table>
