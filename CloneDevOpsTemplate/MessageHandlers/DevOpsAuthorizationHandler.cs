@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using CloneDevOpsTemplate.Constants;
 
-namespace CloneDevOpsTemplate.Services;
+namespace CloneDevOpsTemplate.MessageHandlers;
 
 public class DevOpsAuthorizationHandler(IHttpContextAccessor httpContextAccessor) : DelegatingHandler
 {
