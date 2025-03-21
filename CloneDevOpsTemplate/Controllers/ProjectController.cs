@@ -4,13 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CloneDevOpsTemplate.Controllers;
 
-public class ProjectController(IProjectService projectService, IIterationService iterationService, ITeamsService teamsService, ITeamSettingsService teamSettingsService, IBoardService boardService) : Controller
+public class ProjectController(IProjectService projectService, IIterationService iterationService, ITeamsService teamsService, ITeamSettingsService teamSettingsService, IBoardService boardService, IRepositoryService repositoryService, IServiceService serviceService) : Controller
 {
     private readonly IProjectService _projectService = projectService;
     private readonly IIterationService _iterationService = iterationService;
     private readonly ITeamsService _teamsService = teamsService;
     private readonly IBoardService _boardService = boardService;
     private readonly ITeamSettingsService _teamSettingsService = teamSettingsService;
+    private readonly IRepositoryService _repositoryService = repositoryService;
+    private readonly IServiceService _serviceService = serviceService;
 
     async public Task<IActionResult> Projects()
     {
@@ -83,6 +85,25 @@ public class ProjectController(IProjectService projectService, IIterationService
 
             // Clone the board rows from the template project
             await _boardService.MoveBoardRowsAsync(project.Id, projectTeamId, templateProjectId, templateTeam.Id, projectBoards);
+        }
+
+        // Get default repositories
+        Repositories repositories = await _repositoryService.GetRepositoriesAsync(project.Id) ?? new();
+        // Get template repositories
+        Repositories templateRepositories = await _repositoryService.GetRepositoriesAsync(templateProjectId) ?? new();
+        // Loop through the repositories in the template project
+        foreach (Repository templateRepository in templateRepositories.Value)
+        {
+            // Clone repository from the template project
+            Repository repository = await _repositoryService.CreateRepositoryAsync(project.Id, templateRepository.Name) ?? new();
+            ServiceModel serviceModel = await _serviceService.CreateServiceAsync(templateRepository.Name, templateRepository.RemoteUrl, templateRepository.Name, project.Id) ?? new();
+            await _repositoryService.CreateImportRequest(project.Id, repository.Id, templateRepository.RemoteUrl, serviceModel.Id);
+        }
+        // Loop through the default repositories
+        foreach (Repository repository in repositories.Value)
+        {
+            // Delete default repositories
+            await _repositoryService.DeleteRepositoryAsync(project.Id, repository.Id);
         }
 
         return RedirectToAction("Project", new { projectId = project.Id });
