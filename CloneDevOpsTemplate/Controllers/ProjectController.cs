@@ -14,18 +14,21 @@ public class ProjectController(IProjectService projectService, IIterationService
     private readonly IRepositoryService _repositoryService = repositoryService;
     private readonly IServiceService _serviceService = serviceService;
 
+    [HttpGet]
     async public Task<IActionResult> Projects()
     {
         Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
         return View(projects.Value);
     }
 
+    [HttpGet]
     async public Task<IActionResult> Project(Guid projectId)
     {
         Project project = await _projectService.GetProjectAsync(projectId) ?? new Project();
         return View(project);
     }
 
+    [HttpGet]
     async public Task<IActionResult> ProjectProperties(Guid projectId)
     {
         ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(projectId) ?? new ProjectProperties();
@@ -35,8 +38,7 @@ public class ProjectController(IProjectService projectService, IIterationService
     [HttpGet]
     async public Task<IActionResult> CreateProject()
     {
-        Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
-        return View(projects.Value);
+        return await Projects();
     }
 
     [HttpPost]
@@ -73,18 +75,18 @@ public class ProjectController(IProjectService projectService, IIterationService
         // TODO: UpdateBoardRows
 
         // Loop through the teams in the template project
-        foreach (Team templateTeam in templateTeams.Value)
+        foreach (Guid templateTeamId in templateTeams.Value.Select(templateTeam => templateTeam.Id))
         {
-            var projectTeamId = mapTeams.GetValueOrDefault(templateTeam.Id);
-            var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProjectId, templateTeam.Id) ?? new();
+            var projectTeamId = mapTeams.GetValueOrDefault(templateTeamId);
+            var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProjectId, templateTeamId) ?? new();
             await _teamSettingsService.UpdateTeamSettings(project.Id, projectTeamId, templateTeamSettings);
 
             Boards projectBoards = await _boardService.GetBoardsAsync(project.Id, projectTeamId) ?? new();
             // Clone the board columns from the template project
-            await _boardService.MoveBoardColumnsAsync(project.Id, projectTeamId, templateProjectId, templateTeam.Id, projectBoards);
+            await _boardService.MoveBoardColumnsAsync(project.Id, projectTeamId, templateProjectId, templateTeamId, projectBoards);
 
             // Clone the board rows from the template project
-            await _boardService.MoveBoardRowsAsync(project.Id, projectTeamId, templateProjectId, templateTeam.Id, projectBoards);
+            await _boardService.MoveBoardRowsAsync(project.Id, projectTeamId, templateProjectId, templateTeamId, projectBoards);
         }
 
         // Get default repositories
