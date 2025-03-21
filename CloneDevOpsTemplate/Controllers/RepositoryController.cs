@@ -13,4 +13,10 @@ public class RepositoryController(IRepositoryService repositoryService) : Contro
         Repositories repositories = await _repositoryService.GetAllRepositoriesAsync() ?? new();
         return View(repositories.Value);
     }
+
+    async public Task<IActionResult> ProjectRepositories(Guid projectId)
+    {
+        Repositories repositories = await _repositoryService.GetRepositoriesAsync(projectId) ?? new();
+        return View("Repositories", repositories.Value);
+    }
 }
