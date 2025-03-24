@@ -73,5 +73,4 @@ public class CardStyles
 {
     public string Url { get; set; } = string.Empty;
     public Rules Rules { get; set; } = new Rules();
-    public string _links { get; set; } = string.Empty;
 }
