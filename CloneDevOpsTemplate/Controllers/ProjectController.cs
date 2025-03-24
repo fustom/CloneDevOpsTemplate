@@ -24,6 +24,11 @@ public class ProjectController(IProjectService projectService, IIterationService
     [HttpGet]
     async public Task<IActionResult> Project(Guid projectId)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         Project project = await _projectService.GetProjectAsync(projectId) ?? new Project();
         return View(project);
     }
@@ -31,6 +36,11 @@ public class ProjectController(IProjectService projectService, IIterationService
     [HttpGet]
     async public Task<IActionResult> ProjectProperties(Guid projectId)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(projectId) ?? new ProjectProperties();
         return View(projectProperties.Value);
     }
@@ -44,6 +54,11 @@ public class ProjectController(IProjectService projectService, IIterationService
     [HttpPost]
     async public Task<IActionResult> CreateProject(Guid templateProjectId, string newProjectName, string description, string visibility)
     {
+        if (!ModelState.IsValid)
+        {
+            return await CreateProject();
+        }
+
         // Query all the projects to fill out the combobox for the 'Create project' form
         Project templateProject = await _projectService.GetProjectAsync(templateProjectId) ?? new();
         CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(newProjectName, description, templateProject.Capabilities.ProcessTemplate.TemplateTypeId, templateProject.Capabilities.Versioncontrol.SourceControlType, visibility) ?? new();
@@ -51,8 +66,7 @@ public class ProjectController(IProjectService projectService, IIterationService
         if (createProjectResponse.Message is not null)
         {
             ModelState.AddModelError("ErrorMessage", createProjectResponse.Message);
-            Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
-            return View(projects.Value);
+            return await CreateProject();
         }
 
         // Ping every 1 sec until the new project creation is 'done' (its sate is 'wellFormed')
