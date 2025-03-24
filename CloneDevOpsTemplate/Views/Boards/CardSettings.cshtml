@@ -1,0 +1,24 @@
+﻿@model Cards
+@{
+    ViewData["Title"] = "Boards";
+}
+
+<h1>Card settings</h1>
+
+<h2>@nameof(Model.Epic)</h2>
+@await Html.PartialAsync("CardSettingItem", Model.Epic)
+
+<h2>@nameof(Model.Feature)</h2>
+@await Html.PartialAsync("CardSettingItem", Model.Feature)
+
+<h2>@nameof(Model.ProductBacklogItem)</h2>
+@await Html.PartialAsync("CardSettingItem", Model.ProductBacklogItem)
+
+<h2>@nameof(Model.UserStory)</h2>
+@await Html.PartialAsync("CardSettingItem", Model.UserStory)
+
+<h2>@nameof(Model.Bug)</h2>
+@await Html.PartialAsync("CardSettingItem", Model.Bug)
+
+<h2>@nameof(Model.Issue)</h2>
+@await Html.PartialAsync("CardSettingItem", Model.Issue)

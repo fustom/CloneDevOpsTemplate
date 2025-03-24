@@ -15,11 +15,11 @@ public interface IBoardService
     Task UpdateBoardRowsAsync(Guid projectId, Guid teamId, string boardId, BoardRows boardRows);
     Task MoveBoardRowsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards);
 
-    Task<BoardCards?> GetCardSettingsAsync(Guid projectId, Guid teamId, string boardId);
-    Task UpdateCardSettingsAsync(Guid projectId, Guid teamId, string boardId, BoardCards cards);
+    Task<CardSettings?> GetCardSettingsAsync(Guid projectId, Guid teamId, string boardId);
+    Task UpdateCardSettingsAsync(Guid projectId, Guid teamId, string boardId, CardSettings cards);
     Task MoveCardSettingsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards);
 
-    Task<CardStyle?> GetCardStylesAsync(Guid projectId, Guid teamId, string boardId);
-    Task UpdateCardStylesAsync(Guid projectId, Guid teamId, string boardId, CardStyle cardStyle);
+    Task<CardStyles?> GetCardStylesAsync(Guid projectId, Guid teamId, string boardId);
+    Task UpdateCardStylesAsync(Guid projectId, Guid teamId, string boardId, CardStyles cardStyle);
     Task MoveCardStylesAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards);
 }

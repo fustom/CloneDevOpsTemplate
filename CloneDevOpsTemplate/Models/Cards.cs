@@ -24,7 +24,7 @@ public class Cards
     public IList<CardItem> Issue { get; set; } = [];
 }
 
-public class BoardCards
+public class CardSettings
 {
     public Cards Cards { get; set; } = new Cards();
 }
@@ -69,7 +69,7 @@ public class Rules
     public IList<TagStyle> TagStyle { get; set; } = [];
 }
 
-public class CardStyle
+public class CardStyles
 {
     public string Url { get; set; } = string.Empty;
     public Rules Rules { get; set; } = new Rules();

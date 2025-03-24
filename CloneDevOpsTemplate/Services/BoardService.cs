@@ -34,7 +34,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
 
     public Task MoveBoardColumnsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards)
     {
-        return ForAllMatchingBoards(projectId, projectTeamId, templateProjectId, templateTeamId, projectBoards,
+        return ForAllMatchingBoards(templateProjectId, templateTeamId, projectBoards,
             async (templateBoardId, matchingProjectBoardId) =>
             {
                 BoardColumns currentBoardColumns = await GetBoardColumnsAsync(projectId, projectTeamId, matchingProjectBoardId) ?? new();
@@ -78,7 +78,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
 
     public Task MoveBoardRowsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards)
     {
-        return ForAllMatchingBoards(projectId, projectTeamId, templateProjectId, templateTeamId, projectBoards,
+        return ForAllMatchingBoards(templateProjectId, templateTeamId, projectBoards,
             async (templateBoardId, matchingProjectBoardId) =>
             {
                 BoardRows templateBoardRows = await GetBoardRowsAsync(templateProjectId, templateTeamId, templateBoardId) ?? new();
@@ -86,12 +86,12 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
             });
     }
 
-    public Task<BoardCards?> GetCardSettingsAsync(Guid projectId, Guid teamId, string boardId)
+    public Task<CardSettings?> GetCardSettingsAsync(Guid projectId, Guid teamId, string boardId)
     { 
-        return _client.GetFromJsonAsync<BoardCards>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardsettings?api-version=7.1");
+        return _client.GetFromJsonAsync<CardSettings>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardsettings?api-version=7.1");
     }
 
-    public Task UpdateCardSettingsAsync(Guid projectId, Guid teamId, string boardId, BoardCards boardCards)
+    public Task UpdateCardSettingsAsync(Guid projectId, Guid teamId, string boardId, CardSettings boardCards)
     {
         return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardsettings?api-version=7.1", boardCards, new JsonSerializerOptions
         {
@@ -102,20 +102,20 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
 
     public Task MoveCardSettingsAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards)
     {
-        return ForAllMatchingBoards(projectId, projectTeamId, templateProjectId, templateTeamId, projectBoards,
+        return ForAllMatchingBoards(templateProjectId, templateTeamId, projectBoards,
             async (templateBoardId, matchingProjectBoardId) =>
             {
-                BoardCards templateBoardCards = await GetCardSettingsAsync(templateProjectId, templateTeamId, templateBoardId) ?? new();
+                CardSettings templateBoardCards = await GetCardSettingsAsync(templateProjectId, templateTeamId, templateBoardId) ?? new();
                 await UpdateCardSettingsAsync(projectId, projectTeamId, matchingProjectBoardId, templateBoardCards);
             });
     }
 
-    public Task<CardStyle?> GetCardStylesAsync(Guid projectId, Guid teamId, string boardId)
+    public Task<CardStyles?> GetCardStylesAsync(Guid projectId, Guid teamId, string boardId)
     {
-        return _client.GetFromJsonAsync<CardStyle>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardrulesettings?api-version=7.1");
+        return _client.GetFromJsonAsync<CardStyles>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardrulesettings?api-version=7.1");
     }
 
-    public Task UpdateCardStylesAsync(Guid projectId, Guid teamId, string boardId, CardStyle cardStyle)
+    public Task UpdateCardStylesAsync(Guid projectId, Guid teamId, string boardId, CardStyles cardStyle)
     {
         return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardrulesettings?api-version=7.1", cardStyle, new JsonSerializerOptions
         {
@@ -126,15 +126,15 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
 
     public Task MoveCardStylesAsync(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards)
     {
-        return ForAllMatchingBoards(projectId, projectTeamId, templateProjectId, templateTeamId, projectBoards,
+        return ForAllMatchingBoards(templateProjectId, templateTeamId, projectBoards,
             async (templateBoardId, matchingProjectBoardId) =>
             {
-                CardStyle templateCardStyles = await GetCardStylesAsync(templateProjectId, templateTeamId, templateBoardId) ?? new();
+                CardStyles templateCardStyles = await GetCardStylesAsync(templateProjectId, templateTeamId, templateBoardId) ?? new();
                 await UpdateCardStylesAsync(projectId, projectTeamId, matchingProjectBoardId, templateCardStyles);
             });
     }
 
-    public async Task ForAllMatchingBoards(Guid projectId, Guid projectTeamId, Guid templateProjectId, Guid templateTeamId, Boards projectBoards, Action<string, string> moveAction)
+    public async Task ForAllMatchingBoards(Guid templateProjectId, Guid templateTeamId, Boards projectBoards, Action<string, string> moveAction)
     {
         Boards templateBoards = await GetBoardsAsync(templateProjectId, templateTeamId) ?? new();
         foreach (BoardValue templateBoard in templateBoards.Value)

@@ -11,19 +11,29 @@ namespace CloneDevOpsTemplate.Controllers
         async public Task<IActionResult> Boards(Guid projectId, Guid teamId)
         {
             Boards boardValues = await _boardService.GetBoardsAsync(projectId, teamId) ?? new Boards();
-            List<Board> boards = [];
+            List<ViewBoard> boards = [];
             foreach (var board in boardValues.Value)
             {
-                var currentBoard = await _boardService.GetBoardAsync(projectId, teamId, board.Id);
-                if (currentBoard != null)
-                {
-                    // Query rows separately, since row colors are ALWAYS null from the GetBoard call
-                    var rows = await _boardService.GetBoardRowsAsync(projectId, teamId, currentBoard.Id) ?? new();
-                    currentBoard.Rows = rows.Value;
-                    boards.Add(currentBoard);
-                }
+                var currentBoard = await _boardService.GetBoardAsync(projectId, teamId, board.Id) ?? new();
+
+                // Query rows separately, since row colors are ALWAYS null from the GetBoard call
+                var rows = await _boardService.GetBoardRowsAsync(projectId, teamId, currentBoard.Id) ?? new();
+                currentBoard.Rows = rows.Value;
+                boards.Add(new() { Board = currentBoard, ProjectId = projectId, TeamId = teamId });
             }
             return View(boards.ToArray());
+        }
+
+        async public Task<IActionResult> CardSettings(Guid projectId, Guid teamId, string boardId)
+        {
+            var cardSettings = await _boardService.GetCardSettingsAsync(projectId, teamId, boardId) ?? new();
+            return View(cardSettings.Cards);
+        }
+
+        async public Task<IActionResult> CardStyles(Guid projectId, Guid teamId, string boardId)
+        {
+            var cardStyles = await _boardService.GetCardStylesAsync(projectId, teamId, boardId) ?? new();
+            return View(cardStyles.Rules);
         }
     }
 }
