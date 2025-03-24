@@ -1,5 +1,5 @@
-﻿using CloneDevOpsTemplate.Models;
-using CloneDevOpsTemplate.Services;
+﻿using CloneDevOpsTemplate.IServices;
+using CloneDevOpsTemplate.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloneDevOpsTemplate.Controllers
@@ -10,8 +10,14 @@ namespace CloneDevOpsTemplate.Controllers
 
         async public Task<IActionResult> Boards(Guid projectId, Guid teamId)
         {
-            Boards boardValues = await _boardService.GetBoardsAsync(projectId, teamId) ?? new Boards();
             List<ViewBoard> boards = [];
+
+            if (!ModelState.IsValid)
+            {
+                return View(boards.ToArray());
+            }
+
+            Boards boardValues = await _boardService.GetBoardsAsync(projectId, teamId) ?? new Boards();
             foreach (var board in boardValues.Value)
             {
                 var currentBoard = await _boardService.GetBoardAsync(projectId, teamId, board.Id) ?? new();

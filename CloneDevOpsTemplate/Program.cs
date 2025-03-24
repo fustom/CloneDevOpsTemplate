@@ -1,4 +1,6 @@
 using CloneDevOpsTemplate.Constants;
+using CloneDevOpsTemplate.IServices;
+using CloneDevOpsTemplate.MessageHandlers;
 using CloneDevOpsTemplate.Middlewares;
 using CloneDevOpsTemplate.Services;
 
@@ -16,6 +18,8 @@ builder.Services.AddScoped<IIterationService, IterationService>();
 builder.Services.AddScoped<ITeamsService, TeamsService>();
 builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ITeamSettingsService, TeamSettingsService>();
+builder.Services.AddScoped<IRepositoryService, RepositoryService>();
+builder.Services.AddScoped<IServiceService, ServiceService>();
 
 builder.Services.AddSession(options =>
 {
@@ -49,4 +53,4 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.Run();
+await app.RunAsync();

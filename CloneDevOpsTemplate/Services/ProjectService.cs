@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Models;
 
 namespace CloneDevOpsTemplate.Services;
@@ -39,7 +40,7 @@ public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectServ
         return _client.GetFromJsonAsync<Process>($"_apis/work/processes/{processTemplateType}");
     }
 
-    public async Task<CreateProjectResponse?> CreateProjectAsync(string name = "New Project", string description = "New Project Description", string processTemplateType = "Basic", string sourceControlType = "Git", string visibility = "private")
+    public async Task<CreateProjectResponse?> CreateProjectAsync(string name, string description, string processTemplateType, string sourceControlType, string visibility)
     {
         CreateProject createProject = new()
         {
