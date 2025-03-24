@@ -17,7 +17,7 @@
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Project</a>
+                        <a class="nav-link text-dark dropdown-toggle" href="#" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">Project</a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" asp-area="" asp-controller="Project" asp-action="Projects">List Projects</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -31,15 +31,15 @@
                         <a class="nav-link text-dark" asp-area="" asp-controller="Repository" asp-action="Repositories">Repositories</a>
                     </li>
                 </ul>
+                @if(isLoggedin)
+                {
+                    <div style="float:left">
+                        <a asp-area="" asp-controller="Home" asp-action="Logout">
+                            <button class="btn btn-primary">Logout</button>
+                        </a>
+                    </div>
+                }
             </div>
-            @if(isLoggedin)
-            {
-                <div style="float:left">
-                    <a asp-area="" asp-controller="Home" asp-action="Logout">
-                        <button class="btn btn-primary">Logout</button>
-                    </a>
-                </div>
-            }
         </div>
     </nav>
 </header>
