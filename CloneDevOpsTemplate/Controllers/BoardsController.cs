@@ -10,8 +10,14 @@ namespace CloneDevOpsTemplate.Controllers
 
         async public Task<IActionResult> Boards(Guid projectId, Guid teamId)
         {
-            Boards boardValues = await _boardService.GetBoardsAsync(projectId, teamId) ?? new Boards();
             List<Board> boards = [];
+
+            if (!ModelState.IsValid)
+            {
+                return View(boards.ToArray());
+            }
+
+            Boards boardValues = await _boardService.GetBoardsAsync(projectId, teamId) ?? new Boards();
             foreach (var board in boardValues.Value)
             {
                 var currentBoard = await _boardService.GetBoardAsync(projectId, teamId, board.Id);
