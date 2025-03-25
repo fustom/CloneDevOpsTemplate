@@ -32,13 +32,27 @@ namespace CloneDevOpsTemplate.Controllers
 
         async public Task<IActionResult> CardSettings(Guid projectId, Guid teamId, string boardId)
         {
-            var cardSettings = await _boardService.GetCardSettingsAsync(projectId, teamId, boardId) ?? new();
+            CardSettings cardSettings = new();
+
+            if (!ModelState.IsValid)
+            {
+                return View(cardSettings.Cards);
+            }
+
+            cardSettings = await _boardService.GetCardSettingsAsync(projectId, teamId, boardId) ?? new();
             return View(cardSettings.Cards);
         }
 
         async public Task<IActionResult> CardStyles(Guid projectId, Guid teamId, string boardId)
         {
-            var cardStyles = await _boardService.GetCardStylesAsync(projectId, teamId, boardId) ?? new();
+            CardStyles cardStyles = new();
+
+            if (!ModelState.IsValid)
+            {
+                return View(cardStyles.Rules);
+            }
+
+            cardStyles = await _boardService.GetCardStylesAsync(projectId, teamId, boardId) ?? new();
             return View(cardStyles.Rules);
         }
     }
