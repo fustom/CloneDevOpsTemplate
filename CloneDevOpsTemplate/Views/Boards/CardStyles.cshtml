@@ -1,0 +1,63 @@
+﻿@model Rules
+@{
+    ViewData["Title"] = "Card styles";
+}
+
+<h2>@nameof(Model.Fill)</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th id="name">Name</th>
+            <th id="isenabled">IsEnabled</th>
+            <th id="filter">Filter</th>
+        </tr>
+    </thead>
+        <tbody>
+        @if (Model.Fill.Count > 0)
+        {
+            @foreach (var item in Model.Fill)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.IsEnabled</td>
+                    <td>@item.Filter</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="3">- empty -</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div style='margin-bottom:50px'></div>
+
+<h2>@nameof(Model.TagStyle)</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th id="name">Name</th>
+            <th id="isenabled">IsEnabled</th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model.TagStyle.Count > 0)
+    {
+            @foreach (var item in Model.TagStyle)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.IsEnabled</td>
+                </tr>
+            }
+    }
+    else
+    {
+        <tr>
+            <td colspan="2">- empty -</td>
+        </tr>
+    }
+    </tbody>
+</table>

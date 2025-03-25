@@ -80,3 +80,10 @@ public class BoardRows
     public int Count { get; set; }
     public BoardRow[] Value { get; set; } = [];
 }
+
+public class ViewBoard
+{
+    public Board Board { get; set; } = new();
+    public Guid ProjectId { get; set; }
+    public Guid TeamId { get; set; }
+}

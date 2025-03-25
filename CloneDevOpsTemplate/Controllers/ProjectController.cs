@@ -86,7 +86,6 @@ public class ProjectController(IProjectService projectService, IIterationService
         Teams templateTeams = await _teamsService.GetTeamsAsync(templateProjectId) ?? new();
         // TODO: TeamIterationMap
         Dictionary<Guid, Guid> mapTeams = await _teamsService.CreateTeamFromTemplateAsync(project.Id, templateTeams.Value, templateProject.DefaultTeam.Id, project.DefaultTeam.Id);
-        // TODO: UpdateBoardRows
 
         // Loop through the teams in the template project
         foreach (Guid templateTeamId in templateTeams.Value.Select(templateTeam => templateTeam.Id))
@@ -101,6 +100,12 @@ public class ProjectController(IProjectService projectService, IIterationService
 
             // Clone the board rows from the template project
             await _boardService.MoveBoardRowsAsync(project.Id, projectTeamId, templateProjectId, templateTeamId, projectBoards);
+
+            // Clone the card settings from the template project
+            await _boardService.MoveCardSettingsAsync(project.Id, projectTeamId, templateProjectId, templateTeamId, projectBoards);
+
+            // Clone the card styles from the template project
+            await _boardService.MoveCardStylesAsync(project.Id, projectTeamId, templateProjectId, templateTeamId, projectBoards);
         }
 
         // Get default repositories

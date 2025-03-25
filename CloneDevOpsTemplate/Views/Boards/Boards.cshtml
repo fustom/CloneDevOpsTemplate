@@ -1,4 +1,4 @@
-﻿@model Board[]
+﻿@model ViewBoard[]
 @{
     ViewData["Title"] = "Boards";
 }
@@ -9,25 +9,26 @@
 
 @foreach (var board in Model)
 {
-    <h2>@board.Name</h2>
-
-    <table class="table">
+    <table class="table table-striped">
         <thead>
+            <tr class="table-primary">
+                <td colspan="@board.Board.Columns.Length"><h2>@board.Board.Name</h2></td>
+            </tr>
             <tr>
-                @foreach (var column in board.Columns)
+                @foreach (var column in board.Board.Columns)
                 {
-                    <th style='min-width:80px'>@column.Name</th>
+                    <th id="name" style='min-width:80px'>@column.Name</th>
                 }
             </tr>
         </thead>
         <tbody>
-            @foreach (var row in board.Rows)
+            @foreach (var row in board.Board.Rows)
             {
                 <tr style='background:@row.Color' height="20px">
-                    <td colspan="@board.Columns.Length">@row.Name</td>
+                    <td colspan="@board.Board.Columns.Length">@row.Name</td>
                 </tr>
                 <tr height="80px">
-                    @foreach (var column in board.Columns)
+                    @foreach (var column in board.Board.Columns)
                     {
                         <td style='background:rgb(230,230,230);padding:10px'></td>
                     }
@@ -35,4 +36,13 @@
             }
         </tbody>
     </table>
+
+    <div style='margin-bottom:50px'>
+        <span style='display: inline-block;'>
+            @Html.ActionLink("Card settings", "CardSettings", "Boards", new { projectId = board.ProjectId, teamId = board.TeamId, boardId = board.Board.Id })
+        </span>
+        <span style='display: inline-block;'>
+            @Html.ActionLink("Card styles", "CardStyles", "Boards", new { projectId = board.ProjectId, teamId = board.TeamId, boardId = board.Board.Id })
+        </span>
+    </div>
 }
