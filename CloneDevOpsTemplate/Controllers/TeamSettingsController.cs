@@ -8,7 +8,7 @@ public class TeamSettingsController(ITeamSettingsService teamSettingsService) : 
 {
     private readonly ITeamSettingsService _teamSettingsService = teamSettingsService;
 
-    async public Task<IActionResult> TeamSettings(Guid projectId, Guid teamId)
+    public async Task<IActionResult> TeamSettings(Guid projectId, Guid teamId)
     {
         TeamSettings teamSettings = await _teamSettingsService.GetTeamSettings(projectId, teamId) ?? new TeamSettings();
         return View(teamSettings);
