@@ -24,7 +24,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         return _client.GetFromJsonAsync<BoardColumns>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/columns?api-version=7.1");
     }
 
-    public Task UpdateBoardColumnsAsync(Guid projectId, Guid teamId, string boardId, BoardColumns boardColumns)
+    public Task<HttpResponseMessage> UpdateBoardColumnsAsync(Guid projectId, Guid teamId, string boardId, BoardColumns boardColumns)
     {
         return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/columns?api-version=7.1", boardColumns.Value, new JsonSerializerOptions
         {
@@ -68,7 +68,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         return _client.GetFromJsonAsync<BoardRows>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/rows?api-version=7.1");
     }
 
-    public Task UpdateBoardRowsAsync(Guid projectId, Guid teamId, string boardId, BoardRows boardRows)
+    public Task<HttpResponseMessage> UpdateBoardRowsAsync(Guid projectId, Guid teamId, string boardId, BoardRows boardRows)
     {
         return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/rows?api-version=7.1", boardRows.Value, new JsonSerializerOptions
         {
@@ -92,7 +92,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         return _client.GetFromJsonAsync<CardSettings>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardsettings?api-version=7.1");
     }
 
-    public Task UpdateCardSettingsAsync(Guid projectId, Guid teamId, string boardId, CardSettings boardCards)
+    public Task<HttpResponseMessage> UpdateCardSettingsAsync(Guid projectId, Guid teamId, string boardId, CardSettings boardCards)
     {
         return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardsettings?api-version=7.1", boardCards, new JsonSerializerOptions
         {
@@ -116,7 +116,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
         return _client.GetFromJsonAsync<CardStyles>($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardrulesettings?api-version=7.1");
     }
 
-    public Task UpdateCardStylesAsync(Guid projectId, Guid teamId, string boardId, CardStyles cardStyle)
+    public Task<HttpResponseMessage> UpdateCardStylesAsync(Guid projectId, Guid teamId, string boardId, CardStyles cardStyle)
     {
         return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardrulesettings?api-version=7.1", cardStyle, new JsonSerializerOptions
         {
