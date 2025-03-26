@@ -141,7 +141,7 @@ public class TeamsServiceTest
     {
         // Arrange
         var projectId = Guid.NewGuid();
-        var teamId = Guid.NewGuid().ToString();
+        var teamId = Guid.NewGuid();
         var expectedTeam = new Team { Id = Guid.NewGuid(), Name = "Test Team", Description = "Test Description" };
 
         _httpMessageHandlerMock.Protected()
@@ -170,7 +170,7 @@ public class TeamsServiceTest
     {
         // Arrange
         var projectId = Guid.NewGuid();
-        var teamId = Guid.NewGuid().ToString();
+        var teamId = Guid.NewGuid();
 
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -281,110 +281,6 @@ public class TeamsServiceTest
 
         // Assert
         Assert.Equal(Guid.Empty, result.First().Value);
-    }
-
-    [Fact]
-    public async Task UpdateTeamAsync_ShouldReturnSuccessResponse_WhenRequestIsSuccessful()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var teamId = Guid.NewGuid().ToString();
-        var teamName = "Updated Team";
-        var teamDescription = "Updated Description";
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK
-            });
-
-        // Act
-        var response = await _teamsService.UpdateTeamAsync(projectId, teamId, teamName, teamDescription);
-
-        // Assert
-        Assert.NotNull(response);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task UpdateTeamAsync_ShouldReturnErrorResponse_WhenRequestFails()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var teamId = Guid.NewGuid().ToString();
-        var teamName = "Updated Team";
-        var teamDescription = "Updated Description";
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.BadRequest
-            });
-
-        // Act
-        var response = await _teamsService.UpdateTeamAsync(projectId, teamId, teamName, teamDescription);
-
-        // Assert
-        Assert.NotNull(response);
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task DeleteTeamAsync_ShouldReturnSuccessResponse_WhenRequestIsSuccessful()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var teamId = Guid.NewGuid().ToString();
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK
-            });
-
-        // Act
-        var response = await _teamsService.DeleteTeamAsync(projectId, teamId);
-
-        // Assert
-        Assert.NotNull(response);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task DeleteTeamAsync_ShouldReturnErrorResponse_WhenRequestFails()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var teamId = Guid.NewGuid().ToString();
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.BadRequest
-            });
-
-        // Act
-        var response = await _teamsService.DeleteTeamAsync(projectId, teamId);
-
-        // Assert
-        Assert.NotNull(response);
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

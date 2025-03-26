@@ -14,7 +14,7 @@ public class TeamController(ITeamsService teamsService) : Controller
         return View(teams.Value);
     }
 
-    public async Task<IActionResult> Team(Guid projectId, string teamId)
+    public async Task<IActionResult> Team(Guid projectId, Guid teamId)
     {
         Team team = await _teamsService.GetTeamAsync(projectId, teamId) ?? new Team();
         return View(team);

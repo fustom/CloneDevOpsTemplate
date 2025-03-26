@@ -11,7 +11,7 @@ public class TeamsService(IHttpClientFactory httpClientFactory) : ITeamsService
     {
         return _client.GetFromJsonAsync<Teams>($"_apis/projects/{projectId}/teams");
     }
-    public Task<Team?> GetTeamAsync(Guid projectId, string teamId)
+    public Task<Team?> GetTeamAsync(Guid projectId, Guid teamId)
     {
         return _client.GetFromJsonAsync<Team>($"_apis/projects/{projectId}/teams/{teamId}");
     }
@@ -47,20 +47,6 @@ public class TeamsService(IHttpClientFactory httpClientFactory) : ITeamsService
         }
 
         return mapTeams;
-    }
-    public Task<HttpResponseMessage> UpdateTeamAsync(Guid projectId, string teamId, string name = "New Team", string description = "New Team Description")
-    {
-        Team updateTeam = new()
-        {
-            Name = name,
-            Description = description
-        };
-
-        return _client.PatchAsJsonAsync($"_apis/projects/{projectId}/teams/{teamId}", updateTeam);
-    }
-    public Task<HttpResponseMessage> DeleteTeamAsync(Guid projectId, string teamId)
-    {
-        return _client.DeleteAsync($"_apis/projects/{projectId}/teams/{teamId}");
     }
     public Task<Teams?> GetAllTeamsAsync()
     {
