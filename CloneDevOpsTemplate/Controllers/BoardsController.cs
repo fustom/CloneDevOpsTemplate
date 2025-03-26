@@ -8,7 +8,7 @@ namespace CloneDevOpsTemplate.Controllers
     {
         private readonly IBoardService _boardService = boardService;
 
-        async public Task<IActionResult> Boards(Guid projectId, Guid teamId)
+        public async Task<IActionResult> Boards(Guid projectId, Guid teamId)
         {
             List<ViewBoard> boards = [];
 
@@ -30,7 +30,7 @@ namespace CloneDevOpsTemplate.Controllers
             return View(boards.ToArray());
         }
 
-        async public Task<IActionResult> CardSettings(Guid projectId, Guid teamId, string boardId)
+        public async Task<IActionResult> CardSettings(Guid projectId, Guid teamId, string boardId)
         {
             CardSettings cardSettings = new();
 
@@ -43,7 +43,7 @@ namespace CloneDevOpsTemplate.Controllers
             return View(cardSettings.Cards);
         }
 
-        async public Task<IActionResult> CardStyles(Guid projectId, Guid teamId, string boardId)
+        public async Task<IActionResult> CardStyles(Guid projectId, Guid teamId, string boardId)
         {
             CardStyles cardStyles = new();
 
