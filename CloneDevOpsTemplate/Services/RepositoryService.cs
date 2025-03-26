@@ -21,12 +21,12 @@ public class RepositoryService(IHttpClientFactory httpClientFactory) : IReposito
         return await result.Content.ReadFromJsonAsync<Repository>();
     }
 
-    public Task DeleteRepositoryAsync(Guid projectId, Guid repositoryId)
+    public Task<HttpResponseMessage> DeleteRepositoryAsync(Guid projectId, Guid repositoryId)
     {
         return _client.DeleteAsync($"{projectId}/_apis/git/repositories/{repositoryId}?api-version=7.1");
     }
 
-    public Task CreateImportRequest(Guid projectId, Guid repositoryId, string sourceRepositoryRemoteUrl, Guid serviceEndpointId)
+    public Task<HttpResponseMessage> CreateImportRequest(Guid projectId, Guid repositoryId, string sourceRepositoryRemoteUrl, Guid serviceEndpointId)
     {
         ImportRequest importRequest = new()
         {

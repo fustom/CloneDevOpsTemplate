@@ -5,5 +5,5 @@ namespace CloneDevOpsTemplate.IServices;
 public interface ITeamSettingsService
 {
     Task<TeamSettings?> GetTeamSettings(Guid projectId, Guid teamId);
-    Task UpdateTeamSettings(Guid projectId, Guid teamId, TeamSettings teamSettings);
+    Task<HttpResponseMessage> UpdateTeamSettings(Guid projectId, Guid teamId, TeamSettings teamSettings);
 }

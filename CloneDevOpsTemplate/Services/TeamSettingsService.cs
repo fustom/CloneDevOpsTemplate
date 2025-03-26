@@ -13,7 +13,7 @@ public class TeamSettingsService(IHttpClientFactory httpClientFactory) : ITeamSe
         return _client.GetFromJsonAsync<TeamSettings>($"{projectId}/{teamId}/_apis/work/teamsettings");
     }
 
-    public Task UpdateTeamSettings(Guid projectId, Guid teamId, TeamSettings teamSettings)
+    public Task<HttpResponseMessage> UpdateTeamSettings(Guid projectId, Guid teamId, TeamSettings teamSettings)
     {
         return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/teamsettings", teamSettings);
     }
