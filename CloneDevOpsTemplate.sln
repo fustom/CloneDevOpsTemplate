@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloneDevOpsTemplate", "CloneDevOpsTemplate\CloneDevOpsTemplate.csproj", "{46F32F78-5939-4438-A800-3663BF9B4023}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloneDevOpsTemplateTest", "CloneDevOpsTemplateTest\CloneDevOpsTemplateTest.csproj", "{F2632B9B-0F0E-4700-994C-F294E15CE1CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{46F32F78-5939-4438-A800-3663BF9B4023}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46F32F78-5939-4438-A800-3663BF9B4023}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46F32F78-5939-4438-A800-3663BF9B4023}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2632B9B-0F0E-4700-994C-F294E15CE1CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2632B9B-0F0E-4700-994C-F294E15CE1CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2632B9B-0F0E-4700-994C-F294E15CE1CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2632B9B-0F0E-4700-994C-F294E15CE1CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
