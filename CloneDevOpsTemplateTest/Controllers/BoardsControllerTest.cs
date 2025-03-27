@@ -140,7 +140,7 @@ public class BoardsControllerTest
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
         var model = Assert.IsType<Cards>(viewResult.Model);
-        Assert.Equal(2, model.Bug.Count);
+        Assert.Equal(2, model.Bug.Length);
         Assert.Equal("bugCard1", model.Bug[0].FieldIdentifier);
         Assert.Equal("bugCard2", model.Bug[1].FieldIdentifier);
         Assert.Equal("bugCardFormat1", model.Bug[0].DisplayFormat);
@@ -222,7 +222,7 @@ public class BoardsControllerTest
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
         var model = Assert.IsType<Rules>(viewResult.Model);
-        Assert.Equal(2, model.Fill.Count);
+        Assert.Equal(2, model.Fill.Length);
         Assert.Equal("rule1", model.Fill[0].Name);
         Assert.Equal("rule2", model.Fill[1].Name);
         Assert.Equal("fieldName", model.Fill[0].Clauses[0].FieldName);
