@@ -11,17 +11,17 @@ public class CardItem
 public class Cards
 {
     [JsonPropertyName("Epic")]
-    public IList<CardItem> Epic { get; set; } = [];
+    public CardItem[] Epic { get; set; } = [];
     [JsonPropertyName("Feature")]
-    public IList<CardItem> Feature { get; set; } = [];
+    public CardItem[] Feature { get; set; } = [];
     [JsonPropertyName("Product Backlog Item")]
-    public IList<CardItem> ProductBacklogItem { get; set; } = [];
+    public CardItem[] ProductBacklogItem { get; set; } = [];
     [JsonPropertyName("User Story")]
-    public IList<CardItem> UserStory { get; set; } = [];
+    public CardItem[] UserStory { get; set; } = [];
     [JsonPropertyName("Bug")]
-    public IList<CardItem> Bug { get; set; } = [];
+    public CardItem[] Bug { get; set; } = [];
     [JsonPropertyName("Issue")]
-    public IList<CardItem> Issue { get; set; } = [];
+    public CardItem[] Issue { get; set; } = [];
 }
 
 public class CardSettings
@@ -52,7 +52,7 @@ public class Fill
     public string Name { get; set; } = string.Empty;
     public string IsEnabled { get; set; } = string.Empty;
     public string Filter { get; set; } = string.Empty;
-    public IList<Clause> Clauses { get; set; } = [];
+    public Clause[] Clauses { get; set; } = [];
     public Settings Settings { get; set; } = new Settings();
 }
 
@@ -65,8 +65,8 @@ public class TagStyle
 
 public class Rules
 {
-    public IList<Fill> Fill { get; set; } = [];
-    public IList<TagStyle> TagStyle { get; set; } = [];
+    public Fill[] Fill { get; set; } = [];
+    public TagStyle[] TagStyle { get; set; } = [];
 }
 
 public class CardStyles
