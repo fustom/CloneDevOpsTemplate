@@ -57,7 +57,7 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         return response;
     }
 
-    public Task MoveIteration(Guid projectId, string path, int Id)
+    public Task<HttpResponseMessage> MoveIteration(Guid projectId, string path, int Id)
     {
         return _client.PostAsJsonAsync($"{projectId}/_apis/wit/classificationNodes/iterations/{path}?api-version=7.1", new { id = Id });
     }

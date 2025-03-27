@@ -15,14 +15,14 @@ public class ProjectController(IProjectService projectService, IIterationService
     private readonly IServiceService _serviceService = serviceService;
 
     [HttpGet]
-    async public Task<IActionResult> Projects()
+    public async Task<IActionResult> Projects()
     {
         Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
         return View(projects.Value);
     }
 
     [HttpGet]
-    async public Task<IActionResult> Project(Guid projectId)
+    public async Task<IActionResult> Project(Guid projectId)
     {
         if (!ModelState.IsValid)
         {
@@ -34,7 +34,7 @@ public class ProjectController(IProjectService projectService, IIterationService
     }
 
     [HttpGet]
-    async public Task<IActionResult> ProjectProperties(Guid projectId)
+    public async Task<IActionResult> ProjectProperties(Guid projectId)
     {
         if (!ModelState.IsValid)
         {
@@ -46,13 +46,13 @@ public class ProjectController(IProjectService projectService, IIterationService
     }
 
     [HttpGet]
-    async public Task<IActionResult> CreateProject()
+    public async Task<IActionResult> CreateProject()
     {
         return await Projects();
     }
 
     [HttpPost]
-    async public Task<IActionResult> CreateProject(Guid templateProjectId, string newProjectName, string description, string visibility)
+    public async Task<IActionResult> CreateProject(Guid templateProjectId, string newProjectName, string description, string visibility)
     {
         if (!ModelState.IsValid)
         {

@@ -9,5 +9,5 @@ public interface IIterationService
     Task<Iteration> CreateIterationAsync(Guid projectId, CreateIterationRequest iteration);
     Task<Iteration> CreateIterationAsync(Guid projectId, Iteration iterations);
     Task MoveIteration(Guid projectId, List<Iteration> iterations, string name = "");
-    Task MoveIteration(Guid projectId, string path, int Id);
+    Task<HttpResponseMessage> MoveIteration(Guid projectId, string path, int Id);
 }
