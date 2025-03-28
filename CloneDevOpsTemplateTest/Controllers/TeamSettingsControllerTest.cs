@@ -23,7 +23,7 @@ public class TeamSettingsControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var teamSettings = new TeamSettings { BugsBehavior = "BugsBehavior", DefaultIterationMacro = "DefaultIterationMacro" };
+        var teamSettings = new TeamSettings { BugsBehavior = BugsBehavior.AsRequirements, DefaultIterationMacro = "DefaultIterationMacro" };
 
         _mockTeamSettingsService
             .Setup(service => service.GetTeamSettings(projectId, teamId))

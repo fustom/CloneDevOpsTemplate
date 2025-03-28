@@ -33,7 +33,7 @@ public class TeamSettingsServiceTest
         var teamId = Guid.NewGuid();
         var expectedTeamSettings = new TeamSettings
         {
-            BugsBehavior = "BugsBehavior"
+            BugsBehavior = BugsBehavior.AsRequirements
         };
 
         _httpMessageHandlerMock.Protected()
@@ -82,9 +82,9 @@ public class TeamSettingsServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var teamSettings = new TeamSettings
+        var teamSettings = new PatchTeamSettings
         {
-            BugsBehavior = "BugsBehavior"
+            BugsBehavior = BugsBehavior.AsRequirements
         };
 
         _httpMessageHandlerMock.Protected()
@@ -105,8 +105,8 @@ public class TeamSettingsServiceTest
             "SendAsync",
             Times.Once(),
             ItExpr.Is<HttpRequestMessage>(req =>
-                req.Method == HttpMethod.Put &&
-                req.Content != null && req.Content.ReadAsStringAsync().Result.Contains("BugsBehavior")),
+                req.Method == HttpMethod.Patch &&
+                req.Content != null && req.Content.ReadAsStringAsync().Result.Contains("AsRequirements")),
             ItExpr.IsAny<CancellationToken>());
     }
 
@@ -116,9 +116,9 @@ public class TeamSettingsServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var teamSettings = new TeamSettings
+        var teamSettings = new PatchTeamSettings
         {
-            BugsBehavior = "BugsBehavior"
+            BugsBehavior = BugsBehavior.AsRequirements
         };
 
         _httpMessageHandlerMock.Protected()

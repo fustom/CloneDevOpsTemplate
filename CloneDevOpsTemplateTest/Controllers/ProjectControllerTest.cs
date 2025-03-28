@@ -262,4 +262,97 @@ public class ProjectControllerTest
         _mockRepositoryService.Verify(service => service.DeleteRepositoryAsync(newProject.Id, repositories.Value[0].Id), Times.Once);
         Assert.IsType<RedirectToActionResult>(result);
     }
+
+    [Fact]
+    public async Task CreateProject_ClonesTeamsAndUpdatesTeamSettings()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var newProjectName = "New Project";
+        var description = "Description";
+        var visibility = "Private";
+        var templateProject = new Project
+        {
+            Capabilities = new Capabilities
+            {
+                ProcessTemplate = new ProcessTemplate { TemplateTypeId = "TemplateId" },
+                Versioncontrol = new VersionControl { SourceControlType = "Git" }
+            },
+            DefaultTeam = new Team { Id = Guid.NewGuid() }
+        };
+        var createProjectResponse = new CreateProjectResponse();
+        var newProject = new Project
+        {
+            Id = Guid.NewGuid(),
+            State = "wellFormed",
+            DefaultTeam = new Team { Id = Guid.NewGuid() }
+        };
+        var iterations = new Iteration();
+        var createdIterations = new Iteration();
+        var templateTeams = new Teams
+        {
+            Value =
+            [
+                new Team { Id = Guid.NewGuid() },
+                new Team { Id = Guid.NewGuid() }
+            ]
+        };
+        var mapTeams = new Dictionary<Guid, Guid>
+        {
+            { templateTeams.Value[0].Id, Guid.NewGuid() },
+            { templateTeams.Value[1].Id, Guid.NewGuid() }
+        };
+        TeamSettings teamSettings = new()
+        {
+            BacklogIteration = new()
+            {
+                Id = Guid.NewGuid()
+            }
+        };
+        TeamSettings templateTeamSettings = new()
+        {
+            DefaultIteration = new()
+            {
+                Id = Guid.NewGuid()
+            }
+        };
+
+        _mockProjectService.Setup(service => service.GetProjectAsync(templateProjectId)).ReturnsAsync(templateProject);
+        _mockProjectService.Setup(service => service.CreateProjectAsync(newProjectName, description, templateProject.Capabilities.ProcessTemplate.TemplateTypeId, templateProject.Capabilities.Versioncontrol.SourceControlType, visibility)).ReturnsAsync(createProjectResponse);
+        _mockProjectService.SetupSequence(service => service.GetProjectAsync(newProjectName))
+            .ReturnsAsync(new Project { State = "notStarted" })
+            .ReturnsAsync(newProject);
+
+        _mockIterationService.Setup(service => service.GetIterationsAsync(templateProjectId)).ReturnsAsync(iterations);
+        _mockIterationService.Setup(service => service.CreateIterationAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
+
+        _mockTeamsService.Setup(service => service.GetTeamsAsync(templateProjectId)).ReturnsAsync(templateTeams);
+        _mockTeamsService.Setup(service => service.CreateTeamFromTemplateAsync(newProject.Id, templateTeams.Value, templateProject.DefaultTeam.Id, newProject.DefaultTeam.Id)).ReturnsAsync(mapTeams);
+        _mockTeamSettingsService.Setup(service => service.GetTeamSettings(newProject.Id, newProject.DefaultTeam.Id)).ReturnsAsync(teamSettings);
+        _mockTeamSettingsService.Setup(service => service.GetTeamSettings(templateProjectId, It.IsAny<Guid>())).ReturnsAsync(templateTeamSettings);
+
+        // Act
+        var result = await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
+
+        // Assert
+        foreach (var templateTeamId in templateTeams.Value.Select(t => t.Id))
+        {
+            var projectTeamId = mapTeams[templateTeamId];
+            _mockTeamSettingsService.Verify(service => service.UpdateTeamSettings(newProject.Id, projectTeamId, It.Is<PatchTeamSettings>(settings =>
+                settings.BacklogIteration == teamSettings.BacklogIteration.Id &&
+                settings.BacklogVisibilities == templateTeamSettings.BacklogVisibilities &&
+                settings.BugsBehavior == templateTeamSettings.BugsBehavior &&
+                settings.DefaultIteration == templateTeamSettings.DefaultIteration.Id &&
+                settings.DefaultIterationMacro == templateTeamSettings.DefaultIterationMacro &&
+                settings.WorkingDays == templateTeamSettings.WorkingDays
+            )), Times.Once);
+
+            _mockBoardService.Verify(service => service.MoveBoardColumnsAsync(newProject.Id, projectTeamId, templateProjectId, templateTeamId, It.IsAny<Boards>()), Times.Once);
+            _mockBoardService.Verify(service => service.MoveBoardRowsAsync(newProject.Id, projectTeamId, templateProjectId, templateTeamId, It.IsAny<Boards>()), Times.Once);
+            _mockBoardService.Verify(service => service.MoveCardSettingsAsync(newProject.Id, projectTeamId, templateProjectId, templateTeamId, It.IsAny<Boards>()), Times.Once);
+            _mockBoardService.Verify(service => service.MoveCardStylesAsync(newProject.Id, projectTeamId, templateProjectId, templateTeamId, It.IsAny<Boards>()), Times.Once);
+        }
+
+        Assert.IsType<RedirectToActionResult>(result);
+    }
 }

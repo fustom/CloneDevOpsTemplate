@@ -86,13 +86,23 @@ public class ProjectController(IProjectService projectService, IIterationService
         Teams templateTeams = await _teamsService.GetTeamsAsync(templateProjectId) ?? new();
         // TODO: TeamIterationMap
         Dictionary<Guid, Guid> mapTeams = await _teamsService.CreateTeamFromTemplateAsync(project.Id, templateTeams.Value, templateProject.DefaultTeam.Id, project.DefaultTeam.Id);
+        var teamSettings = await _teamSettingsService.GetTeamSettings(project.Id, project.DefaultTeam.Id) ?? new();
 
         // Loop through the teams in the template project
         foreach (Guid templateTeamId in templateTeams.Value.Select(templateTeam => templateTeam.Id))
         {
             var projectTeamId = mapTeams.GetValueOrDefault(templateTeamId);
             var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProjectId, templateTeamId) ?? new();
-            await _teamSettingsService.UpdateTeamSettings(project.Id, projectTeamId, templateTeamSettings);
+            PatchTeamSettings newTeamSettings = new()
+            {
+                BacklogIteration = teamSettings.BacklogIteration?.Id,
+                BacklogVisibilities = templateTeamSettings.BacklogVisibilities,
+                BugsBehavior = templateTeamSettings.BugsBehavior,
+                DefaultIteration = templateTeamSettings.DefaultIteration?.Id,
+                DefaultIterationMacro = templateTeamSettings.DefaultIterationMacro,
+                WorkingDays = templateTeamSettings.WorkingDays
+            };
+            await _teamSettingsService.UpdateTeamSettings(project.Id, projectTeamId, newTeamSettings);
 
             Boards projectBoards = await _boardService.GetBoardsAsync(project.Id, projectTeamId) ?? new();
             // Clone the board columns from the template project

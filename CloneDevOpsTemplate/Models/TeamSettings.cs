@@ -2,27 +2,76 @@ using System.Text.Json.Serialization;
 
 namespace CloneDevOpsTemplate.Models;
 
-public class TeamSettings
+[JsonConverter(typeof(JsonStringEnumConverter<BugsBehavior>))]
+public enum BugsBehavior
 {
-    public TeamIteration BacklogIteration { set; get; } = new();
-    public string BugsBehavior { set; get; } = string.Empty;
-    public string[] WorkingDays { set; get; } = [];
+    AsRequirements,
+    AsTasks,
+    Off
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter<DayOfWeek>))]
+public enum DayOfWeek
+{
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+    Sunday
+}
+
+public class TeamSettingsBase
+{
+    public BugsBehavior BugsBehavior { set; get; }
+    public DayOfWeek[] WorkingDays { set; get; } = [];
     public BacklogVisibilities BacklogVisibilities { set; get; } = new();
-    public TeamIteration DefaultIteration { set; get; } = new();
-    public string DefaultIterationMacro { set; get; } = string.Empty;
+    public string? DefaultIterationMacro { set; get; }
+}
+
+public class PatchTeamSettings : TeamSettingsBase
+{
+    public Guid? BacklogIteration { set; get; }
+    public Guid? DefaultIteration { set; get; }
+}
+
+public class TeamSettings : TeamSettingsBase
+{
+    public TeamIterationSettings? BacklogIteration { set; get; }
+    public TeamIterationSettings? DefaultIteration { set; get; }
 }
 
 public class BacklogVisibilities
 {
     [JsonPropertyName("Microsoft.EpicCategory")]
-    public bool EpicCategory { set; get; }
+    public bool? EpicCategory { set; get; }
     [JsonPropertyName("Microsoft.FeatureCategory")]
-    public bool FeatureCategory { set; get; }
+    public bool? FeatureCategory { set; get; }
     [JsonPropertyName("Microsoft.RequirementCategory")]
-    public bool RequirementCategory { set; get; }
+    public bool? RequirementCategory { set; get; }
 }
 
-public class TeamIteration
+public class TeamIterationSettings
 {
+    public TeamIterationAttributes Attributes { set; get; } = new();
     public Guid Id { set; get; }
+    public string Name { set; get; } = string.Empty;
+    public string Path { set; get; } = string.Empty;
+    public string Url { set; get; } = string.Empty;
+}
+
+public class TeamIterationAttributes
+{
+    public DateTime FinishDate { set; get; }
+    public DateTime StartDate { set; get; }
+    public TimeFrame TimeFrame { set; get; }
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter<TimeFrame>))]
+public enum TimeFrame
+{
+    Current,
+    Future,
+    Past
 }
