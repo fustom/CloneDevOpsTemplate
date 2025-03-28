@@ -80,8 +80,11 @@ public class ProjectController(IProjectService projectService, IIterationService
         // Clone the iterations from the template project
         Iteration templateIterations = await _iterationService.GetIterationsAsync(templateProjectId) ?? new();
         Iteration iterations = await _iterationService.CreateIterationAsync(project.Id, templateIterations);
-        await _iterationService.MoveIteration(project.Id, iterations.Children);
-        // TODO: Areas
+        await _iterationService.MoveIterationAsync(project.Id, iterations.Children, "");
+
+        Iteration templateAreas = await _iterationService.GetAreaAsync(templateProjectId) ?? new();
+        Iteration areas = await _iterationService.CreateAreaAsync(project.Id, templateAreas);
+        await _iterationService.MoveAreaAsync(project.Id, areas.Children, "");
 
         Teams templateTeams = await _teamsService.GetTeamsAsync(templateProjectId) ?? new();
         // TODO: TeamIterationMap
@@ -103,6 +106,13 @@ public class ProjectController(IProjectService projectService, IIterationService
                 WorkingDays = templateTeamSettings.WorkingDays
             };
             await _teamSettingsService.UpdateTeamSettings(project.Id, projectTeamId, newTeamSettings);
+            var teamFieldValues = await _teamSettingsService.GetTeamFieldValues(templateProjectId, templateTeamId) ?? new();
+            teamFieldValues.DefaultValue = teamFieldValues.DefaultValue.Replace(templateProject.Name, project.Name);
+            foreach (var value in teamFieldValues.Values)
+            {
+                value.Value = value.Value.Replace(templateProject.Name, project.Name);
+            }
+            await _teamSettingsService.UpdateTeamFieldValues(project.Id, projectTeamId, teamFieldValues);
 
             Boards projectBoards = await _boardService.GetBoardsAsync(project.Id, projectTeamId) ?? new();
             // Clone the board columns from the template project

@@ -129,7 +129,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        await _iterationService.MoveIteration(projectId, path, id);
+        await _iterationService.MoveIterationAsync(projectId, path, id);
 
         // Assert
         _httpMessageHandlerMock.Protected().Verify(
@@ -257,7 +257,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        await _iterationService.MoveIteration(projectId, iterations);
+        await _iterationService.MoveIterationAsync(projectId, iterations, "");
 
         // Assert
         _httpMessageHandlerMock.Protected().Verify(
@@ -299,7 +299,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        await _iterationService.MoveIteration(projectId, iterations);
+        await _iterationService.MoveIterationAsync(projectId, iterations, "");
 
         // Assert
         _httpMessageHandlerMock.Protected().Verify(

@@ -75,3 +75,14 @@ public enum TimeFrame
     Future,
     Past
 }
+
+public class TeamFieldValues
+{
+    public string DefaultValue { get; set; } = string.Empty;
+    public Values[] Values { get; set; } = [];
+}
+
+public class Values
+{
+    public string Value { get; set; } = string.Empty;
+}
