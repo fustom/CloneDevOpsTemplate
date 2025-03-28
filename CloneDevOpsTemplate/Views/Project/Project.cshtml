@@ -58,4 +58,7 @@
     <tr>
         <td colspan="2">@Html.ActionLink("Services", "ProjectServices", "Service", new { projectId = Model.Id })</td>
     </tr>
+    <tr>
+        <td colspan="2">@Html.ActionLink("WorkItems", "WorkItems", "WorkItems", new { projectId = Model.Id, projectName = Model.Name })</td>
+    </tr>
 </table>

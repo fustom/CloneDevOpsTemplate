@@ -30,39 +30,36 @@
                     <td style="background-color:@item.Settings?.TitleColor"></td>
                     <td style="background-color:@item.Settings?.BackgroundColor"></td>
                 </tr>
-                @if (item.Clauses.Length > 0)
-                {
-                    <tr>
-                        <td colspan="5">
-                            <table class="table table-striped table-sm">
-                                <thead>
-                                    <tr class="table-success">
-                                        <td colspan="5"><h3>Criterias</h3></td>
-                                    </tr>
+                <tr>
+                    <td colspan="5">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr class="table-success">
+                                    <td colspan="5"><h3>Criterias</h3></td>
+                                </tr>
+                                <tr>
+                                    <th id="index">Index</th>
+                                    <th id="fieldname">FieldName</th>
+                                    <th id="logicaloperator">LogicalOperator</th>
+                                    <th id="operator">Operator</th>
+                                    <th id="value">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var criteria in item.Clauses)
+                                {
                                     <tr>
-                                        <th id="index">Index</th>
-                                        <th id="fieldname">FieldName</th>
-                                        <th id="logicaloperator">LogicalOperator</th>
-                                        <th id="operator">Operator</th>
-                                        <th id="value">Value</th>
+                                        <td>@criteria.Index</td>
+                                        <td>@criteria.FieldName</td>
+                                        <td>@criteria.LogicalOperator</td>
+                                        <td>@criteria.Operator</td>
+                                        <td>@criteria.Value</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var criteria in item.Clauses)
-                                    {
-                                        <tr>
-                                            <td>@criteria.Index</td>
-                                            <td>@criteria.FieldName</td>
-                                            <td>@criteria.LogicalOperator</td>
-                                            <td>@criteria.Operator</td>
-                                            <td>@criteria.Value</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                }
+                                }
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
             }
         }
         else

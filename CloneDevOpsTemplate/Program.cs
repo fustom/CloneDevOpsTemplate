@@ -20,6 +20,7 @@ builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ITeamSettingsService, TeamSettingsService>();
 builder.Services.AddScoped<IRepositoryService, RepositoryService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
+builder.Services.AddScoped<IWorkItemService, WorkItemService>();
 
 builder.Services.AddSession(options =>
 {

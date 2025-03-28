@@ -1,0 +1,43 @@
+@model WorkItem[]
+@{
+    ViewData["Title"] = "WorkItems";
+}
+
+<h1>Work items</h1>
+
+@foreach (var workItem in Model)
+{
+    <table class="table table-striped">
+        <thead>
+            <tr class="table-primary">
+                <td colspan="4"><h2>@workItem.Fields.SystemTitle</h2></td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Assigned to</td>
+                <td>@workItem.Fields.SystemAssignedTo.DisplayName</td>
+                <td>@workItem.Fields.SystemAssignedTo.UniqueName</td>
+                <td>
+                    <img style="width: auto; height: auto;" src="@workItem.Fields.SystemAssignedTo.ImageUrl" />
+                </td>
+            </tr>
+            <tr>
+                <td>Effort</td>
+                <td colspan="3">@workItem.Fields.MicrosoftVSTSSchedulingEffort</td>
+            </tr>
+            <tr>
+                <td>Priority</td>
+                <td colspan="3">@workItem.Fields.MicrosoftVSTSCommonPriority</td>
+            </tr>
+            <tr>
+                <td>Workitem type</td>
+                <td colspan="3">@workItem.Fields.SystemWorkItemType</td>
+            </tr>
+            <tr>
+                <td>Iteration path</td>
+                <td colspan="3">@workItem.Fields.SystemIterationPath</td>
+            </tr>
+        </tbody>
+    </table>
+}
