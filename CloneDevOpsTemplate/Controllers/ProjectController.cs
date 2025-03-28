@@ -59,9 +59,14 @@ public class ProjectController(IProjectService projectService, IIterationService
             return await CreateProject();
         }
 
-        // Query all the projects to fill out the combobox for the 'Create project' form
         Project templateProject = await _projectService.GetProjectAsync(templateProjectId) ?? new();
-        CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(newProjectName, description, templateProject.Capabilities.ProcessTemplate.TemplateTypeId, templateProject.Capabilities.Versioncontrol.SourceControlType, visibility) ?? new();
+        CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(
+            newProjectName,
+            description,
+            templateProject.Capabilities.ProcessTemplate.TemplateTypeId,
+            templateProject.Capabilities.Versioncontrol.SourceControlType,
+            visibility
+        ) ?? new();
 
         if (createProjectResponse.Message is not null)
         {
@@ -69,64 +74,89 @@ public class ProjectController(IProjectService projectService, IIterationService
             return await CreateProject();
         }
 
-        // Ping every 1 sec until the new project creation is 'done' (its sate is 'wellFormed')
-        Project project = new();
-        while (project.State != "wellFormed")
+        Project project = await WaitForProjectCreation(newProjectName);
+
+        await Task.WhenAll(
+            CloneIterations(templateProjectId, project.Id),
+            // TODO: CloneAreas
+            CloneTeamsAndBoards(templateProject, project),
+            // TODO: MapTeamIterations
+            CloneRepositories(templateProjectId, project.Id)
+        );
+
+        return RedirectToAction("Project", new { projectId = project.Id });
+    }
+
+    private async Task<Project> WaitForProjectCreation(string newProjectName)
+    {
+        var timeout = DateTime.UtcNow.AddMinutes(5);
+
+        while (DateTime.UtcNow < timeout)
         {
+            var project = await _projectService.GetProjectAsync(newProjectName);
+            if (project?.State == "wellFormed")
+            {
+                return project;
+            }
             await Task.Delay(1000);
-            project = await _projectService.GetProjectAsync(newProjectName) ?? new();
         }
 
-        // Clone the iterations from the template project
+        throw new TimeoutException("Project creation timed out.");
+    }
+
+    private async Task CloneIterations(Guid templateProjectId, Guid newProjectId)
+    {
         Iteration templateIterations = await _iterationService.GetIterationsAsync(templateProjectId) ?? new();
-        Iteration iterations = await _iterationService.CreateIterationAsync(project.Id, templateIterations);
-        await _iterationService.MoveIteration(project.Id, iterations.Children);
-        // TODO: Areas
+        Iteration iterations = await _iterationService.CreateIterationAsync(newProjectId, templateIterations);
+        await _iterationService.MoveIteration(newProjectId, iterations.Children);
+    }
 
-        Teams templateTeams = await _teamsService.GetTeamsAsync(templateProjectId) ?? new();
-        // TODO: TeamIterationMap
-        Dictionary<Guid, Guid> mapTeams = await _teamsService.CreateTeamFromTemplateAsync(project.Id, templateTeams.Value, templateProject.DefaultTeam.Id, project.DefaultTeam.Id);
+    private async Task CloneTeamsAndBoards(Project templateProject, Project project)
+    {
+        Teams templateTeams = await _teamsService.GetTeamsAsync(templateProject.Id) ?? new();
+        Dictionary<Guid, Guid> mapTeams = await _teamsService.CreateTeamFromTemplateAsync(
+            project.Id,
+            templateTeams.Value,
+            templateProject.DefaultTeam.Id,
+            project.DefaultTeam.Id
+        );
 
-        // Loop through the teams in the template project
-        foreach (Guid templateTeamId in templateTeams.Value.Select(templateTeam => templateTeam.Id))
+        await Parallel.ForEachAsync(templateTeams.Value.Select(templateTeam => templateTeam.Id), async (templateTeamId, ct) =>
         {
             var projectTeamId = mapTeams.GetValueOrDefault(templateTeamId);
-            var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProjectId, templateTeamId) ?? new();
+            var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProject.Id, templateTeamId) ?? new();
             await _teamSettingsService.UpdateTeamSettings(project.Id, projectTeamId, templateTeamSettings);
 
             Boards projectBoards = await _boardService.GetBoardsAsync(project.Id, projectTeamId) ?? new();
-            // Clone the board columns from the template project
-            await _boardService.MoveBoardColumnsAsync(project.Id, projectTeamId, templateProjectId, templateTeamId, projectBoards);
+            await Task.WhenAll(
+                _boardService.MoveBoardColumnsAsync(project.Id, projectTeamId, templateProject.Id, templateTeamId, projectBoards),
+                _boardService.MoveBoardRowsAsync(project.Id, projectTeamId, templateProject.Id, templateTeamId, projectBoards),
+                _boardService.MoveCardSettingsAsync(project.Id, projectTeamId, templateProject.Id, templateTeamId, projectBoards),
+                _boardService.MoveCardStylesAsync(project.Id, projectTeamId, templateProject.Id, templateTeamId, projectBoards)
+            );
+        });
+    }
 
-            // Clone the board rows from the template project
-            await _boardService.MoveBoardRowsAsync(project.Id, projectTeamId, templateProjectId, templateTeamId, projectBoards);
-
-            // Clone the card settings from the template project
-            await _boardService.MoveCardSettingsAsync(project.Id, projectTeamId, templateProjectId, templateTeamId, projectBoards);
-
-            // Clone the card styles from the template project
-            await _boardService.MoveCardStylesAsync(project.Id, projectTeamId, templateProjectId, templateTeamId, projectBoards);
-        }
-
-        // Get default repositories
-        Repositories repositories = await _repositoryService.GetRepositoriesAsync(project.Id) ?? new();
-        // Get template repositories
+    private async Task CloneRepositories(Guid templateProjectId, Guid newProjectId)
+    {
+        Repositories repositories = await _repositoryService.GetRepositoriesAsync(newProjectId) ?? new();
         Repositories templateRepositories = await _repositoryService.GetRepositoriesAsync(templateProjectId) ?? new();
-        // Loop through the repositories in the template project
+
         foreach (Repository templateRepository in templateRepositories.Value)
         {
-            // Clone repository from the template project
-            Repository repository = await _repositoryService.CreateRepositoryAsync(project.Id, templateRepository.Name) ?? new();
-            ServiceModel serviceModel = await _serviceService.CreateServiceAsync(templateRepository.Name, templateRepository.RemoteUrl, templateRepository.Name, project.Id) ?? new();
-            await _repositoryService.CreateImportRequest(project.Id, repository.Id, templateRepository.RemoteUrl, serviceModel.Id);
-        }
-        // Loop through the default repositories
-        foreach (Repository repository in repositories.Value)
-        {
-            // Delete default repositories
-            await _repositoryService.DeleteRepositoryAsync(project.Id, repository.Id);
+            Repository repository = await _repositoryService.CreateRepositoryAsync(newProjectId, templateRepository.Name) ?? new();
+            ServiceModel serviceModel = await _serviceService.CreateServiceAsync(
+                templateRepository.Name,
+                templateRepository.RemoteUrl,
+                templateRepository.Name,
+                newProjectId
+            ) ?? new();
+            await _repositoryService.CreateImportRequest(newProjectId, repository.Id, templateRepository.RemoteUrl, serviceModel.Id);
         }
 
-        return RedirectToAction("Project", new { projectId = project.Id });
+        foreach (Repository repository in repositories.Value)
+        {
+            await _repositoryService.DeleteRepositoryAsync(newProjectId, repository.Id);
+        }
     }
 }
