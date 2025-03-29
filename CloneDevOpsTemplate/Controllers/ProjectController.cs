@@ -119,7 +119,7 @@ public class ProjectController(IProjectService projectService, IIterationService
         await _iterationService.MoveAreaAsync(projectId, areas.Children, "");
     }
 
-    private async Task CloneTeamsAndSettings(Project  templateProject, Project project)
+    private async Task CloneTeamsAndSettings(Project templateProject, Project project)
     {
         Teams templateTeams = await _teamsService.GetTeamsAsync(templateProject.Id) ?? new();
         // TODO: TeamIterationMap

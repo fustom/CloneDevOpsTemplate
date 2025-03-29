@@ -277,6 +277,7 @@ public class ProjectControllerTest
         var visibility = "Private";
         var templateProject = new Project
         {
+            Id = templateProjectId,
             Name = "OldName",
             Capabilities = new Capabilities
             {
