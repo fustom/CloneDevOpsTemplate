@@ -23,7 +23,7 @@ public class TeamSettingsService(IHttpClientFactory httpClientFactory) : ITeamSe
         return _client.GetFromJsonAsync<TeamFieldValues>($"{projectId}/{teamId}/_apis/work/teamsettings/teamfieldvalues");
     }
 
-    public Task UpdateTeamFieldValues(Guid projectId, Guid teamId, TeamFieldValues teamFieldValues)
+    public Task<HttpResponseMessage> UpdateTeamFieldValues(Guid projectId, Guid teamId, TeamFieldValues teamFieldValues)
     {
         return _client.PatchAsJsonAsync($"{projectId}/{teamId}/_apis/work/teamsettings/teamfieldvalues?api-version=7.1", teamFieldValues);
     }

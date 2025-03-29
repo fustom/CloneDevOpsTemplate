@@ -85,4 +85,5 @@ public class TeamFieldValues
 public class Values
 {
     public string Value { get; set; } = string.Empty;
+    public bool IncludeChildren { get; set; }
 }
