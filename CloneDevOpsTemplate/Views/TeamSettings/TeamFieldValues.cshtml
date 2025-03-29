@@ -1,0 +1,23 @@
+@model TeamFieldValues
+@{
+    ViewData["Title"] = "Team areas (TeamFieldValues)";
+}
+
+@Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+<table class="table table-striped">
+    <th class="table-primary" colspan="2">
+        <h1>Team areas (TeamFieldValues)</h1>
+    </th>
+    <tr>
+        <td>DefaultValue</td>
+        <td>@Model.DefaultValue</td>
+    </tr>
+    @foreach(var value in Model.Values)
+    {
+        <tr>
+            <td>Value</td>
+            <td>@value.Value</td>
+        </tr>
+    }
+</table>

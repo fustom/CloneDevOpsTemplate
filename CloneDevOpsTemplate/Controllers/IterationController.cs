@@ -10,6 +10,10 @@ public class IterationController(IIterationService iterationService) : Controlle
 
     public async Task<IActionResult> Iterations(Guid projectId)
     {
+        if (!ModelState.IsValid)
+        {
+            return View(new Iteration());
+        }
         Iteration iterations = await _iterationService.GetIterationsAsync(projectId) ?? new();
         return View(iterations);
     }
@@ -19,5 +23,15 @@ public class IterationController(IIterationService iterationService) : Controlle
     {
         await _iterationService.CreateIterationAsync(projectId, iteration);
         return RedirectToAction("Iterations", new { projectId });
+    }
+
+    public async Task<IActionResult> Areas(Guid projectId)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(new Iteration());
+        }
+        Iteration areas = await _iterationService.GetAreaAsync(projectId) ?? new();
+        return View(areas);
     }
 }

@@ -57,4 +57,62 @@ public class TeamSettingsControllerTest
         var model = Assert.IsType<TeamSettings>(viewResult.Model);
         Assert.NotNull(model);
     }
+
+    [Fact]
+    public async Task TeamFieldValues_ReturnsViewResult_WithTeamFieldValues()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var teamId = Guid.NewGuid();
+        var teamFieldValues = new TeamFieldValues { DefaultValue = "Field1", Values = [new Values { Value = "Value1" }, new Values { Value = "Value2" }] };
+
+        _mockTeamSettingsService
+            .Setup(service => service.GetTeamFieldValues(projectId, teamId))
+            .ReturnsAsync(teamFieldValues);
+
+        // Act
+        var result = await _controller.TeamFieldValues(projectId, teamId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<TeamFieldValues>(viewResult.Model);
+        Assert.Equal(teamFieldValues, model);
+    }
+
+    [Fact]
+    public async Task TeamFieldValues_ReturnsViewResult_WithNewTeamFieldValues_WhenServiceReturnsNull()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var teamId = Guid.NewGuid();
+
+        _mockTeamSettingsService
+            .Setup(service => service.GetTeamFieldValues(projectId, teamId))
+            .ReturnsAsync((TeamFieldValues?)null);
+
+        // Act
+        var result = await _controller.TeamFieldValues(projectId, teamId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<TeamFieldValues>(viewResult.Model);
+        Assert.NotNull(model);
+    }
+
+    [Fact]
+    public async Task TeamFieldValues_ReturnsViewResult_WithNewTeamFieldValues_WhenModelStateIsInvalid()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var teamId = Guid.NewGuid();
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.TeamFieldValues(projectId, teamId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<TeamFieldValues>(viewResult.Model);
+        Assert.NotNull(model);
+    }
 }

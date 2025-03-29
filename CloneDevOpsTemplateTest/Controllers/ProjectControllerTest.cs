@@ -150,6 +150,8 @@ public class ProjectControllerTest
 
         _mockIterationService.Setup(service => service.GetIterationsAsync(templateProjectId)).ReturnsAsync(iterations);
         _mockIterationService.Setup(service => service.CreateIterationAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
+        _mockIterationService.Setup(service => service.GetAreaAsync(templateProjectId)).ReturnsAsync(iterations);
+        _mockIterationService.Setup(service => service.CreateAreaAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
 
         // Act
         var result = await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
@@ -252,6 +254,8 @@ public class ProjectControllerTest
 
         _mockRepositoryService.Setup(service => service.GetRepositoriesAsync(newProject.Id)).ReturnsAsync(repositories);
         _mockRepositoryService.Setup(service => service.GetRepositoriesAsync(templateProjectId)).ReturnsAsync(templateRepositories);
+        _mockIterationService.Setup(service => service.GetAreaAsync(templateProjectId)).ReturnsAsync(iterations);
+        _mockIterationService.Setup(service => service.CreateAreaAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
 
         // Act
         var result = await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
@@ -273,6 +277,7 @@ public class ProjectControllerTest
         var visibility = "Private";
         var templateProject = new Project
         {
+            Name = "OldName",
             Capabilities = new Capabilities
             {
                 ProcessTemplate = new ProcessTemplate { TemplateTypeId = "TemplateId" },
@@ -325,6 +330,8 @@ public class ProjectControllerTest
 
         _mockIterationService.Setup(service => service.GetIterationsAsync(templateProjectId)).ReturnsAsync(iterations);
         _mockIterationService.Setup(service => service.CreateIterationAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
+        _mockIterationService.Setup(service => service.GetAreaAsync(templateProjectId)).ReturnsAsync(iterations);
+        _mockIterationService.Setup(service => service.CreateAreaAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
 
         _mockTeamsService.Setup(service => service.GetTeamsAsync(templateProjectId)).ReturnsAsync(templateTeams);
         _mockTeamsService.Setup(service => service.CreateTeamFromTemplateAsync(newProject.Id, templateTeams.Value, templateProject.DefaultTeam.Id, newProject.DefaultTeam.Id)).ReturnsAsync(mapTeams);
