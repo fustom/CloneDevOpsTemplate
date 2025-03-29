@@ -1,9 +1,9 @@
 @model Iteration
 @{
-    ViewData["Title"] = "Iterations";
+    ViewData["Title"] = "Areas";
 }
 
-<h1>Iterations</h1>
+<h1>Areas</h1>
 
 @Html.ValidationSummary(false, "", new { @class = "text-danger" })
 @{ await Html.RenderPartialAsync("_ShowIteration", Model); }
