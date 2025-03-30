@@ -244,7 +244,7 @@ public class CloneManagerTest
             .Returns(Task.FromResult(new HttpResponseMessage()));
 
         // Act
-        await _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, teamSettings);
+        await _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, teamSettings.BacklogIteration.Id);
 
         // Assert
         _mockTeamSettingsService.Verify(s => s.GetTeamSettings(templateProjectId, templateTeamId), Times.Once);

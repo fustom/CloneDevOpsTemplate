@@ -11,6 +11,7 @@ public interface ICloneManager
     Task CloneRepositoriesAsync(Guid templateProjectId, Guid projectId);
     Task CloneTeamFieldValuesAsync(Project templateProject, Project project, Guid templateTeamId, Guid projectTeamId);
     Task<Dictionary<Guid, Guid>> CloneTeamsAsync(Project templateProject, Project project);
+    Task<Dictionary<Guid, Guid>> CloneTeamsAsync(Guid templateProjectId, Guid projectId);
     Task CloneTeamsAndSettingsAndBoardsAsync(Project templateProject, Project project);
-    Task CloneTeamSettingsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId, TeamSettings teamSettings);
+    Task CloneTeamSettingsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId, Guid? backlogIterationId);
 }

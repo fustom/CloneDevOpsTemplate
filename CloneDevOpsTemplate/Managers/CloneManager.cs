@@ -66,7 +66,7 @@ public class CloneManager(IProjectService projectService, IIterationService iter
 
         foreach (var mappedTeam in mapTeams)
         {
-            await CloneTeamSettingsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value, teamSettings);
+            await CloneTeamSettingsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value, teamSettings.BacklogIteration?.Id);
             await CloneTeamFieldValuesAsync(templateProject, project, mappedTeam.Key, mappedTeam.Value);
             await CloneBoardsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value);
         }
@@ -97,12 +97,20 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         return await _teamsService.CreateTeamFromTemplateAsync(project.Id, templateTeams.Value, templateProject.DefaultTeam.Id, project.DefaultTeam.Id);
     }
 
-    public async Task CloneTeamSettingsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId, TeamSettings teamSettings)
+    public async Task<Dictionary<Guid, Guid>> CloneTeamsAsync(Guid templateProjectId, Guid projectId)
+    {
+        Project templateProject = await _projectService.GetProjectAsync(templateProjectId) ?? new();
+        Project project = await _projectService.GetProjectAsync(projectId) ?? new();
+
+        return await CloneTeamsAsync(templateProject, project);
+    }
+
+    public async Task CloneTeamSettingsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId, Guid? backlogIterationId)
     {
         var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProjectId, templateTeamId) ?? new();
         PatchTeamSettings newTeamSettings = new()
         {
-            BacklogIteration = teamSettings.BacklogIteration?.Id,
+            BacklogIteration = backlogIterationId,
             BacklogVisibilities = templateTeamSettings.BacklogVisibilities,
             BugsBehavior = templateTeamSettings.BugsBehavior,
             DefaultIteration = templateTeamSettings.DefaultIteration?.Id,
