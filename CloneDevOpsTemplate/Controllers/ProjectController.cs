@@ -55,11 +55,11 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             return await CreateProject();
         }
 
-        (Project project, Project templateProject, string? message) = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility);
+        (Project project, Project templateProject, string? errorMessage) = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility);
 
-        if (message is not null)
+        if (errorMessage is not null)
         {
-            ModelState.AddModelError("ErrorMessage", message);
+            ModelState.AddModelError("ErrorMessage", errorMessage);
             return await CreateProject();
         }
 
