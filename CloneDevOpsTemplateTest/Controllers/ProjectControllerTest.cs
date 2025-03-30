@@ -1,5 +1,6 @@
 using CloneDevOpsTemplate.Controllers;
 using CloneDevOpsTemplate.IServices;
+using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -9,32 +10,17 @@ namespace CloneDevOpsTemplateTest.Controllers;
 public class ProjectControllerTest
 {
     private readonly Mock<IProjectService> _mockProjectService;
-    private readonly Mock<IIterationService> _mockIterationService;
-    private readonly Mock<ITeamsService> _mockTeamsService;
-    private readonly Mock<ITeamSettingsService> _mockTeamSettingsService;
-    private readonly Mock<IBoardService> _mockBoardService;
-    private readonly Mock<IRepositoryService> _mockRepositoryService;
-    private readonly Mock<IServiceService> _mockServiceService;
+    private readonly Mock<ICloneManager> _mockCloneManager;
     private readonly ProjectController _controller;
 
     public ProjectControllerTest()
     {
         _mockProjectService = new Mock<IProjectService>();
-        _mockIterationService = new Mock<IIterationService>();
-        _mockTeamsService = new Mock<ITeamsService>();
-        _mockTeamSettingsService = new Mock<ITeamSettingsService>();
-        _mockBoardService = new Mock<IBoardService>();
-        _mockRepositoryService = new Mock<IRepositoryService>();
-        _mockServiceService = new Mock<IServiceService>();
+        _mockCloneManager = new Mock<ICloneManager>();
 
         _controller = new ProjectController(
             _mockProjectService.Object,
-            _mockIterationService.Object,
-            _mockTeamsService.Object,
-            _mockTeamSettingsService.Object,
-            _mockBoardService.Object,
-            _mockRepositoryService.Object,
-            _mockServiceService.Object
+            _mockCloneManager.Object
         );
     }
 
@@ -122,48 +108,6 @@ public class ProjectControllerTest
     }
 
     [Fact]
-    public async Task CreateProject_ValidData_RedirectsToProject()
-    {
-        // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var newProjectName = "New Project";
-        var description = "Description";
-        var visibility = "Private";
-        var templateProject = new Project
-        {
-            Capabilities = new Capabilities
-            {
-                ProcessTemplate = new ProcessTemplate { TemplateTypeId = "TemplateId" },
-                Versioncontrol = new VersionControl { SourceControlType = "Git" }
-            }
-        };
-        var createProjectResponse = new CreateProjectResponse();
-        var newProject = new Project { Id = Guid.NewGuid(), State = "wellFormed" };
-        var iterations = new Iteration();
-        var createdIterations = new Iteration();
-
-        _mockProjectService.Setup(service => service.GetProjectAsync(templateProjectId)).ReturnsAsync(templateProject);
-        _mockProjectService.Setup(service => service.CreateProjectAsync(newProjectName, description, templateProject.Capabilities.ProcessTemplate.TemplateTypeId, templateProject.Capabilities.Versioncontrol.SourceControlType, visibility)).ReturnsAsync(createProjectResponse);
-        _mockProjectService.SetupSequence(service => service.GetProjectAsync(newProjectName))
-            .ReturnsAsync(new Project { State = "notStarted" })
-            .ReturnsAsync(newProject);
-
-        _mockIterationService.Setup(service => service.GetIterationsAsync(templateProjectId)).ReturnsAsync(iterations);
-        _mockIterationService.Setup(service => service.CreateIterationAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
-        _mockIterationService.Setup(service => service.GetAreaAsync(templateProjectId)).ReturnsAsync(iterations);
-        _mockIterationService.Setup(service => service.CreateAreaAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
-
-        // Act
-        var result = await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
-
-        // Assert
-        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal("Project", redirectResult.ActionName);
-        Assert.NotNull(redirectResult.RouteValues);
-        Assert.Equal(newProject.Id, redirectResult.RouteValues["projectId"]);
-    }
-
-    [Fact]
     public async Task ProjectProperties_InvalidModelState_ReturnsBadRequest()
     {
         // Arrange
@@ -193,174 +137,72 @@ public class ProjectControllerTest
     }
 
     [Fact]
-    public async Task CreateProject_CreateProjectResponseWithError_ReturnsCreateProjectView()
+    public async Task CreateProject_ValidInput_RedirectsToProject()
     {
         // Arrange
         var templateProjectId = Guid.NewGuid();
         var newProjectName = "New Project";
         var description = "Description";
         var visibility = "Private";
-        var templateProject = new Project
-        {
-            Capabilities = new Capabilities
-            {
-                ProcessTemplate = new ProcessTemplate { TemplateTypeId = "TemplateId" },
-                Versioncontrol = new VersionControl { SourceControlType = "Git" }
-            }
-        };
-        var createProjectResponse = new CreateProjectResponse { Message = "Error creating project" };
 
-        _mockProjectService.Setup(service => service.GetProjectAsync(templateProjectId)).ReturnsAsync(templateProject);
-        _mockProjectService.Setup(service => service.CreateProjectAsync(newProjectName, description, templateProject.Capabilities.ProcessTemplate.TemplateTypeId, templateProject.Capabilities.Versioncontrol.SourceControlType, visibility)).ReturnsAsync(createProjectResponse);
+        var project = new Project { Id = Guid.NewGuid() };
+        var templateProject = new Project();
+        string? message = null;
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
+            .ReturnsAsync(Tuple.Create(project, templateProject, message));
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneIterationsAsync(templateProjectId, project.Id))
+            .Returns(Task.CompletedTask);
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneAreasAsync(templateProjectId, project.Id))
+            .Returns(Task.CompletedTask);
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneTeamsAndSettingsAndBoardsAsync(templateProject, project))
+            .Returns(Task.CompletedTask);
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneRepositoriesAsync(templateProjectId, project.Id))
+            .Returns(Task.CompletedTask);
 
         // Act
-        await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
+        var result = await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
 
         // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Project", redirectResult.ActionName);
+        Assert.NotNull(redirectResult.RouteValues);
+        Assert.Equal(project.Id, redirectResult.RouteValues["projectId"]);
+    }
+
+    [Fact]
+    public async Task CreateProject_CloneProjectReturnsMessage_ReturnsCreateProjectViewWithError()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var newProjectName = "New Project";
+        var description = "Description";
+        var visibility = "Private";
+
+        var project = new Project();
+        var templateProject = new Project();
+        string? message = "Error cloning project";
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
+            .ReturnsAsync(Tuple.Create(project, templateProject, (string?)message));
+
+        // Act
+        var result = await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Empty(viewResult.Model as ProjectBase[] ?? []);
         Assert.True(_controller.ModelState.ContainsKey("ErrorMessage"));
-    }
-
-    [Fact]
-    public async Task CreateProject_ClonesIterationsAndRepositories()
-    {
-        // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var newProjectName = "New Project";
-        var description = "Description";
-        var visibility = "Private";
-        var templateProject = new Project
-        {
-            Capabilities = new Capabilities
-            {
-                ProcessTemplate = new ProcessTemplate { TemplateTypeId = "TemplateId" },
-                Versioncontrol = new VersionControl { SourceControlType = "Git" }
-            }
-        };
-        var createProjectResponse = new CreateProjectResponse();
-        var newProject = new Project { Id = Guid.NewGuid(), State = "wellFormed" };
-        var iterations = new Iteration();
-        var createdIterations = new Iteration();
-        var repositories = new Repositories { Value = [new Repository { Id = Guid.NewGuid() }] };
-        var templateRepositories = new Repositories { Value = [new Repository { Name = "TemplateRepo", RemoteUrl = "http://example.com" }] };
-
-        _mockProjectService.Setup(service => service.GetProjectAsync(templateProjectId)).ReturnsAsync(templateProject);
-        _mockProjectService.Setup(service => service.CreateProjectAsync(newProjectName, description, templateProject.Capabilities.ProcessTemplate.TemplateTypeId, templateProject.Capabilities.Versioncontrol.SourceControlType, visibility)).ReturnsAsync(createProjectResponse);
-        _mockProjectService.SetupSequence(service => service.GetProjectAsync(newProjectName))
-            .ReturnsAsync(new Project { State = "notStarted" })
-            .ReturnsAsync(newProject);
-
-        _mockIterationService.Setup(service => service.GetIterationsAsync(templateProjectId)).ReturnsAsync(iterations);
-        _mockIterationService.Setup(service => service.CreateIterationAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
-
-        _mockRepositoryService.Setup(service => service.GetRepositoriesAsync(newProject.Id)).ReturnsAsync(repositories);
-        _mockRepositoryService.Setup(service => service.GetRepositoriesAsync(templateProjectId)).ReturnsAsync(templateRepositories);
-        _mockIterationService.Setup(service => service.GetAreaAsync(templateProjectId)).ReturnsAsync(iterations);
-        _mockIterationService.Setup(service => service.CreateAreaAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
-
-        // Act
-        var result = await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
-
-        // Assert
-        _mockIterationService.Verify(service => service.CreateIterationAsync(newProject.Id, iterations), Times.Once);
-        _mockRepositoryService.Verify(service => service.CreateRepositoryAsync(newProject.Id, "TemplateRepo"), Times.Once);
-        _mockRepositoryService.Verify(service => service.DeleteRepositoryAsync(newProject.Id, repositories.Value[0].Id), Times.Once);
-        Assert.IsType<RedirectToActionResult>(result);
-    }
-
-    [Fact]
-    public async Task CreateProject_ClonesTeamsAndUpdatesTeamSettings()
-    {
-        // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var newProjectName = "New Project";
-        var description = "Description";
-        var visibility = "Private";
-        var templateProject = new Project
-        {
-            Id = templateProjectId,
-            Name = "OldName",
-            Capabilities = new Capabilities
-            {
-                ProcessTemplate = new ProcessTemplate { TemplateTypeId = "TemplateId" },
-                Versioncontrol = new VersionControl { SourceControlType = "Git" }
-            },
-            DefaultTeam = new Team { Id = Guid.NewGuid() }
-        };
-        var createProjectResponse = new CreateProjectResponse();
-        var newProject = new Project
-        {
-            Id = Guid.NewGuid(),
-            State = "wellFormed",
-            DefaultTeam = new Team { Id = Guid.NewGuid() }
-        };
-        var iterations = new Iteration();
-        var createdIterations = new Iteration();
-        var templateTeams = new Teams
-        {
-            Value =
-            [
-                new Team { Id = Guid.NewGuid() },
-                new Team { Id = Guid.NewGuid() }
-            ]
-        };
-        var mapTeams = new Dictionary<Guid, Guid>
-        {
-            { templateTeams.Value[0].Id, Guid.NewGuid() },
-            { templateTeams.Value[1].Id, Guid.NewGuid() }
-        };
-        TeamSettings teamSettings = new()
-        {
-            BacklogIteration = new()
-            {
-                Id = Guid.NewGuid()
-            }
-        };
-        TeamSettings templateTeamSettings = new()
-        {
-            DefaultIteration = new()
-            {
-                Id = Guid.NewGuid()
-            }
-        };
-
-        _mockProjectService.Setup(service => service.GetProjectAsync(templateProjectId)).ReturnsAsync(templateProject);
-        _mockProjectService.Setup(service => service.CreateProjectAsync(newProjectName, description, templateProject.Capabilities.ProcessTemplate.TemplateTypeId, templateProject.Capabilities.Versioncontrol.SourceControlType, visibility)).ReturnsAsync(createProjectResponse);
-        _mockProjectService.SetupSequence(service => service.GetProjectAsync(newProjectName))
-            .ReturnsAsync(new Project { State = "notStarted" })
-            .ReturnsAsync(newProject);
-
-        _mockIterationService.Setup(service => service.GetIterationsAsync(templateProjectId)).ReturnsAsync(iterations);
-        _mockIterationService.Setup(service => service.CreateIterationAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
-        _mockIterationService.Setup(service => service.GetAreaAsync(templateProjectId)).ReturnsAsync(iterations);
-        _mockIterationService.Setup(service => service.CreateAreaAsync(newProject.Id, iterations)).ReturnsAsync(createdIterations);
-
-        _mockTeamsService.Setup(service => service.GetTeamsAsync(templateProjectId)).ReturnsAsync(templateTeams);
-        _mockTeamsService.Setup(service => service.CreateTeamFromTemplateAsync(newProject.Id, templateTeams.Value, templateProject.DefaultTeam.Id, newProject.DefaultTeam.Id)).ReturnsAsync(mapTeams);
-        _mockTeamSettingsService.Setup(service => service.GetTeamSettings(newProject.Id, newProject.DefaultTeam.Id)).ReturnsAsync(teamSettings);
-        _mockTeamSettingsService.Setup(service => service.GetTeamSettings(templateProjectId, It.IsAny<Guid>())).ReturnsAsync(templateTeamSettings);
-
-        // Act
-        var result = await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
-
-        // Assert
-        foreach (var templateTeamId in templateTeams.Value.Select(t => t.Id))
-        {
-            var projectTeamId = mapTeams[templateTeamId];
-            _mockTeamSettingsService.Verify(service => service.UpdateTeamSettings(newProject.Id, projectTeamId, It.Is<PatchTeamSettings>(settings =>
-                settings.BacklogIteration == teamSettings.BacklogIteration.Id &&
-                settings.BacklogVisibilities == templateTeamSettings.BacklogVisibilities &&
-                settings.BugsBehavior == templateTeamSettings.BugsBehavior &&
-                settings.DefaultIteration == templateTeamSettings.DefaultIteration.Id &&
-                settings.DefaultIterationMacro == templateTeamSettings.DefaultIterationMacro &&
-                settings.WorkingDays == templateTeamSettings.WorkingDays
-            )), Times.Once);
-
-            _mockBoardService.Verify(service => service.MoveBoardColumnsAsync(newProject.Id, projectTeamId, templateProjectId, templateTeamId, It.IsAny<Boards>()), Times.Once);
-            _mockBoardService.Verify(service => service.MoveBoardRowsAsync(newProject.Id, projectTeamId, templateProjectId, templateTeamId, It.IsAny<Boards>()), Times.Once);
-            _mockBoardService.Verify(service => service.MoveCardSettingsAsync(newProject.Id, projectTeamId, templateProjectId, templateTeamId, It.IsAny<Boards>()), Times.Once);
-            _mockBoardService.Verify(service => service.MoveCardStylesAsync(newProject.Id, projectTeamId, templateProjectId, templateTeamId, It.IsAny<Boards>()), Times.Once);
-        }
-
-        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(message, _controller.ModelState["ErrorMessage"]?.Errors?.FirstOrDefault()?.ErrorMessage);
     }
 }
