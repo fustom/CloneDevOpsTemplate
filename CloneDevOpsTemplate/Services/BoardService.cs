@@ -55,7 +55,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
                     }
                     else
                     {
-                        templateBoardColumn.Id = string.Empty;
+                        templateBoardColumn.Id = null;
                     }
                 }
 
@@ -72,7 +72,6 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
     {
         return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/rows?api-version=7.1", boardRows.Value, new JsonSerializerOptions
         {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         });
     }
