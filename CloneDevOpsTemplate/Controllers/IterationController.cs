@@ -21,18 +21,6 @@ public class IterationController(IIterationService iterationService) : Controlle
         return View(iterations);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateIteration(Guid projectId, CreateIterationRequest iteration)
-    {
-        if (!ModelState.IsValid)
-        {
-            return await Iterations(projectId);
-        }
-        
-        await _iterationService.CreateIterationAsync(projectId, iteration);
-        return RedirectToAction("Iterations", new { projectId });
-    }
-
     public async Task<IActionResult> Areas(Guid projectId)
     {
         Iteration areas = new();
