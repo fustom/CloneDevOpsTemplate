@@ -53,7 +53,7 @@ public class StateMappings
 
 public class BoardColumn
 {
-    public string Id { get; set; } = string.Empty;
+    public Guid? Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public int ItemLimit { get; set; }
     public StateMappings StateMappings { get; set; } = new();
@@ -70,9 +70,9 @@ public class BoardColumns
 
 public class BoardRow
 {
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Color { get; set; } = string.Empty;
+    public Guid Id { get; set; }
+    public string? Name { get; set; }
+    public string? Color { get; set; }
 }
 
 public class BoardRows

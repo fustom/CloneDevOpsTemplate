@@ -221,16 +221,16 @@ public class BoardServiceTest
         {
             Value =
             [
-                new BoardColumn { Id = "templateColumnId1", ColumnType = BoardColumnType.Incoming },
-                new BoardColumn { Id = "templateColumnId2", ColumnType = BoardColumnType.Outgoing }
+                new BoardColumn { Id = Guid.NewGuid(), ColumnType = BoardColumnType.Incoming },
+                new BoardColumn { Id = Guid.NewGuid(), ColumnType = BoardColumnType.Outgoing }
             ]
         };
         var currentBoardColumns = new BoardColumns
         {
             Value =
             [
-                new BoardColumn { Id = "currentColumnId1", ColumnType = BoardColumnType.Incoming },
-                new BoardColumn { Id = "currentColumnId2", ColumnType = BoardColumnType.Outgoing }
+                new BoardColumn { Id = Guid.NewGuid(), ColumnType = BoardColumnType.Incoming },
+                new BoardColumn { Id = Guid.NewGuid(), ColumnType = BoardColumnType.Outgoing }
             ]
         };
 
@@ -311,8 +311,8 @@ public class BoardServiceTest
         {
             Value =
             [
-                new BoardRow { Id = "templateRowId1" },
-            new BoardRow { Id = "templateRowId2" }
+                new BoardRow { Id = Guid.NewGuid() },
+                new BoardRow { Id = Guid.NewGuid() }
             ]
         };
 

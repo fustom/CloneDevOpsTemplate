@@ -39,7 +39,7 @@ public class BoardsControllerTest
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
         var boardId = Guid.NewGuid();
-        var boardRowId = "myBoardRow";
+        var boardRowId = Guid.NewGuid();
 
         var mockBoards = new Boards
         {
