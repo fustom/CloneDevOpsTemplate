@@ -12,6 +12,6 @@
     @Html.DropDownList("templateProjectId", new SelectList(Model, "Id", "Name"), "Select a project", new { @class = "form-select form-control" })
     @Html.TextBox("newProjectName", "My New Project", new { @class = "form-text form-control" })
     @Html.TextBox("description", "My New Project Description", new { @class = "form-text form-control" })
-    @Html.DropDownList("visibility", new SelectList(new List<string> { "private", "public" }), "Select a visibility", new { @class = "form-select form-control form-text" })
+    @Html.DropDownList("visibility", new SelectList(Enum.GetNames<Visibility>()), new { @class = "form-select form-control form-text" })
     <button type="submit" class="btn btn-primary form-button form-text">Create</button>
 }

@@ -100,7 +100,7 @@ public class ProjectControllerTest
         _controller.ModelState.AddModelError("Error", "Invalid model state");
 
         // Act
-        var result = await _controller.CreateProject(Guid.NewGuid(), "New Project", "Description", "Private");
+        var result = await _controller.CreateProject(Guid.NewGuid(), "New Project", "Description", Visibility.Private);
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
@@ -143,7 +143,7 @@ public class ProjectControllerTest
         var templateProjectId = Guid.NewGuid();
         var newProjectName = "New Project";
         var description = "Description";
-        var visibility = "Private";
+        var visibility = Visibility.Private;
 
         var project = new Project { Id = Guid.NewGuid() };
         var templateProject = new Project();
@@ -186,7 +186,7 @@ public class ProjectControllerTest
         var templateProjectId = Guid.NewGuid();
         var newProjectName = "New Project";
         var description = "Description";
-        var visibility = "Private";
+        var visibility = Visibility.Private;
 
         var project = new Project();
         var templateProject = new Project();

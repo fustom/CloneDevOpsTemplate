@@ -44,7 +44,7 @@ public class CloneManagerTest
         var templateProjectId = Guid.NewGuid();
         var newProjectName = "New Project";
         var description = "New Project Description";
-        var visibility = "private";
+        var visibility = Visibility.Private;
 
         var templateProject = new Project
         {
