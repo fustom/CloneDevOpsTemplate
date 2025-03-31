@@ -14,7 +14,7 @@ public class ProjectBase
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
-    public string State { get; set; } = string.Empty;
+    public ProjectState State { get; set; }
     public int Revision { get; set; }
     public Visibility Visibility { get; set; }
     public string LastUpdateTime { get; set; } = string.Empty;
@@ -50,4 +50,16 @@ public enum Visibility
 {
     Private,
     Public
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter<ProjectState>))]
+public enum ProjectState
+{
+    All,
+    CreatePending,
+    Deleted,
+    Deleting,
+    New,
+    Unchanged,
+    WellFormed
 }

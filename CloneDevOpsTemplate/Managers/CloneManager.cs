@@ -36,7 +36,7 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         {
             await Task.Delay(1000);
             var project = await _projectService.GetProjectAsync(newProjectName);
-            if (project?.State == "wellFormed")
+            if (project?.State == ProjectState.WellFormed)
             {
                 return project;
             }

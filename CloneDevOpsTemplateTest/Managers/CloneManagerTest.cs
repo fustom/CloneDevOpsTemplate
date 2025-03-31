@@ -56,7 +56,7 @@ public class CloneManagerTest
         };
 
         var createProjectResponse = new CreateProjectResponse { Message = "Project created successfully" };
-        var newProject = new Project { State = "wellFormed" };
+        var newProject = new Project { State = ProjectState.WellFormed };
 
         _mockProjectService.Setup(s => s.GetProjectAsync(templateProjectId)).ReturnsAsync(templateProject);
         _mockProjectService.Setup(s => s.CreateProjectAsync(newProjectName, description, "template-id", "Git", visibility))
