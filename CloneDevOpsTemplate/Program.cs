@@ -1,5 +1,6 @@
 using CloneDevOpsTemplate.Constants;
 using CloneDevOpsTemplate.IServices;
+using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.MessageHandlers;
 using CloneDevOpsTemplate.Middlewares;
 using CloneDevOpsTemplate.Services;
@@ -21,6 +22,7 @@ builder.Services.AddScoped<ITeamSettingsService, TeamSettingsService>();
 builder.Services.AddScoped<IRepositoryService, RepositoryService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<IWorkItemService, WorkItemService>();
+builder.Services.AddScoped<ICloneManager, CloneManager>();
 
 builder.Services.AddSession(options =>
 {
