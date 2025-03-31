@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CloneDevOpsTemplate.Models;
 
 public class CreateProject
@@ -11,6 +13,17 @@ public class CreateProject
 public class CreateProjectResponse : ErrorResponse
 {
     public Guid Id { get; set; }
-    public string Status { get; set; } = string.Empty;
+    public OperationStatus Status { get; set; }
     public string Url { get; set; } = string.Empty;
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter<OperationStatus>))]
+public enum OperationStatus
+{
+    Cancelled,
+    Failed,
+    InProgress,
+    NotSet,
+    Queued,
+    Succeeded
 }
