@@ -131,7 +131,7 @@ public class ProjectServiceTest
         var description = "Project Description";
         var processTemplateType = "TemplateType";
         var sourceControlType = "Git";
-        var visibility = "private";
+        var visibility = Visibility.Private;
         var expectedResponse = new CreateProjectResponse
         {
             Id = Guid.NewGuid(),

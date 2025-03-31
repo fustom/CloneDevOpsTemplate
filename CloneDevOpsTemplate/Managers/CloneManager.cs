@@ -13,7 +13,7 @@ public class CloneManager(IProjectService projectService, IIterationService iter
     private readonly IRepositoryService _repositoryService = repositoryService;
     private readonly IServiceService _serviceService = serviceService;
 
-    public async Task<Tuple<Project, Project, string?>> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, string visibility)
+    public async Task<Tuple<Project, Project, string?>> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility)
     {
         Project templateProject = await _projectService.GetProjectAsync(templateProjectId) ?? new();
         CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(

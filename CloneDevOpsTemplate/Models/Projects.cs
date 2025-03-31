@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CloneDevOpsTemplate.Models;
 
 public class Projects
@@ -14,7 +16,7 @@ public class ProjectBase
     public string Url { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public int Revision { get; set; }
-    public string Visibility { get; set; } = string.Empty;
+    public Visibility Visibility { get; set; }
     public string LastUpdateTime { get; set; } = string.Empty;
 }
 
@@ -41,4 +43,11 @@ public class ProcessTemplate
 {
     public string? TemplateName { get; set; }
     public string TemplateTypeId { get; set; } = string.Empty;
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter<Visibility>))]
+public enum Visibility
+{
+    Private,
+    Public
 }
