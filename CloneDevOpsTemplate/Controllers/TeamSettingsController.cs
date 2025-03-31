@@ -10,17 +10,27 @@ public class TeamSettingsController(ITeamSettingsService teamSettingsService) : 
 
     public async Task<IActionResult> TeamSettings(Guid projectId, Guid teamId)
     {
-        TeamSettings teamSettings = await _teamSettingsService.GetTeamSettings(projectId, teamId) ?? new TeamSettings();
+        TeamSettings teamSettings = new();
+
+        if (!ModelState.IsValid)
+        {
+            return View(teamSettings);
+        }
+
+        teamSettings = await _teamSettingsService.GetTeamSettings(projectId, teamId) ?? new TeamSettings();
         return View(teamSettings);
     }
 
     public async Task<IActionResult> TeamFieldValues(Guid projectId, Guid teamId)
     {
+        TeamFieldValues teamFieldValues = new();
+
         if (!ModelState.IsValid)
         {
-            return View(new TeamFieldValues());
+            return View(teamFieldValues);
         }
-        TeamFieldValues teamFieldValues = await _teamSettingsService.GetTeamFieldValues(projectId, teamId) ?? new();
+
+        teamFieldValues = await _teamSettingsService.GetTeamFieldValues(projectId, teamId) ?? new();
         return View(teamFieldValues);
     }
     

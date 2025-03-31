@@ -8,22 +8,28 @@ namespace CloneDevOpsTemplateTest.Controllers;
 
 public class ServiceControllerTest
 {
+    private readonly Mock<IServiceService> _mockRepositoryService;
+    private readonly ServiceController _controller;
+
+    public ServiceControllerTest()
+    {
+        _mockRepositoryService = new Mock<IServiceService>();
+        _controller = new ServiceController(_mockRepositoryService.Object);
+    }
+
     [Fact]
     public async Task ProjectServices_ReturnsViewWithServices()
     {
         // Arrange
-        var mockServiceService = new Mock<IServiceService>();
         var projectId = Guid.NewGuid();
         var servicesModel = new ServicesModel { Value = [] };
 
-        mockServiceService
+        _mockRepositoryService
             .Setup(service => service.GetServicesAsync(projectId))
             .ReturnsAsync(servicesModel);
 
-        var controller = new ServiceController(mockServiceService.Object);
-
         // Act
-        var result = await controller.ProjectServices(projectId);
+        var result = await _controller.ProjectServices(projectId);
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
@@ -35,22 +41,34 @@ public class ServiceControllerTest
     public async Task ProjectServices_ReturnsViewWithEmptyServices_WhenServiceReturnsNull()
     {
         // Arrange
-        var mockServiceService = new Mock<IServiceService>();
         var projectId = Guid.NewGuid();
 
-        mockServiceService
+        _mockRepositoryService
             .Setup(service => service.GetServicesAsync(projectId))
             .ReturnsAsync((ServicesModel?)null);
 
-        var controller = new ServiceController(mockServiceService.Object);
-
         // Act
-        var result = await controller.ProjectServices(projectId);
+        var result = await _controller.ProjectServices(projectId);
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal("Services", viewResult.ViewName);
         var viewModel = Assert.IsType<ServiceModel[]>(viewResult.Model);
         Assert.Empty(viewModel);
+    }
+
+    [Fact]
+    public async Task Projects_InvalidModelState_ReturnsDefaultView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.ProjectServices(Guid.NewGuid());
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("Services", viewResult.ViewName);
+        Assert.IsType<ServiceModel[]>(viewResult.Model);
     }
 }

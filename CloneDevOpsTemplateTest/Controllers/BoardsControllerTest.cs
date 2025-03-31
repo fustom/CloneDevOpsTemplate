@@ -38,7 +38,7 @@ public class BoardsControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "myBoard";
+        var boardId = Guid.NewGuid();
         var boardRowId = "myBoardRow";
 
         var mockBoards = new Boards
@@ -90,17 +90,17 @@ public class BoardsControllerTest
         _controller.ModelState.AddModelError("Error", "Invalid model state");
 
         // Act
-        var result = await _controller.CardSettings(Guid.NewGuid(), Guid.NewGuid(), "boardId");
+        var result = await _controller.CardSettings(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
         var model = Assert.IsType<Cards>(viewResult.Model);
-        Assert.Empty(model.Bug);
-        Assert.Empty(model.Epic);
-        Assert.Empty(model.Feature);
-        Assert.Empty(model.Issue);
-        Assert.Empty(model.ProductBacklogItem);
-        Assert.Empty(model.UserStory);
+        Assert.Null(model.Bug);
+        Assert.Null(model.Epic);
+        Assert.Null(model.Feature);
+        Assert.Null(model.Issue);
+        Assert.Null(model.ProductBacklogItem);
+        Assert.Null(model.UserStory);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class BoardsControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
 
         var mockCardSettings = new CardSettings
         {
@@ -140,6 +140,7 @@ public class BoardsControllerTest
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
         var model = Assert.IsType<Cards>(viewResult.Model);
+        Assert.NotNull(model.Bug);
         Assert.Equal(2, model.Bug.Length);
         Assert.Equal("bugCard1", model.Bug[0].FieldIdentifier);
         Assert.Equal("bugCard2", model.Bug[1].FieldIdentifier);
@@ -154,7 +155,7 @@ public class BoardsControllerTest
         _controller.ModelState.AddModelError("Error", "Invalid model state");
 
         // Act
-        var result = await _controller.CardStyles(Guid.NewGuid(), Guid.NewGuid(), "boardId");
+        var result = await _controller.CardStyles(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
@@ -169,7 +170,7 @@ public class BoardsControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
 
         var mockCardStyles = new CardStyles
         {

@@ -28,17 +28,17 @@ public class HomeController : Controller
     [HttpPost]
     public IActionResult Login(LoginModel loginModel)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            // update session with user credentials
-            HttpContext.Session.SetString(Const.SessionKeyOrganizationName, loginModel.OrganizationName);
-            HttpContext.Session.SetString(Const.SessionKeyAccessToken, loginModel.AccessToken);
-
-            return RedirectToAction("Projects", "Project");
+            ViewBag.LoginMessage = "Login failed. Please try again.";
+            return View("Index");
         }
 
-        ViewBag.LoginMessage = "Login failed. Please try again.";
-        return View("Index");
+        // update session with user credentials
+        HttpContext.Session.SetString(Const.SessionKeyOrganizationName, loginModel.OrganizationName);
+        HttpContext.Session.SetString(Const.SessionKeyAccessToken, loginModel.AccessToken);
+
+        return RedirectToAction("Projects", "Project");
     }
 
     public IActionResult Logout()

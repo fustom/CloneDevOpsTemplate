@@ -3,6 +3,8 @@
     ViewData["Title"] = "Project";
 }
 
+@Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
 <table class="table table-striped">
     <th class="table-primary" colspan="2">
         <h1>@Model.Name</h1>

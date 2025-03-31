@@ -30,7 +30,7 @@ public class BoardsController(IBoardService boardService) : Controller
         return View(boards.ToArray());
     }
 
-    public async Task<IActionResult> CardSettings(Guid projectId, Guid teamId, string boardId)
+    public async Task<IActionResult> CardSettings(Guid projectId, Guid teamId, Guid boardId)
     {
         CardSettings cardSettings = new();
 
@@ -43,7 +43,7 @@ public class BoardsController(IBoardService boardService) : Controller
         return View(cardSettings.Cards);
     }
 
-    public async Task<IActionResult> CardStyles(Guid projectId, Guid teamId, string boardId)
+    public async Task<IActionResult> CardStyles(Guid projectId, Guid teamId, Guid boardId)
     {
         CardStyles cardStyles = new();
 

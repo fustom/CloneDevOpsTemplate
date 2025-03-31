@@ -59,6 +59,23 @@ public class TeamSettingsControllerTest
     }
 
     [Fact]
+    public async Task TeamSettings_ReturnsViewResult_WithNewTeamFieldValues_WhenModelStateIsInvalid()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var teamId = Guid.NewGuid();
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.TeamSettings(projectId, teamId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<TeamSettings>(viewResult.Model);
+        Assert.NotNull(model);
+    }
+
+    [Fact]
     public async Task TeamFieldValues_ReturnsViewResult_WithTeamFieldValues()
     {
         // Arrange

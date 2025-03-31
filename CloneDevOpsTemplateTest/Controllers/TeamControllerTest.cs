@@ -18,6 +18,20 @@ public class TeamControllerTest
     }
 
     [Fact]
+    public async Task Teams_InvalidModelState_ReturnsDefaultView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.Teams();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<Team[]>(viewResult.Model);
+    }
+
+    [Fact]
     public async Task Teams_ReturnsViewWithTeams()
     {
         // Arrange
@@ -30,6 +44,20 @@ public class TeamControllerTest
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal(mockTeams.Value, viewResult.Model);
+    }
+
+    [Fact]
+    public async Task Team_InvalidModelState_ReturnsDefaultView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.Team(Guid.NewGuid(), Guid.NewGuid());
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<Team>(viewResult.Model);
     }
 
     [Fact]
@@ -50,6 +78,21 @@ public class TeamControllerTest
     }
 
     [Fact]
+    public async Task ProjectTeams_InvalidModelState_ReturnsDefaultView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.ProjectTeams(Guid.NewGuid());
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("Teams", viewResult.ViewName);
+        Assert.IsType<Team[]>(viewResult.Model);
+    }
+
+    [Fact]
     public async Task ProjectTeams_ReturnsViewWithTeams()
     {
         // Arrange
@@ -65,3 +108,4 @@ public class TeamControllerTest
         Assert.Equal(mockTeams.Value, viewResult.Model);
     }
 }
+
