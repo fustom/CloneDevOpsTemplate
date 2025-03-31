@@ -118,7 +118,7 @@ public class BoardService(IHttpClientFactory httpClientFactory) : IBoardService
 
     public Task<HttpResponseMessage> UpdateCardStylesAsync(Guid projectId, Guid teamId, string boardId, CardStyles cardStyle)
     {
-        return _client.PutAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardrulesettings?api-version=7.1", cardStyle, new JsonSerializerOptions
+        return _client.PatchAsJsonAsync($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardrulesettings?api-version=7.1", cardStyle, new JsonSerializerOptions
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
