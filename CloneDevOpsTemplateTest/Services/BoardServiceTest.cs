@@ -57,7 +57,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var board = new Board { Id = "boardId" };
+        var board = new Board { Id = Guid.NewGuid() };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -84,7 +84,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var boardColumns = new BoardColumns { Value = [] };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -112,7 +112,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var boardColumns = new BoardColumns { Value = [] };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -143,7 +143,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var boardRows = new BoardRows { Value = [] };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -171,7 +171,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var boardRows = new BoardRows { Value = [] };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -207,14 +207,14 @@ public class BoardServiceTest
         {
             Value =
             [
-                new BoardValue { Id = "projectBoardId", Name = "Board1" }
+                new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }
             ]
         };
         var templateBoards = new Boards
         {
             Value =
             [
-                new BoardValue { Id = "templateBoardId", Name = "Board1" }
+                new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }
             ]
         };
         var templateBoardColumns = new BoardColumns
@@ -297,14 +297,14 @@ public class BoardServiceTest
         {
             Value =
             [
-                new BoardValue { Id = "projectBoardId", Name = "Board1" }
+                new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }
             ]
         };
         var templateBoards = new Boards
         {
             Value =
             [
-                new BoardValue { Id = "templateBoardId", Name = "Board1" }
+                new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }
             ]
         };
         var templateBoardRows = new BoardRows
@@ -368,7 +368,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var cardsettings = new CardSettings();
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -395,7 +395,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -417,7 +417,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var cardSettings = new CardSettings { /* Initialize properties as needed */ };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -453,7 +453,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var cardSettings = new CardSettings { /* Initialize properties as needed */ };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -483,14 +483,14 @@ public class BoardServiceTest
         {
             Value =
             [
-                new BoardValue { Id = "projectBoardId", Name = "Board1" }
+                new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }
             ]
         };
         var templateBoards = new Boards
         {
             Value =
             [
-                new BoardValue { Id = "templateBoardId", Name = "Board1" }
+                new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }
             ]
         };
         var templateCardSettings = new CardSettings
@@ -558,7 +558,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var cardStyles = new CardStyles();
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -585,7 +585,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -607,7 +607,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -628,7 +628,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var cardStyles = new CardStyles { /* Initialize properties as needed */ };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -664,7 +664,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var cardStyles = new CardStyles { /* Initialize properties as needed */ };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -691,7 +691,7 @@ public class BoardServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var teamId = Guid.NewGuid();
-        var boardId = "boardId";
+        var boardId = Guid.NewGuid();
         var cardStyles = new CardStyles { /* Initialize properties as needed */ };
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -724,14 +724,14 @@ public class BoardServiceTest
         {
             Value =
             [
-                new BoardValue { Id = "projectBoardId", Name = "Board1" }
+                new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }
             ]
         };
         var templateBoards = new Boards
         {
             Value =
             [
-                new BoardValue { Id = "templateBoardId", Name = "Board1" }
+                new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }
             ]
         };
         var templateCardStyles = new CardStyles

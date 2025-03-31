@@ -11,17 +11,17 @@ public class CardItem
 public class Cards
 {
     [JsonPropertyName("Epic")]
-    public CardItem[] Epic { get; set; } = [];
+    public CardItem[]? Epic { get; set; }
     [JsonPropertyName("Feature")]
-    public CardItem[] Feature { get; set; } = [];
+    public CardItem[]? Feature { get; set; }
     [JsonPropertyName("Product Backlog Item")]
-    public CardItem[] ProductBacklogItem { get; set; } = [];
+    public CardItem[]? ProductBacklogItem { get; set; }
     [JsonPropertyName("User Story")]
-    public CardItem[] UserStory { get; set; } = [];
+    public CardItem[]? UserStory { get; set; }
     [JsonPropertyName("Bug")]
-    public CardItem[] Bug { get; set; } = [];
+    public CardItem[]? Bug { get; set; }
     [JsonPropertyName("Issue")]
-    public CardItem[] Issue { get; set; } = [];
+    public CardItem[]? Issue { get; set; }
 }
 
 public class CardSettings
