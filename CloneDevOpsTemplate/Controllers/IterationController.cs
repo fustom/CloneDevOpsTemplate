@@ -10,28 +10,39 @@ public class IterationController(IIterationService iterationService) : Controlle
 
     public async Task<IActionResult> Iterations(Guid projectId)
     {
+        Iteration iterations = new();
+
         if (!ModelState.IsValid)
         {
-            return View(new Iteration());
+            return View(iterations);
         }
-        Iteration iterations = await _iterationService.GetIterationsAsync(projectId) ?? new();
+
+        iterations = await _iterationService.GetIterationsAsync(projectId) ?? new();
         return View(iterations);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateIteration(Guid projectId, CreateIterationRequest iteration)
     {
+        if (!ModelState.IsValid)
+        {
+            return await Iterations(projectId);
+        }
+        
         await _iterationService.CreateIterationAsync(projectId, iteration);
         return RedirectToAction("Iterations", new { projectId });
     }
 
     public async Task<IActionResult> Areas(Guid projectId)
     {
+        Iteration areas = new();
+
         if (!ModelState.IsValid)
         {
-            return View(new Iteration());
+            return View(areas);
         }
-        Iteration areas = await _iterationService.GetAreaAsync(projectId) ?? new();
+
+        areas = await _iterationService.GetAreaAsync(projectId) ?? new();
         return View(areas);
     }
 }

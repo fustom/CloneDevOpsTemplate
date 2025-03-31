@@ -40,6 +40,20 @@ public class ProjectControllerTest
     }
 
     [Fact]
+    public async Task Projects_InvalidModelState_ReturnsDefaultView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.Projects();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<ProjectBase[]>(viewResult.Model);
+    }
+
+    [Fact]
     public async Task Project_ReturnsViewWithProject()
     {
         // Arrange
@@ -56,7 +70,7 @@ public class ProjectControllerTest
     }
 
     [Fact]
-    public async Task Project_InvalidModelState_ReturnsBadRequest()
+    public async Task Project_InvalidModelState_ReturnsDefaultView()
     {
         // Arrange
         _controller.ModelState.AddModelError("Error", "Invalid model state");
@@ -65,7 +79,8 @@ public class ProjectControllerTest
         var result = await _controller.Project(Guid.NewGuid());
 
         // Assert
-        Assert.IsType<BadRequestObjectResult>(result);
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<Project>(viewResult.Model);
     }
 
     [Fact]
@@ -85,29 +100,6 @@ public class ProjectControllerTest
     }
 
     [Fact]
-    public async Task CreateProject_InvalidModelState_ReturnsCreateProjectView()
-    {
-        // Arrange
-        var projects = new Projects
-        {
-            Value =
-            [
-                new Project()
-            ]
-        };
-        _mockProjectService.Setup(service => service.GetAllProjectsAsync()).ReturnsAsync(projects);
-
-        _controller.ModelState.AddModelError("Error", "Invalid model state");
-
-        // Act
-        var result = await _controller.CreateProject(Guid.NewGuid(), "New Project", "Description", "Private");
-
-        // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(projects.Value, viewResult.Model);
-    }
-
-    [Fact]
     public async Task ProjectProperties_InvalidModelState_ReturnsBadRequest()
     {
         // Arrange
@@ -117,7 +109,8 @@ public class ProjectControllerTest
         var result = await _controller.ProjectProperties(Guid.NewGuid());
 
         // Assert
-        Assert.IsType<BadRequestObjectResult>(result);
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<ProjectProperty[]>(viewResult.Model);
     }
 
     [Fact]
@@ -134,6 +127,20 @@ public class ProjectControllerTest
         var viewResult = Assert.IsType<ViewResult>(result);
         var viewModel = Assert.IsType<ProjectProperty[]>(viewResult.Model);
         Assert.Empty(viewModel);
+    }
+
+    [Fact]
+    public async Task CreateProject_InvalidModelState_ReturnsCreateProjectView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.CreateProject(Guid.NewGuid(), "New Project", "Description", "Private");
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<ProjectBase[]>(viewResult.Model);
     }
 
     [Fact]

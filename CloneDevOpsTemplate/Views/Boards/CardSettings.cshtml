@@ -5,6 +5,8 @@
 
 <h1>Card settings</h1>
 
+@Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
 <h2>@nameof(Model.Epic)</h2>
 @await Html.PartialAsync("CardSettingItem", Model.Epic)
 

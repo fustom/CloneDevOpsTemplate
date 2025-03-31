@@ -51,6 +51,25 @@ public class IterationControllerTest
     }
 
     [Fact]
+    public async Task Iterations_ReturnsViewResult_WithNewIteration_WhenModelStateIsInvalid()
+    {
+        // Arrange
+        var mockIterationService = new Mock<IIterationService>();
+        var projectId = Guid.NewGuid();
+
+        var controller = new IterationController(mockIterationService.Object);
+        controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await controller.Iterations(projectId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.NotNull(viewResult.Model);
+        Assert.IsType<Iteration>(viewResult.Model);
+    }
+
+    [Fact]
     public async Task CreateIteration_RedirectsToIterations_AfterSuccessfulCreation()
     {
         // Arrange
@@ -93,6 +112,27 @@ public class IterationControllerTest
         await Assert.ThrowsAsync<Exception>(() => controller.CreateIteration(projectId, iterationRequest));
         mockIterationService.Verify(service => service.CreateIterationAsync(projectId, iterationRequest), Times.Once);
     }
+
+    [Fact]
+    public async Task CreateIteration_ReturnsViewResult_WithNewIteration_WhenModelStateIsInvalid()
+    {
+        // Arrange
+        var mockIterationService = new Mock<IIterationService>();
+        var projectId = Guid.NewGuid();
+        var iterationRequest = new CreateIterationRequest();
+
+        var controller = new IterationController(mockIterationService.Object);
+        controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await controller.CreateIteration(projectId, iterationRequest);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.NotNull(viewResult.Model);
+        Assert.IsType<Iteration>(viewResult.Model);
+    }
+
     [Fact]
     public async Task Areas_ReturnsViewResult_WithAreas()
     {

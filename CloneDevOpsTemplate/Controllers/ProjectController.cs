@@ -13,31 +13,42 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
     [HttpGet]
     public async Task<IActionResult> Projects()
     {
-        Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
+        Projects projects = new();
+
+        if (!ModelState.IsValid)
+        {
+            return View(projects.Value);
+        }
+        
+        projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
         return View(projects.Value);
     }
 
     [HttpGet]
     public async Task<IActionResult> Project(Guid projectId)
     {
+        Project project = new();
+
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            return View(project);
         }
 
-        Project project = await _projectService.GetProjectAsync(projectId) ?? new Project();
+        project = await _projectService.GetProjectAsync(projectId) ?? new Project();
         return View(project);
     }
 
     [HttpGet]
     public async Task<IActionResult> ProjectProperties(Guid projectId)
     {
+        ProjectProperties projectProperties = new();
+
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            return View(projectProperties.Value);
         }
 
-        ProjectProperties projectProperties = await _projectService.GetProjectPropertiesAsync(projectId) ?? new ProjectProperties();
+        projectProperties = await _projectService.GetProjectPropertiesAsync(projectId) ?? new ProjectProperties();
         return View(projectProperties.Value);
     }
 

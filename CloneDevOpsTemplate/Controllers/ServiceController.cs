@@ -10,7 +10,14 @@ public class ServiceController(IServiceService serviceService) : Controller
 
     public async Task<IActionResult> ProjectServices(Guid projectId)
     {
-        ServicesModel services = await _serviceService.GetServicesAsync(projectId) ?? new();
+        ServicesModel services = new();
+
+        if (!ModelState.IsValid)
+        {
+            return View("Services", services.Value);
+        }
+
+        services = await _serviceService.GetServicesAsync(projectId) ?? new();
         return View("Services", services.Value);
     }
 }

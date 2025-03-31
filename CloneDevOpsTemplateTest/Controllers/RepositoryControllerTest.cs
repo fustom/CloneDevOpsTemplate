@@ -18,6 +18,20 @@ public class RepositoryControllerTest
     }
 
     [Fact]
+    public async Task Repositories_InvalidModelState_ReturnsDefaultView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.Repositories();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<Repository[]>(viewResult.Model);
+    }
+
+    [Fact]
     public async Task Repositories_ReturnsViewWithRepositories()
     {
         // Arrange
@@ -52,6 +66,21 @@ public class RepositoryControllerTest
     }
 
     [Fact]
+    public async Task ProjectRepositories_InvalidModelState_ReturnsDefaultView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.ProjectRepositories(Guid.NewGuid());
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("Repositories", viewResult.ViewName);
+        Assert.IsType<Repository[]>(viewResult.Model);
+    }
+
+    [Fact]
     public async Task ProjectRepositories_ReturnsViewWithRepositories()
     {
         // Arrange
@@ -66,6 +95,7 @@ public class RepositoryControllerTest
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("Repositories", viewResult.ViewName);
         Assert.Equal(mockRepositories.Value, viewResult.Model);
     }
 
@@ -83,6 +113,7 @@ public class RepositoryControllerTest
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("Repositories", viewResult.ViewName);
         var viewModel = Assert.IsType<Repository[]>(viewResult.Model);
         Assert.Empty(viewModel);
     }

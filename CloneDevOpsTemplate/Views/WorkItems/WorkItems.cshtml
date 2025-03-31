@@ -5,6 +5,8 @@
 
 <h1>Work items</h1>
 
+@Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
 @foreach (var workItem in Model)
 {
     <table class="table table-striped">
