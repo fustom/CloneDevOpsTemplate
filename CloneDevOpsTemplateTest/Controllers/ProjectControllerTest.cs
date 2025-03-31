@@ -136,7 +136,7 @@ public class ProjectControllerTest
         _controller.ModelState.AddModelError("Error", "Invalid model state");
 
         // Act
-        var result = await _controller.CreateProject(Guid.NewGuid(), "New Project", "Description", "Private");
+        var result = await _controller.CreateProject(Guid.NewGuid(), "New Project", "Description", Visibility.Private);
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
