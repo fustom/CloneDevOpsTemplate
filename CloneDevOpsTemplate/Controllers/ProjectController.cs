@@ -59,7 +59,7 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateProject(Guid templateProjectId, string newProjectName, string description, string visibility)
+    public async Task<IActionResult> CreateProject(Guid templateProjectId, string newProjectName, string description, Visibility visibility)
     {
         if (!ModelState.IsValid)
         {

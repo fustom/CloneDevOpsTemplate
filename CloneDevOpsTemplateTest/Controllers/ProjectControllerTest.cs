@@ -150,7 +150,7 @@ public class ProjectControllerTest
         var templateProjectId = Guid.NewGuid();
         var newProjectName = "New Project";
         var description = "Description";
-        var visibility = "Private";
+        var visibility = Visibility.Private;
 
         var project = new Project { Id = Guid.NewGuid() };
         var templateProject = new Project();
@@ -193,7 +193,7 @@ public class ProjectControllerTest
         var templateProjectId = Guid.NewGuid();
         var newProjectName = "New Project";
         var description = "Description";
-        var visibility = "Private";
+        var visibility = Visibility.Private;
 
         var project = new Project();
         var templateProject = new Project();

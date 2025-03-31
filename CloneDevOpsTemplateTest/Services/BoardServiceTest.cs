@@ -651,7 +651,7 @@ public class BoardServiceTest
             "SendAsync",
             Times.Once(),
             ItExpr.Is<HttpRequestMessage>(req =>
-                req.Method == HttpMethod.Put &&
+                req.Method == HttpMethod.Patch &&
                 req.RequestUri != null &&
                 req.RequestUri.ToString().Contains($"{projectId}/{teamId}/_apis/work/boards/{boardId}/cardrulesettings?api-version=7.1")),
             ItExpr.IsAny<CancellationToken>()
@@ -788,7 +788,7 @@ public class BoardServiceTest
         _httpMessageHandlerMock.Protected().Verify(
             "SendAsync",
             Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => req.RequestUri != null && req.RequestUri.ToString().Contains("/cardrulesettings") && req.Method == HttpMethod.Put),
+            ItExpr.Is<HttpRequestMessage>(req => req.RequestUri != null && req.RequestUri.ToString().Contains("/cardrulesettings") && req.Method == HttpMethod.Patch),
             ItExpr.IsAny<CancellationToken>()
         );
     }

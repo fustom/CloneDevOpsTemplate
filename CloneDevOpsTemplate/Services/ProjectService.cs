@@ -40,7 +40,7 @@ public class ProjectService(IHttpClientFactory httpClientFactory) : IProjectServ
         return _client.GetFromJsonAsync<Process>($"_apis/work/processes/{processTemplateType}");
     }
 
-    public async Task<CreateProjectResponse?> CreateProjectAsync(string name, string description, string processTemplateType, string sourceControlType, string visibility)
+    public async Task<CreateProjectResponse?> CreateProjectAsync(string name, string description, string processTemplateType, string sourceControlType, Visibility visibility)
     {
         CreateProject createProject = new()
         {
