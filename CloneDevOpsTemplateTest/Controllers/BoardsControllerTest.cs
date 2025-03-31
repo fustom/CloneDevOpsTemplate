@@ -140,6 +140,7 @@ public class BoardsControllerTest
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
         var model = Assert.IsType<Cards>(viewResult.Model);
+        Assert.NotNull(model.Bug);
         Assert.Equal(2, model.Bug.Length);
         Assert.Equal("bugCard1", model.Bug[0].FieldIdentifier);
         Assert.Equal("bugCard2", model.Bug[1].FieldIdentifier);
