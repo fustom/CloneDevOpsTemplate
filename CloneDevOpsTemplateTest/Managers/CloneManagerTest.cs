@@ -144,7 +144,7 @@ public class CloneManagerTest
 
         // Assert
         _mockRepositoryService.Verify(s => s.CreateRepositoryAsync(projectId, "Repo1"), Times.Once);
-        _mockRepositoryService.Verify(s => s.DeleteRepositoryAsync(projectId, repositories.Value.First().Id), Times.Once);
+        _mockRepositoryService.Verify(s => s.DeleteRepositoryAsync(projectId, repositories.Value[0].Id), Times.Once);
     }
 
     [Fact]
