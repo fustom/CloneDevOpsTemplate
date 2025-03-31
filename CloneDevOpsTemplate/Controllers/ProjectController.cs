@@ -13,14 +13,7 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
     [HttpGet]
     public async Task<IActionResult> Projects()
     {
-        Projects projects = new();
-
-        if (!ModelState.IsValid)
-        {
-            return View(projects.Value);
-        }
-        
-        projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
+        Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
         return View(projects.Value);
     }
 

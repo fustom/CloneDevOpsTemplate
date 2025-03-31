@@ -10,14 +10,7 @@ public class TeamController(ITeamsService teamsService) : Controller
 
     public async Task<IActionResult> Teams()
     {
-        Teams teams = new();
-
-        if (!ModelState.IsValid)
-        {
-            return View(teams.Value);
-        }
-
-        teams = await _teamsService.GetAllTeamsAsync() ?? new Teams();
+        Teams teams = await _teamsService.GetAllTeamsAsync() ?? new Teams();
         return View(teams.Value);
     }
 
