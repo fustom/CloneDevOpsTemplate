@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch CloneDevOpsTemplate",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "launchSettingsFilePath": "${workspaceFolder}/CloneDevOpsTemplate/Properties/launchSettings.json",
+            "launchSettingsProfile": "http",
+            "program": "${workspaceFolder}/CloneDevOpsTemplate/bin/Debug/net8.0/CloneDevOpsTemplate.dll",
+            "launchBrowser": {
+                "enabled": true
+            }
+        }
+    ]
+}
