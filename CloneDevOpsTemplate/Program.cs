@@ -11,7 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMvc();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<DevOpsAuthorizationHandler>();
-builder.Services.AddHttpClient("DevOpsServer", client => {
+builder.Services.AddHttpClient("DevOpsServer", client =>
+{
     client.BaseAddress = new Uri(Const.ServiceRootUrl);
 }).AddHttpMessageHandler<DevOpsAuthorizationHandler>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
@@ -42,7 +43,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.MapStaticAssets();
 
 app.UseRouting();
 
