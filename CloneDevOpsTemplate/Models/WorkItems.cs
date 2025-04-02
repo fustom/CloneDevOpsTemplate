@@ -2,28 +2,28 @@ using System.Text.Json.Serialization;
 
 namespace CloneDevOpsTemplate.Models;
 
-public class WorkItemQueryRequest
+public class WorkItemsListQueryRequest
 {
     public string Query { get; set; } = "";
 }
 
-public class WorkItemQueryList
+public class WorkItemsListQueryResult
 {
     public string QueryType { get; set; } = "";
     public string QueryResultType { get; set; } = "";
     public DateTime AsOf { get; set; }
-    public WorkItemQueryColumn[] Columns { get; set; } = [];
-    public WorkItemQueryItem[] WorkItems { get; set; } = [];
+    public WorkItemsListQueryColumn[] Columns { get; set; } = [];
+    public WorkItemsListQueryItem[] WorkItems { get; set; } = [];
 }
 
-public class WorkItemQueryColumn
+public class WorkItemsListQueryColumn
 {
     public string ReferenceName { get; set; } = "";
     public string Name { get; set; } = "";
     public string Url { get; set; } = "";
 }
 
-public class WorkItemQueryItem
+public class WorkItemsListQueryItem
 {
     public int Id { get; set; } = 0;
     public string Url { get; set; } = "";
@@ -93,4 +93,37 @@ public class Relations
     public string Rel { get; set; } = "";
     public string Url { get; set; } = "";
     public Dictionary<string, string> Attributes { get; set; } = new();
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter<WorkItemExpand>))]
+public enum WorkItemExpand
+{
+    None,
+    Relations,
+    Fields,
+    Links,
+    All
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter<WorkItemErrorPolicy>))]
+public enum WorkItemErrorPolicy
+{
+    Fail,
+    Omit
+}
+
+public class WorkItemsQueryRequest
+{
+    [JsonPropertyName("$expand")]
+    public WorkItemExpand Expand { get; set; } = WorkItemExpand.None;
+    public WorkItemErrorPolicy ErrorPolicy { get; set; } = WorkItemErrorPolicy.Fail;
+    public DateTime AsOf { get; set; }
+    public string[] Fields { get; set; } = [];
+    public int[] Ids { get; set; } = [];
+}
+
+public class WorkItems
+{
+    public int Count { get; set; }
+    public WorkItem[] Value { get; set; } = [];
 }

@@ -4,6 +4,7 @@ namespace CloneDevOpsTemplate.IServices;
 
 public interface IWorkItemService
 {
-    Task<WorkItemQueryList> GetWorkItemsAsync(Guid projectId, string projectName);
+    Task<WorkItemsListQueryResult?> GetWorkItemsListAsync(Guid projectId, string projectName);
+    Task<WorkItems?> GetWorkItemsAsync(Guid projectId, int[] workItemIds);
     Task<WorkItem?> GetWorkItemAsync(Guid projectId, int workItemId);
 }

@@ -1,6 +1,7 @@
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace CloneDevOpsTemplate.Controllers;
 
@@ -17,11 +18,18 @@ public class WorkItemsController(IWorkItemService workItemService) : Controller
             return View(workItems.ToArray());
         }
 
-        WorkItemQueryList workItemQueryList = await _workItemService.GetWorkItemsAsync(projectId, projectName) ?? new();
-        foreach (var workItem in workItemQueryList.WorkItems)
+        WorkItemsListQueryResult workItemsList = await _workItemService.GetWorkItemsListAsync(projectId, projectName) ?? new();
+        var workItemIdBatches = workItemsList.WorkItems
+            .Select(x => x.Id)
+            .Chunk(200);
+
+        foreach (var workItemIdBatch in workItemIdBatches)
         {
-            var currentWorkItem = await _workItemService.GetWorkItemAsync(projectId, workItem.Id) ?? new();
-            workItems.Add(currentWorkItem);
+            var currentWorkItems = await _workItemService.GetWorkItemsAsync(projectId, workItemIdBatch);
+            if (currentWorkItems != null)
+            {
+                workItems.AddRange(currentWorkItems.Value);
+            }
         }
         return View(workItems.ToArray());
     }

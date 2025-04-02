@@ -7,9 +7,9 @@ public class WorkItemService(IHttpClientFactory httpClientFactory) : IWorkItemSe
 {
     private readonly HttpClient _client = httpClientFactory.CreateClient("DevOpsServer");
 
-    public async Task<WorkItemQueryList> GetWorkItemsAsync(Guid projectId, string projectName)
+    public async Task<WorkItemsListQueryResult?> GetWorkItemsListAsync(Guid projectId, string projectName)
     {
-        WorkItemQueryRequest wiqlRequest = new()
+        WorkItemsListQueryRequest wiqlRequest = new()
         {
             Query = $"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{projectName}'",
         };
@@ -17,10 +17,36 @@ public class WorkItemService(IHttpClientFactory httpClientFactory) : IWorkItemSe
         var result = await _client.PostAsJsonAsync($"{projectId}/_apis/wit/wiql?api-version=7.1", wiqlRequest);
         if (result.IsSuccessStatusCode)
         {
-            return await result.Content.ReadFromJsonAsync<WorkItemQueryList>() ?? new();
+            return await result.Content.ReadFromJsonAsync<WorkItemsListQueryResult>();
         }
         return new();
     }
+
+    public async Task<WorkItems?> GetWorkItemsAsync(Guid projectId, int[] workItemIds)
+    {
+        WorkItemsQueryRequest wiQueryRequest = new()
+        {
+            AsOf = DateTime.UtcNow,
+            Fields =                    // This must be extended if additional fields are needed to display
+            [
+                "System.Id", 
+                "System.Title", 
+                "System.AssignedTo", 
+                "System.IterationPath", 
+                "Microsoft.VSTS.Scheduling.Effort", 
+                "Microsoft.VSTS.Common.Priority", 
+                "System.WorkItemType"
+            ],
+            Ids = workItemIds,
+        };
+        
+        var result = await _client.PostAsJsonAsync($"{projectId}/_apis/wit/workitemsbatch?api-version=7.1", wiQueryRequest);
+        if (result.IsSuccessStatusCode)
+        {
+            return await result.Content.ReadFromJsonAsync<WorkItems>();
+        }
+        return new();
+}
 
     public Task<WorkItem?> GetWorkItemAsync(Guid projectId, int workItemId)
     {
