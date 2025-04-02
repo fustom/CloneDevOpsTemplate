@@ -1,10 +1,12 @@
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
 namespace CloneDevOpsTemplate.Controllers;
 
+[Authorize]
 public class WorkItemsController(IWorkItemService workItemService) : Controller
 {
     private readonly IWorkItemService _workItemService = workItemService;

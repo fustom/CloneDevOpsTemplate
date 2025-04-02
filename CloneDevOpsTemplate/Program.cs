@@ -4,6 +4,7 @@ using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.MessageHandlers;
 using CloneDevOpsTemplate.Middlewares;
 using CloneDevOpsTemplate.Services;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,8 @@ builder.Services.AddScoped<IRepositoryService, RepositoryService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<IWorkItemService, WorkItemService>();
 builder.Services.AddScoped<ICloneManager, CloneManager>();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, DevOpsAuthorizationMiddleware>();
+
 
 builder.Services.AddSession(options =>
 {
@@ -31,6 +34,7 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -47,11 +51,8 @@ app.MapStaticAssets();
 
 app.UseRouting();
 
-app.UseAuthorization();
-
 app.UseSession();
-
-app.UseMiddleware<DevOpsAuthorizationMiddleware>();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",

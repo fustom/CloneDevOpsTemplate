@@ -1,9 +1,11 @@
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloneDevOpsTemplate.Controllers;
 
+[Authorize]
 public class IterationController(IIterationService iterationService) : Controller
 {
     private readonly IIterationService _iterationService = iterationService;

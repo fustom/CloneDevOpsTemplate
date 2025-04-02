@@ -1,9 +1,11 @@
 ﻿using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloneDevOpsTemplate.Controllers;
 
+[Authorize]
 public class BoardsController(IBoardService boardService) : Controller
 {
     private readonly IBoardService _boardService = boardService;

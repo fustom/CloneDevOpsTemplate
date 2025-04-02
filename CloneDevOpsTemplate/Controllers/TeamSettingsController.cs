@@ -1,9 +1,11 @@
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloneDevOpsTemplate.Controllers;
 
+[Authorize]
 public class TeamSettingsController(ITeamSettingsService teamSettingsService) : Controller
 {
     private readonly ITeamSettingsService _teamSettingsService = teamSettingsService;
@@ -33,5 +35,5 @@ public class TeamSettingsController(ITeamSettingsService teamSettingsService) : 
         teamFieldValues = await _teamSettingsService.GetTeamFieldValues(projectId, teamId) ?? new();
         return View(teamFieldValues);
     }
-    
+
 }
