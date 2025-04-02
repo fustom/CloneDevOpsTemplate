@@ -1,0 +1,32 @@
+{
+	"name": "C# (.NET)",
+	"image": "mcr.microsoft.com/devcontainers/dotnet:8.0-bookworm",
+	"features": {
+		"ghcr.io/devcontainers/features/dotnet:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/github-cli:1": {
+			"installDirectlyFromGitHubRelease": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/node": {
+			"version": "latest"
+		}
+	},
+	"postCreateCommand": "bash ./.devcontainer/postCreateCommand.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csdevkit",
+				"humao.rest-client",
+				"sonarsource.sonarlint-vscode"
+			],
+			"settings": {
+				"editor.formatOnSave": true,
+				"dotnet.formatting.organizeImportsOnFormat": true,
+				"git.autofetch": "all",
+				"git.blame.editorDecoration.enabled": true
+			}
+		}
+	}
+}
