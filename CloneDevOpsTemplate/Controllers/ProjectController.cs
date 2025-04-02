@@ -1,10 +1,12 @@
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloneDevOpsTemplate.Controllers;
 
+[Authorize]
 public class ProjectController(IProjectService projectService, ICloneManager cloneManager) : Controller
 {
     private readonly IProjectService _projectService = projectService;

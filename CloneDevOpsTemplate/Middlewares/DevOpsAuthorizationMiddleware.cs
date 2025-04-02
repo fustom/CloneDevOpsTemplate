@@ -1,26 +1,19 @@
 using CloneDevOpsTemplate.Constants;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Policy;
 
-namespace CloneDevOpsTemplate.Middlewares
+namespace CloneDevOpsTemplate.Middlewares;
+
+public class DevOpsAuthorizationMiddleware : IAuthorizationMiddlewareResultHandler
 {
-    public class DevOpsAuthorizationMiddleware(RequestDelegate next)
+    public async Task HandleAsync(RequestDelegate next, HttpContext context, AuthorizationPolicy policy, PolicyAuthorizationResult authorizeResult)
     {
-        private readonly RequestDelegate _next = next;
-
-        public async Task Invoke(HttpContext context)
+        if (context.Session.GetString(Const.SessionKeyOrganizationName) == null || context.Session.GetString(Const.SessionKeyAccessToken) == null)
         {
-            if (context.Request.Path.Value is not null && context.Request.Path.Value.Contains("/Home/Login"))
-            {
-                await _next(context);
-                return;
-            }
-
-            if (context.Session.GetString(Const.SessionKeyOrganizationName) == null || context.Session.GetString(Const.SessionKeyAccessToken) == null)
-            {
-                context.Response.Redirect("/Home/Login");
-                return;
-            }
-
-            await _next(context);
+            context.Response.Redirect("/Home/Login");
+            return;
         }
+
+        await next(context);
     }
 }
