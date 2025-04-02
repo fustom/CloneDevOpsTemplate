@@ -26,17 +26,6 @@ public class WorkItemService(IHttpClientFactory httpClientFactory) : IWorkItemSe
     {
         WorkItemsQueryRequest wiQueryRequest = new()
         {
-            AsOf = DateTime.UtcNow,
-            Fields =                    // This must be extended if additional fields are needed to display
-            [
-                "System.Id", 
-                "System.Title", 
-                "System.AssignedTo", 
-                "System.IterationPath", 
-                "Microsoft.VSTS.Scheduling.Effort", 
-                "Microsoft.VSTS.Common.Priority", 
-                "System.WorkItemType"
-            ],
             Ids = workItemIds,
         };
         
