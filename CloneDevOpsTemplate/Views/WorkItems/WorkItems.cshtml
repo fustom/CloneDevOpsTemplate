@@ -12,7 +12,9 @@
     <table class="table table-striped">
         <thead>
             <tr class="table-primary">
-                <th colspan="4"><h2>@workItem.Fields.SystemTitle</h2></th>
+                <th colspan="4">
+                    <h2>@workItem.Fields.SystemTitle</h2>
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -21,7 +23,7 @@
                 <td>@workItem.Fields.SystemAssignedTo.DisplayName</td>
                 <td>@workItem.Fields.SystemAssignedTo.UniqueName</td>
                 <td>
-                    <img style="width: auto; height: auto;" src="@workItem.Fields.SystemAssignedTo.ImageUrl" />
+                    <img src="@workItem.Fields.SystemAssignedTo.ImageUrl" alt="@workItem.Fields.SystemAssignedTo.DisplayName" />
                 </td>
             </tr>
             <tr>

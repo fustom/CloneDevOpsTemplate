@@ -26,12 +26,12 @@ public class WorkItemServiceTest
     }
 
     [Fact]
-    public async Task GetWorkItemsAsync_ReturnsWorkItemQueryList_WhenResponseIsSuccessful()
+    public async Task GetWorkItemsListAsync_ReturnsWorkItemQueryList_WhenResponseIsSuccessful()
     {
         // Arrange
         var projectId = Guid.NewGuid();
         var projectName = "TestProject";
-        var expectedResponse = new WorkItemQueryList() { AsOf = DateTime.Now, WorkItems = [new WorkItemQueryItem() { Id = 666 }] };
+        var expectedResponse = new WorkItemsListQueryResult() { AsOf = DateTime.Now, WorkItems = [new WorkItemsListQueryItem() { Id = 666 }] };
 
         _httpMessageHandlerMock
             .Protected()
@@ -46,7 +46,7 @@ public class WorkItemServiceTest
             });
 
         // Act
-        var result = await _workItemService.GetWorkItemsAsync(projectId, projectName);
+        var result = await _workItemService.GetWorkItemsListAsync(projectId, projectName);
 
         // Assert
         Assert.NotNull(result);
@@ -56,7 +56,7 @@ public class WorkItemServiceTest
     }
 
     [Fact]
-    public async Task GetWorkItemsAsync_ReturnsEmptyWorkItemQueryList_WhenResponseIsUnsuccessful()
+    public async Task GetWorkItemsListAsync_ReturnsEmptyWorkItemQueryList_WhenResponseIsUnsuccessful()
     {
         // Arrange
         var projectId = Guid.NewGuid();
@@ -74,11 +74,78 @@ public class WorkItemServiceTest
             });
 
         // Act
-        var result = await _workItemService.GetWorkItemsAsync(projectId, projectName);
+        var result = await _workItemService.GetWorkItemsListAsync(projectId, projectName);
 
         // Assert
         Assert.NotNull(result);
         Assert.Empty(result.WorkItems);
+    }
+
+    [Fact]
+    public async Task GetWorkItemsAsync_ReturnsWorkItems_WhenResponseIsSuccessful()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var workItemIds = new[] { 1, 2, 3 };
+        var expectedWorkItems = new WorkItems
+        {
+            Value =
+            [
+                new WorkItem { Id = 1, Fields = new Fields { SystemTitle = "Work Item 1" } },
+                new WorkItem { Id = 2, Fields = new Fields { SystemTitle = "Work Item 2" } },
+                new WorkItem { Id = 3, Fields = new Fields { SystemTitle = "Work Item 3" } }
+            ]
+        };
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = JsonContent.Create(expectedWorkItems)
+            });
+
+        // Act
+        var result = await _workItemService.GetWorkItemsAsync(projectId, workItemIds);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(expectedWorkItems.Value.Length, result.Value.Length);
+        for (int i = 0; i < expectedWorkItems.Value.Length; i++)
+        {
+            Assert.Equal(expectedWorkItems.Value[i].Id, result.Value[i].Id);
+            Assert.Equal(expectedWorkItems.Value[i].Fields.SystemTitle, result.Value[i].Fields.SystemTitle);
+        }
+    }
+
+    [Fact]
+    public async Task GetWorkItemsAsync_ReturnsEmptyWorkItems_WhenResponseIsUnsuccessful()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var workItemIds = new[] { 1, 2, 3 };
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var result = await _workItemService.GetWorkItemsAsync(projectId, workItemIds);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Empty(result.Value);
     }
 
     [Fact]

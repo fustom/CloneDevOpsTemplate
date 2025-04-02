@@ -39,29 +39,29 @@ public class WorkItemsControllerTest
         var projectId = Guid.NewGuid();
         var projectName = "TestProject";
 
-        var workItemQueryList = new WorkItemQueryList
+        var workItemQueryList = new WorkItemsListQueryResult
         {
-            WorkItems = new List<WorkItemQueryItem>
+            WorkItems = new List<WorkItemsListQueryItem>
             {
-                new WorkItemQueryItem { Id = 1 },
-                new WorkItemQueryItem { Id = 2 }
+                new WorkItemsListQueryItem { Id = 1 },
+                new WorkItemsListQueryItem { Id = 2 }
             }.ToArray()
         };
 
         var workItem1 = new WorkItem { Id = 1, Fields = new Fields { SystemTitle = "WorkItem1" } };
         var workItem2 = new WorkItem { Id = 2, Fields = new Fields { SystemTitle = "WorkItem2" } };
+        var workItems = new WorkItems
+        {
+            Value = [workItem1, workItem2]
+        };
 
         _mockWorkItemService
-            .Setup(s => s.GetWorkItemsAsync(projectId, projectName))
+            .Setup(s => s.GetWorkItemsListAsync(projectId, projectName))
             .ReturnsAsync(workItemQueryList);
 
         _mockWorkItemService
-            .Setup(s => s.GetWorkItemAsync(projectId, 1))
-            .ReturnsAsync(workItem1);
-
-        _mockWorkItemService
-            .Setup(s => s.GetWorkItemAsync(projectId, 2))
-            .ReturnsAsync(workItem2);
+            .Setup(s => s.GetWorkItemsAsync(projectId, new[] { 1, 2 }))
+            .ReturnsAsync(workItems);
 
         // Act
         var result = await _controller.WorkItems(projectId, projectName);
@@ -82,8 +82,8 @@ public class WorkItemsControllerTest
         var projectName = "TestProject";
 
         _mockWorkItemService
-            .Setup(s => s.GetWorkItemsAsync(projectId, projectName))
-            .ReturnsAsync(new WorkItemQueryList { WorkItems = [] });
+            .Setup(s => s.GetWorkItemsListAsync(projectId, projectName))
+            .ReturnsAsync(new WorkItemsListQueryResult { WorkItems = [] });
 
         // Act
         var result = await _controller.WorkItems(projectId, projectName);
