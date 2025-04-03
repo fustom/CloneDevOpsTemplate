@@ -3,8 +3,10 @@ using System.Net.Http.Json;
 using CloneDevOpsTemplate.Constants;
 using CloneDevOpsTemplate.Models;
 using CloneDevOpsTemplate.Services;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using Moq.Protected;
+using MyTestProject.Service.Tests.Common;
 
 namespace CloneDevOpsTemplateTest.Services;
 
@@ -16,9 +18,10 @@ public class TeamsServiceTest
     public TeamsServiceTest()
     {
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+        var configuration = ConfigurationFactory.GetConfiguration();
         HttpClient httpClient = new(_httpMessageHandlerMock.Object)
         {
-            BaseAddress = new Uri(Const.ServiceRootUrl)
+            BaseAddress = new Uri(configuration.GetValue<string>("ServiceRootUrl") ?? string.Empty)
         };
         var httpClientFactoryMock = new Mock<IHttpClientFactory>();
         httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);

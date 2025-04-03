@@ -1,11 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
-using CloneDevOpsTemplate.Constants;
 using CloneDevOpsTemplate.Models;
 using CloneDevOpsTemplate.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using Moq.Protected;
+using MyTestProject.Service.Tests.Common;
 
 namespace CloneDevOpsTemplateTest.Services;
 
@@ -17,6 +18,7 @@ public class ServiceServiceTest
     {
         var httpClientFactoryMock = new Mock<IHttpClientFactory>();
         var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+        var configuration = ConfigurationFactory.GetConfiguration();
 
         var handlerMock = new Mock<HttpMessageHandler>();
         handlerMock.Protected()
@@ -33,7 +35,7 @@ public class ServiceServiceTest
 
         HttpClient httpClient = new(handlerMock.Object)
         {
-            BaseAddress = new Uri(Const.ServiceRootUrl)
+            BaseAddress = new Uri(configuration.GetValue<string>("ServiceRootUrl") ?? string.Empty)
         };
         httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
 

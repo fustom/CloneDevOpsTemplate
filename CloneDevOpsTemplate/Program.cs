@@ -1,4 +1,3 @@
-using CloneDevOpsTemplate.Constants;
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.MessageHandlers;
@@ -14,7 +13,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<DevOpsAuthorizationHandler>();
 builder.Services.AddHttpClient("DevOpsServer", client =>
 {
-    client.BaseAddress = new Uri(Const.ServiceRootUrl);
+    var baseAddress = builder.Configuration.GetValue<string>("ServiceRootUrl");
+    if (string.IsNullOrEmpty(baseAddress))
+    {
+        throw new ArgumentException("ServiceRootUrl is not configured.");
+    }
+    client.BaseAddress = new Uri(baseAddress);
 }).AddHttpMessageHandler<DevOpsAuthorizationHandler>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IIterationService, IterationService>();

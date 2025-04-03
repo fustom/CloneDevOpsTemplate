@@ -26,5 +26,8 @@
   <ItemGroup>
     <ProjectReference Include="..\CloneDevOpsTemplate\CloneDevOpsTemplate.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="appsettings.Test.json" CopyToOutputDirectory="Always"></None>
+  </ItemGroup>
 
 </Project>
