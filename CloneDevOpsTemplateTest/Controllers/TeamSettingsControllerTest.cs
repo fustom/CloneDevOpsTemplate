@@ -1,5 +1,6 @@
 using CloneDevOpsTemplate.Controllers;
 using CloneDevOpsTemplate.IServices;
+using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -9,12 +10,16 @@ namespace CloneDevOpsTemplateTest.Controllers;
 public class TeamSettingsControllerTest
 {
     private readonly Mock<ITeamSettingsService> _mockTeamSettingsService;
+    private readonly Mock<ICloneManager> _mockCloneManager;
+    private readonly Mock<ITeamsService> _mockTeamsService;
     private readonly TeamSettingsController _controller;
 
     public TeamSettingsControllerTest()
     {
         _mockTeamSettingsService = new Mock<ITeamSettingsService>();
-        _controller = new TeamSettingsController(_mockTeamSettingsService.Object);
+        _mockCloneManager = new Mock<ICloneManager>();
+        _mockTeamsService = new Mock<ITeamsService>();
+        _controller = new TeamSettingsController(_mockTeamSettingsService.Object, _mockCloneManager.Object, _mockTeamsService.Object);
     }
 
     [Fact]
@@ -131,5 +136,85 @@ public class TeamSettingsControllerTest
         var viewResult = Assert.IsType<ViewResult>(result);
         var model = Assert.IsType<TeamFieldValues>(viewResult.Model);
         Assert.NotNull(model);
+    }
+
+    [Fact]
+    public async Task CloneTeamSettings_ReturnsViewResult_WithTeams()
+    {
+        // Arrange
+        Team[] teams =
+        [
+            new() { Id = Guid.NewGuid(), Name = "Team1" },
+            new() { Id = Guid.NewGuid(), Name = "Team2" }
+        ];
+        var teamsResponse = new Teams { Value = teams };
+
+        _mockTeamsService
+            .Setup(service => service.GetAllTeamsAsync())
+            .ReturnsAsync(teamsResponse);
+
+        // Act
+        var result = await _controller.CloneTeamSettings();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsAssignableFrom<IEnumerable<Team>>(viewResult.Model);
+        Assert.Equal(teams, model);
+    }
+
+    [Fact]
+    public async Task CloneTeamSettings_ReturnsViewResult_WithEmptyTeams_WhenServiceReturnsNull()
+    {
+        // Arrange
+        _mockTeamsService
+            .Setup(service => service.GetAllTeamsAsync())
+            .ReturnsAsync((Teams?)null);
+
+        // Act
+        var result = await _controller.CloneTeamSettings();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsAssignableFrom<IEnumerable<Team>>(viewResult.Model);
+        Assert.Empty(model);
+    }
+
+    [Fact]
+    public async Task CloneTeamSettings_Post_ReturnsViewResult_WithSuccessMessage_WhenModelStateIsValid()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var templateTeamId = Guid.NewGuid();
+        var projectTeamId = Guid.NewGuid();
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, null))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.CloneTeamSettings(templateProjectId, projectId, templateTeamId, projectTeamId);
+
+        // Assert
+        Assert.IsType<ViewResult>(result);
+        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
+    }
+
+    [Fact]
+    public async Task CloneTeamSettings_Post_ReturnsViewResult_WhenModelStateIsInvalid()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var templateTeamId = Guid.NewGuid();
+        var projectTeamId = Guid.NewGuid();
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.CloneTeamSettings(templateProjectId, projectId, templateTeamId, projectTeamId);
+
+        // Assert
+        Assert.IsType<ViewResult>(result);
+        Assert.Null(_controller.ViewBag.SuccessMessage);
     }
 }

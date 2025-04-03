@@ -229,12 +229,13 @@ public class CloneManagerTest
             BugsBehavior = BugsBehavior.AsTasks,
             DefaultIteration = new TeamIterationSettings { Id = Guid.NewGuid() },
             DefaultIterationMacro = "macro",
-            WorkingDays = [ CloneDevOpsTemplate.Models.DayOfWeek.Monday, CloneDevOpsTemplate.Models.DayOfWeek.Tuesday ]
+            WorkingDays = [CloneDevOpsTemplate.Models.DayOfWeek.Monday, CloneDevOpsTemplate.Models.DayOfWeek.Tuesday]
         };
 
         var teamSettings = new TeamSettings
         {
-            BacklogIteration = new TeamIterationSettings { Id = Guid.NewGuid() }
+            BacklogIteration = new() { Id = Guid.NewGuid() },
+            DefaultIteration = new() { Id = Guid.NewGuid() }
         };
 
         _mockTeamSettingsService.Setup(s => s.GetTeamSettings(templateProjectId, templateTeamId))
@@ -252,9 +253,50 @@ public class CloneManagerTest
             settings.BacklogIteration == teamSettings.BacklogIteration.Id &&
             settings.BacklogVisibilities == templateTeamSettings.BacklogVisibilities &&
             settings.BugsBehavior == templateTeamSettings.BugsBehavior &&
-            settings.DefaultIteration == templateTeamSettings.DefaultIteration.Id &&
+            settings.DefaultIteration == (templateTeamSettings.DefaultIterationMacro == null ? teamSettings.DefaultIteration.Id : null) &&
             settings.DefaultIterationMacro == templateTeamSettings.DefaultIterationMacro &&
             settings.WorkingDays.SequenceEqual(templateTeamSettings.WorkingDays)
+        )), Times.Once);
+    }
+
+    [Fact]
+    public async Task CloneTeamFieldValuesAsync_ShouldCloneTeamFieldValues()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var templateTeamId = Guid.NewGuid();
+        var projectTeamId = Guid.NewGuid();
+
+        var templateProject = new Project { Name = "TemplateProject", Id = templateProjectId };
+        var project = new Project { Name = "NewProject", Id = projectId };
+
+        var teamFieldValues = new TeamFieldValues
+        {
+            DefaultValue = "TemplateProject\\Area",
+            Values =
+            [
+                new Values { Value = "TemplateProject\\Area1" },
+                new Values { Value = "TemplateProject\\Area2" }
+            ]
+        };
+
+        _mockProjectService.Setup(s => s.GetProjectAsync(templateProjectId)).ReturnsAsync(templateProject);
+        _mockProjectService.Setup(s => s.GetProjectAsync(projectId)).ReturnsAsync(project);
+        _mockTeamSettingsService.Setup(s => s.GetTeamFieldValues(templateProjectId, templateTeamId)).ReturnsAsync(teamFieldValues);
+
+        _mockTeamSettingsService.Setup(s => s.UpdateTeamFieldValues(projectId, projectTeamId, It.IsAny<TeamFieldValues>()))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
+
+        // Act
+        await _cloneManager.CloneTeamFieldValuesAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
+
+        // Assert
+        _mockTeamSettingsService.Verify(s => s.GetTeamFieldValues(templateProjectId, templateTeamId), Times.Once);
+        _mockTeamSettingsService.Verify(s => s.UpdateTeamFieldValues(projectId, projectTeamId, It.Is<TeamFieldValues>(values =>
+            values.DefaultValue == "NewProject\\Area" &&
+            values.Values.Any(v => v.Value == "NewProject\\Area1") &&
+            values.Values.Any(v => v.Value == "NewProject\\Area2")
         )), Times.Once);
     }
 }

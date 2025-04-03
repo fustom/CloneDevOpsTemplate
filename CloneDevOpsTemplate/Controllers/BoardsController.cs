@@ -1,4 +1,5 @@
 ﻿using CloneDevOpsTemplate.IServices;
+using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,9 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace CloneDevOpsTemplate.Controllers;
 
 [Authorize]
-public class BoardsController(IBoardService boardService) : Controller
+public class BoardsController(IBoardService boardService, ICloneManager cloneManager, ITeamsService teamsService) : Controller
 {
     private readonly IBoardService _boardService = boardService;
+    private readonly ICloneManager _cloneManager = cloneManager;
+    private readonly ITeamsService _teamsService = teamsService;
 
     public async Task<IActionResult> Boards(Guid projectId, Guid teamId)
     {
@@ -56,6 +59,27 @@ public class BoardsController(IBoardService boardService) : Controller
 
         cardStyles = await _boardService.GetCardStylesAsync(projectId, teamId, boardId) ?? new();
         return View(cardStyles.Rules);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CloneBoards()
+    {
+        var teams = await _teamsService.GetAllTeamsAsync() ?? new();
+        return View(teams.Value);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CloneBoards(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
+    {
+        if (!ModelState.IsValid)
+        {
+            return await CloneBoards();
+        }
+
+        await _cloneManager.CloneBoardsAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
+        ViewBag.SuccessMessage = "Success";
+
+        return await CloneBoards();
     }
 }
 

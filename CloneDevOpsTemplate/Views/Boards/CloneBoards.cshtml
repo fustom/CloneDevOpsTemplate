@@ -1,0 +1,8 @@
+@model Team[]
+@{
+    ViewData["Title"] = "Clone boards";
+}
+
+<h1>Clone boards</h1>
+
+@{ await Html.RenderPartialAsync("_CloneByTeam", Tuple.Create(Model, "Boards", "CloneBoards")); }

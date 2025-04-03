@@ -1,40 +1,74 @@
 @using CloneDevOpsTemplate.Constants
-@{ 
+@{
     var isLoggedin = Context.Session.GetString(Const.SessionKeyAccessToken) != null;
 }
 
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">CloneDevOpsTemplate</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">CloneDevOpsTemplate</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link text-dark dropdown-toggle" href="#" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">Project</a>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Project" asp-action="Projects">Projects</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Team" asp-action="Teams">Teams</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Repository"
+                            asp-action="Repositories">Repositories</a>
+                    </li>
+                    <li class="nav-item dropdown bg-warning">
+                        <a class="nav-link text-dark dropdown-toggle" href="#" id="navbarDropdown"
+                            data-bs-toggle="dropdown" aria-expanded="false">Clone</a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" asp-area="" asp-controller="Project" asp-action="Projects">List Projects</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" asp-area="" asp-controller="Project" asp-action="CreateProject">Create Project from Template</a></li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Project" asp-action="CloneProject">Project</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Iteration"
+                                    asp-action="CloneIterations">Iterations</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Iteration" asp-action="CloneAreas">Areas</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Team" asp-action="CloneTeams">Teams</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="TeamSettings"
+                                    asp-action="CloneTeamSettings">Team Settings</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Team" asp-action="CloneTeamFieldValues">Team
+                                    Field Values</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Boards" asp-action="CloneBoards">Boards</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Repository"
+                                    asp-action="CloneRepository">Repository</a>
+                            </li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Team" asp-action="Teams">Teams</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Repository" asp-action="Repositories">Repositories</a>
+                    <li class="nav-item bg-danger">
+                        <a class="nav-link text-dark" asp-controller="Project" asp-action="CreateProject">Create Project
+                            from Template</a>
                     </li>
                 </ul>
-                @if(isLoggedin)
+                @if (isLoggedin)
                 {
                     <div style="float:left">
-                        <a asp-area="" asp-controller="Home" asp-action="Logout">
+                        <a asp-controller="Home" asp-action="Logout">
                             <button class="btn btn-primary">Logout</button>
                         </a>
                     </div>

@@ -1,4 +1,5 @@
 using CloneDevOpsTemplate.IServices;
+using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,9 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace CloneDevOpsTemplate.Controllers;
 
 [Authorize]
-public class RepositoryController(IRepositoryService repositoryService) : Controller
+public class RepositoryController(IRepositoryService repositoryService, ICloneManager cloneManager, IProjectService projectService) : Controller
 {
     private readonly IRepositoryService _repositoryService = repositoryService;
+    private readonly ICloneManager _cloneManager = cloneManager;
+    private readonly IProjectService _projectService = projectService;
 
     public async Task<IActionResult> Repositories()
     {
@@ -34,5 +37,26 @@ public class RepositoryController(IRepositoryService repositoryService) : Contro
 
         repositories = await _repositoryService.GetRepositoriesAsync(projectId) ?? new();
         return View("Repositories", repositories.Value);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CloneRepository()
+    {
+        Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
+        return View(projects.Value);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CloneRepository(Guid templateProjectId, Guid projectId)
+    {
+        if (!ModelState.IsValid)
+        {
+            return await CloneRepository();
+        }
+
+        await _cloneManager.CloneRepositoriesAsync(templateProjectId, projectId);
+        ViewBag.SuccessMessage = "Success";
+
+        return await CloneRepository();
     }
 }
