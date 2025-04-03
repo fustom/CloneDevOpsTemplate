@@ -7,40 +7,41 @@
 
 @Html.ValidationSummary(false, "", new { @class = "text-danger" })
 
-@foreach (var workItem in Model)
+@foreach (var fields in Model.Select(workitem => workitem.Fields))
 {
     <table class="table table-striped">
         <thead>
             <tr class="table-primary">
                 <th colspan="4">
-                    <h2>@workItem.Fields.SystemTitle</h2>
+                    <h2>@fields.SystemTitle</h2>
                 </th>
             </tr>
         </thead>
         <tbody>
             <tr>
+                @{ var assignedTo = fields.SystemAssignedTo; }
                 <td>Assigned to</td>
-                <td>@workItem.Fields.SystemAssignedTo.DisplayName</td>
-                <td>@workItem.Fields.SystemAssignedTo.UniqueName</td>
+                <td>@assignedTo.DisplayName</td>
+                <td>@assignedTo.UniqueName</td>
                 <td>
-                    <img src="@workItem.Fields.SystemAssignedTo.ImageUrl" alt="@workItem.Fields.SystemAssignedTo.DisplayName" />
+                    <img src="@assignedTo.ImageUrl" alt="@assignedTo.DisplayName" />
                 </td>
             </tr>
             <tr>
                 <td>Effort</td>
-                <td colspan="3">@workItem.Fields.MicrosoftVSTSSchedulingEffort</td>
+                <td colspan="3">@fields.MicrosoftVSTSSchedulingEffort</td>
             </tr>
             <tr>
                 <td>Priority</td>
-                <td colspan="3">@workItem.Fields.MicrosoftVSTSCommonPriority</td>
+                <td colspan="3">@fields.MicrosoftVSTSCommonPriority</td>
             </tr>
             <tr>
                 <td>Workitem type</td>
-                <td colspan="3">@workItem.Fields.SystemWorkItemType</td>
+                <td colspan="3">@fields.SystemWorkItemType</td>
             </tr>
             <tr>
                 <td>Iteration path</td>
-                <td colspan="3">@workItem.Fields.SystemIterationPath</td>
+                <td colspan="3">@fields.SystemIterationPath</td>
             </tr>
         </tbody>
     </table>

@@ -1,10 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
-using CloneDevOpsTemplate.Constants;
 using CloneDevOpsTemplate.Models;
 using CloneDevOpsTemplate.Services;
 using Moq;
 using Moq.Protected;
+using MyTestProject.Service.Tests.Common;
+using Microsoft.Extensions.Configuration;
 
 namespace CloneDevOpsTemplateTest.Services;
 
@@ -16,9 +17,10 @@ public class IterationServiceTest
     public IterationServiceTest()
     {
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+        var configuration = ConfigurationFactory.GetConfiguration();
         HttpClient httpClient = new(_httpMessageHandlerMock.Object)
         {
-            BaseAddress = new Uri(Const.ServiceRootUrl)
+            BaseAddress = new Uri(configuration.GetValue<string>("ServiceRootUrl") ?? string.Empty)
         };
         var httpClientFactoryMock = new Mock<IHttpClientFactory>();
         httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
