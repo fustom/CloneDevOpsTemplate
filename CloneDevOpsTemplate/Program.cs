@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var apiConfigurationSection = builder.Configuration.GetSection("ApiSettings");
+var apiConfigurationSection = builder.Configuration.GetSection(nameof(ApiSettings));
 builder.Services.Configure<ApiSettings>(apiConfigurationSection);
 
 // Add services to the container.
@@ -17,7 +17,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<DevOpsAuthorizationHandler>();
 builder.Services.AddHttpClient("DevOpsServer", client =>
 {
-    var baseAddress = apiConfigurationSection.GetValue<string>("ServiceRootUrl");
+    var baseAddress = apiConfigurationSection.GetValue<string>(nameof(ApiSettings.ServiceRootUrl));
     if (string.IsNullOrEmpty(baseAddress))
     {
         throw new ArgumentException("ServiceRootUrl is not configured.");
