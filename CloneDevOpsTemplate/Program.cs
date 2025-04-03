@@ -1,3 +1,4 @@
+using CloneDevOpsTemplate;
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.MessageHandlers;
@@ -7,13 +8,16 @@ using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var apiConfigurationSection = builder.Configuration.GetSection("ApiSettings");
+builder.Services.Configure<ApiSettings>(apiConfigurationSection);
+
 // Add services to the container.
 builder.Services.AddMvc();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<DevOpsAuthorizationHandler>();
 builder.Services.AddHttpClient("DevOpsServer", client =>
 {
-    var baseAddress = builder.Configuration.GetValue<string>("ServiceRootUrl");
+    var baseAddress = apiConfigurationSection.GetValue<string>("ServiceRootUrl");
     if (string.IsNullOrEmpty(baseAddress))
     {
         throw new ArgumentException("ServiceRootUrl is not configured.");
