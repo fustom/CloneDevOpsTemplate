@@ -81,6 +81,7 @@ public class ProjectControllerTest
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.IsType<Project>(viewResult.Model);
+        Assert.True(viewResult.ViewData.ModelState.ErrorCount > 0);
     }
 
     [Fact]
@@ -110,7 +111,9 @@ public class ProjectControllerTest
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.IsType<ProjectProperty[]>(viewResult.Model);
+        var viewModel = Assert.IsType<ProjectProperty[]>(viewResult.Model);
+        Assert.Empty(viewModel);
+        Assert.True(viewResult.ViewData.ModelState.ErrorCount > 0);
     }
 
     [Fact]
@@ -211,5 +214,93 @@ public class ProjectControllerTest
         Assert.Empty(viewResult.Model as ProjectBase[] ?? []);
         Assert.True(_controller.ModelState.ContainsKey("ErrorMessage"));
         Assert.Equal(message, _controller.ModelState["ErrorMessage"]?.Errors?.FirstOrDefault()?.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task CloneProject_ReturnsViewWithProjects()
+    {
+        // Arrange
+        var projects = new Projects { Value = [] };
+        _mockProjectService.Setup(service => service.GetAllProjectsAsync()).ReturnsAsync(projects);
+
+        // Act
+        var result = await _controller.CloneProject();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(projects.Value, viewResult.Model);
+    }
+
+    [Fact]
+    public async Task CloneProject_InvalidModelState_ReturnsDefaultView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.CloneProject();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<ProjectBase[]>(viewResult.Model);
+    }
+
+    [Fact]
+    public async Task CloneProject_InvalidModelState_ReturnsProjectsView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.CloneProject(Guid.NewGuid(), "New Project", "Description", Visibility.Private);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.True(_controller.ModelState.ContainsKey("Error"));
+        Assert.IsType<ProjectBase[]>(viewResult.Model);
+    }
+
+    [Fact]
+    public async Task CloneProject_CloneProjectReturnsMessage_AddsErrorMessageAndReturnsProjectsView()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var newProjectName = "New Project";
+        var description = "Description";
+        var visibility = Visibility.Private;
+        var message = "Error cloning project";
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
+            .ReturnsAsync(Tuple.Create((Project?)null!, (Project?)null!, (string?)message));
+
+        // Act
+        var result = await _controller.CloneProject(templateProjectId, newProjectName, description, visibility);
+
+        // Assert
+        Assert.IsType<ViewResult>(result);
+        Assert.True(_controller.ModelState.ContainsKey("ErrorMessage"));
+        Assert.Equal(message, _controller.ModelState["ErrorMessage"]?.Errors?.FirstOrDefault()?.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task CloneProject_CloneProjectSuccess_AddsSuccessMessageAndReturnsProjectsView()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var newProjectName = "New Project";
+        var description = "Description";
+        var visibility = Visibility.Private;
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
+            .ReturnsAsync(Tuple.Create((Project?)null!, (Project?)null!, (string?)null));
+
+        // Act
+        var result = await _controller.CloneProject(templateProjectId, newProjectName, description, visibility);
+
+        // Assert
+        Assert.IsType<ViewResult>(result);
+        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
     }
 }

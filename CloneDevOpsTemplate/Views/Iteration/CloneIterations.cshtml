@@ -1,0 +1,10 @@
+@model ProjectBase[]
+@{
+    ViewData["Title"] = "Clone iterations";
+}
+
+<h1>Clone iterations</h1>
+
+<h2 class="text-success">@ViewBag.SuccessMessage</h2>
+
+@{ await Html.RenderPartialAsync("_CloneByProject", Tuple.Create(Model, "Iteration", "CloneIterations")); }

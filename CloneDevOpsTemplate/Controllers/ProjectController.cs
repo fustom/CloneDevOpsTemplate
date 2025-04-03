@@ -15,7 +15,7 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
     [HttpGet]
     public async Task<IActionResult> Projects()
     {
-        Projects projects = await _projectService.GetAllProjectsAsync() ?? new Projects();
+        Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
         return View(projects.Value);
     }
 
@@ -29,7 +29,7 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             return View(project);
         }
 
-        project = await _projectService.GetProjectAsync(projectId) ?? new Project();
+        project = await _projectService.GetProjectAsync(projectId) ?? new();
         return View(project);
     }
 
@@ -43,7 +43,7 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             return View(projectProperties.Value);
         }
 
-        projectProperties = await _projectService.GetProjectPropertiesAsync(projectId) ?? new ProjectProperties();
+        projectProperties = await _projectService.GetProjectPropertiesAsync(projectId) ?? new();
         return View(projectProperties.Value);
     }
 
@@ -79,5 +79,32 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
         );
 
         return RedirectToAction("Project", new { projectId = project.Id });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CloneProject()
+    {
+        return await Projects();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CloneProject(Guid templateProjectId, string newProjectName, string description, Visibility visibility)
+    {
+        if (!ModelState.IsValid)
+        {
+            return await Projects();
+        }
+
+        (_, _, string? message) = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility);
+        if (message is not null)
+        {
+            ModelState.AddModelError("ErrorMessage", message);
+        }
+        else
+        {
+            ViewBag.SuccessMessage = "Success";
+        }
+
+        return await Projects();
     }
 }

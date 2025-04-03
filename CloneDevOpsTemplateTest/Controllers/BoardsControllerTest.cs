@@ -1,5 +1,6 @@
 using CloneDevOpsTemplate.Controllers;
 using CloneDevOpsTemplate.IServices;
+using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -9,12 +10,16 @@ namespace CloneDevOpsTemplateTest.Controllers;
 public class BoardsControllerTest
 {
     private readonly Mock<IBoardService> _mockBoardService;
+    private readonly Mock<ICloneManager> _mockCloneManager;
+    private readonly Mock<ITeamsService> _mockTeamsService;
     private readonly BoardsController _controller;
 
     public BoardsControllerTest()
     {
         _mockBoardService = new Mock<IBoardService>();
-        _controller = new BoardsController(_mockBoardService.Object);
+        _mockCloneManager = new Mock<ICloneManager>();
+        _mockTeamsService = new Mock<ITeamsService>();
+        _controller = new BoardsController(_mockBoardService.Object, _mockCloneManager.Object, _mockTeamsService.Object);
     }
 
     [Fact]
@@ -235,5 +240,98 @@ public class BoardsControllerTest
         Assert.Equal("black", model.TagStyle[0].Settings.TitleColor);
         Assert.Equal("tagStyle1", model.TagStyle[0].Name);
         Assert.Equal("true", model.TagStyle[0].IsEnabled);
+    }
+
+    [Fact]
+    public async Task CloneBoards_ReturnsTeamsView()
+    {
+        // Arrange
+        var mockTeams = new Teams
+        {
+            Value =
+            [
+                new Team { Id = Guid.NewGuid(), Name = "Team1" },
+                new Team { Id = Guid.NewGuid(), Name = "Team2" }
+            ]
+        };
+
+        _mockTeamsService.Setup(s => s.GetAllTeamsAsync())
+            .ReturnsAsync(mockTeams);
+
+        // Act
+        var result = await _controller.CloneBoards();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<Team[]>(viewResult.Model);
+        Assert.Equal(2, model.Length);
+        Assert.Equal("Team1", model[0].Name);
+        Assert.Equal("Team2", model[1].Name);
+    }
+
+    [Fact]
+    public async Task CloneBoards_NullTeams_ReturnsEmptyView()
+    {
+        // Arrange
+        _mockTeamsService.Setup(s => s.GetAllTeamsAsync())
+            .ReturnsAsync((Teams)null!);
+
+        // Act
+        var result = await _controller.CloneBoards();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<Team[]>(viewResult.Model);
+        Assert.Empty(model);
+    }
+
+    [Fact]
+    public async Task CloneBoards_InvalidModelState_ReturnsTeamsView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.CloneBoards(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<Team[]>(viewResult.Model);
+        Assert.Empty(model);
+    }
+
+    [Fact]
+    public async Task CloneBoards_ValidModelState_ClonesBoardsAndReturnsTeamsView()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var templateTeamId = Guid.NewGuid();
+        var projectTeamId = Guid.NewGuid();
+
+        var mockTeams = new Teams
+        {
+            Value =
+            [
+                new Team { Id = Guid.NewGuid(), Name = "Team1" },
+                new Team { Id = Guid.NewGuid(), Name = "Team2" }
+            ]
+        };
+
+        _mockTeamsService.Setup(s => s.GetAllTeamsAsync())
+            .ReturnsAsync(mockTeams);
+
+        // Act
+        var result = await _controller.CloneBoards(templateProjectId, projectId, templateTeamId, projectTeamId);
+
+        // Assert
+        _mockCloneManager.Verify(m => m.CloneBoardsAsync(templateProjectId, projectId, templateTeamId, projectTeamId), Times.Once);
+
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<Team[]>(viewResult.Model);
+        Assert.Equal(2, model.Length);
+        Assert.Equal("Team1", model[0].Name);
+        Assert.Equal("Team2", model[1].Name);
+        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
     }
 }

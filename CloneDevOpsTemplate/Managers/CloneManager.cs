@@ -113,7 +113,7 @@ public class CloneManager(IProjectService projectService, IIterationService iter
             BacklogIteration = backlogIterationId,
             BacklogVisibilities = templateTeamSettings.BacklogVisibilities,
             BugsBehavior = templateTeamSettings.BugsBehavior,
-            DefaultIteration = templateTeamSettings.DefaultIteration?.Id,
+            DefaultIteration = templateTeamSettings.DefaultIterationMacro is null ? templateTeamSettings.DefaultIteration?.Id : null,
             DefaultIterationMacro = templateTeamSettings.DefaultIterationMacro,
             WorkingDays = templateTeamSettings.WorkingDays
         };
@@ -129,6 +129,13 @@ public class CloneManager(IProjectService projectService, IIterationService iter
             value.Value = value.Value.Replace(templateProject.Name, project.Name);
         }
         await _teamSettingsService.UpdateTeamFieldValues(project.Id, projectTeamId, teamFieldValues);
+    }
+
+    public async Task CloneTeamFieldValuesAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
+    {
+        var templateProject = await _projectService.GetProjectAsync(templateProjectId) ?? new();
+        var project = await _projectService.GetProjectAsync(projectId) ?? new();
+        await CloneTeamFieldValuesAsync(templateProject, project, templateTeamId, projectTeamId);
     }
 
     public async Task CloneBoardsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
