@@ -131,7 +131,7 @@ public class ProjectServiceTest
         // Arrange
         var name = "NewProject";
         var description = "Project Description";
-        var processTemplateType = "TemplateType";
+        var processTemplateTypeId = Guid.NewGuid();
         var sourceControlType = "Git";
         var visibility = Visibility.Private;
         var expectedResponse = new CreateProjectResponse
@@ -150,7 +150,7 @@ public class ProjectServiceTest
             });
 
         // Act
-        var result = await _projectService.CreateProjectAsync(name, description, processTemplateType, sourceControlType, visibility);
+        var result = await _projectService.CreateProjectAsync(name, description, processTemplateTypeId, sourceControlType, visibility);
 
         // Assert
         Assert.NotNull(result);

@@ -42,7 +42,7 @@ public class VersionControl
 public class ProcessTemplate
 {
     public string? TemplateName { get; set; }
-    public string TemplateTypeId { get; set; } = string.Empty;
+    public Guid TemplateTypeId { get; set; }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<Visibility>))]
