@@ -38,14 +38,15 @@ public class WorkItemsControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         var projectName = "TestProject";
+        int[] workItemIds = [1, 2];
 
         var workItemQueryList = new WorkItemsListQueryResult
         {
-            WorkItems = new List<WorkItemsListQueryItem>
-            {
+            WorkItems =
+            [
                 new WorkItemsListQueryItem { Id = 1 },
                 new WorkItemsListQueryItem { Id = 2 }
-            }.ToArray()
+            ]
         };
 
         var workItem1 = new WorkItem { Id = 1, Fields = new Fields { SystemTitle = "WorkItem1" } };
@@ -60,7 +61,7 @@ public class WorkItemsControllerTest
             .ReturnsAsync(workItemQueryList);
 
         _mockWorkItemService
-            .Setup(s => s.GetWorkItemsAsync(projectId, new[] { 1, 2 }))
+            .Setup(s => s.GetWorkItemsAsync(projectId, workItemIds))
             .ReturnsAsync(workItems);
 
         // Act

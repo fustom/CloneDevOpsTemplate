@@ -16,11 +16,29 @@
 
 @Html.ValidationSummary(false, "", new { @class = "text-danger" })
 
-@using (Html.BeginForm(Model.Item3, Model.Item2, FormMethod.Post, new { @class = "form-container card input-group-lg" }))
+@using (Html.BeginForm(Model.Item3, Model.Item2, FormMethod.Post, new { @class = "form-container input-group-lg" }))
 {
     @Html.Hidden("templateProjectId")
     @Html.Hidden("projectId")
-    @Html.DropDownList("templateTeamId", new SelectList(Model.Item1, "Id", "Name"), "Select a team", new { @class = "form-select form-control", @onChange = "onTeamChanged()" })
-    @Html.DropDownList("projectTeamId", new SelectList(Model.Item1, "Id", "Name"), "Select a team", new { @class = "form-select form-control", @onChange = "onTeamChanged()" })
-    <button type="submit" class="btn btn-primary form-button form-text">Clone</button>
+    
+    <div class="form-group row" style="margin-bottom: 10px">
+        @Html.Label("templateProjectId", "Select a source team", new { @class = "col-sm-2 col-form-label" })
+        <div class="col-sm-10">
+            @Html.DropDownList("templateTeamId", new SelectList(Model.Item1, "Id", "Name"), "Select a team", new { @class = "form-select form-control", @onChange = "onTeamChanged()" })
+        </div>
+    </div>
+    
+    <div class="form-group row" style="margin-bottom: 10px">
+        @Html.Label("newProjectName", "Select a target team", new { @class = "col-sm-2 col-form-label" })
+        <div class="col-sm-10">
+            @Html.DropDownList("projectTeamId", new SelectList(Model.Item1, "Id", "Name"), "Select a team", new { @class = "form-select form-control", @onChange = "onTeamChanged()" })
+        </div>
+    </div>
+    
+    <div class="form-group row">
+        <label for="cloneButton" class="col-sm-2 col-form-label" style="visibility: hidden;">Create</label>
+        <div class="col-sm-10">
+            <button id="cloneButton" type="submit" class="btn btn-primary form-button form-text" style="width: 20%;">Clone</button>
+        </div>
+    </div>
 }
