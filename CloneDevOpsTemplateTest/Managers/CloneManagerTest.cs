@@ -45,12 +45,13 @@ public class CloneManagerTest
         var newProjectName = "New Project";
         var description = "New Project Description";
         var visibility = Visibility.Private;
+        var templateTypeId = Guid.NewGuid();
 
         var templateProject = new Project
         {
             Capabilities = new Capabilities
             {
-                ProcessTemplate = new ProcessTemplate { TemplateTypeId = "template-id" },
+                ProcessTemplate = new ProcessTemplate { TemplateTypeId = templateTypeId },
                 Versioncontrol = new VersionControl { SourceControlType = "Git" }
             }
         };
@@ -59,7 +60,7 @@ public class CloneManagerTest
         var newProject = new Project { State = ProjectState.WellFormed };
 
         _mockProjectService.Setup(s => s.GetProjectAsync(templateProjectId)).ReturnsAsync(templateProject);
-        _mockProjectService.Setup(s => s.CreateProjectAsync(newProjectName, description, "template-id", "Git", visibility))
+        _mockProjectService.Setup(s => s.CreateProjectAsync(newProjectName, description, templateTypeId, "Git", visibility))
             .ReturnsAsync(createProjectResponse);
         _mockProjectService.Setup(s => s.GetProjectAsync(newProjectName)).ReturnsAsync(newProject);
 

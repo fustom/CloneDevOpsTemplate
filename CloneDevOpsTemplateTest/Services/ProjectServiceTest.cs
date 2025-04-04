@@ -131,7 +131,7 @@ public class ProjectServiceTest
         // Arrange
         var name = "NewProject";
         var description = "Project Description";
-        var processTemplateType = "TemplateType";
+        var processTemplateTypeId = Guid.NewGuid();
         var sourceControlType = "Git";
         var visibility = Visibility.Private;
         var expectedResponse = new CreateProjectResponse
@@ -150,7 +150,7 @@ public class ProjectServiceTest
             });
 
         // Act
-        var result = await _projectService.CreateProjectAsync(name, description, processTemplateType, sourceControlType, visibility);
+        var result = await _projectService.CreateProjectAsync(name, description, processTemplateTypeId, sourceControlType, visibility);
 
         // Assert
         Assert.NotNull(result);
@@ -192,90 +192,5 @@ public class ProjectServiceTest
         Assert.Equal(expectedProperties.Value[0].Value.ToString(), result.Value[0].Value.ToString());
         Assert.Equal(expectedProperties.Value[1].Name, result.Value[1].Name);
         Assert.Equal(expectedProperties.Value[1].Value.ToString(), result.Value[1].Value.ToString());
-    }
-
-    [Fact]
-    public async Task GetProcessesAsync_ReturnsProcesses()
-    {
-        // Arrange
-        var expectedProcesses = new Processes
-        {
-            Count = 2,
-            Value =
-            [
-                new Process { TypeId = Guid.NewGuid().ToString(), Name = "Process1" },
-                new Process { TypeId = Guid.NewGuid().ToString(), Name = "Process2" }
-            ]
-        };
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedProcesses)
-            });
-
-        // Act
-        var result = await _projectService.GetProcessesAsync();
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(expectedProcesses.Count, result.Count);
-        Assert.Equal(expectedProcesses.Value[0].TypeId, result.Value[0].TypeId);
-        Assert.Equal(expectedProcesses.Value[0].Name, result.Value[0].Name);
-        Assert.Equal(expectedProcesses.Value[1].TypeId, result.Value[1].TypeId);
-        Assert.Equal(expectedProcesses.Value[1].Name, result.Value[1].Name);
-    }
-
-    [Fact]
-    public async Task GetProcessAsync_ReturnsProcess()
-    {
-        // Arrange
-        var processTemplateType = "TemplateType";
-        var expectedProcess = new Process
-        {
-            TypeId = Guid.NewGuid().ToString(),
-            Name = "Process1"
-        };
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedProcess)
-            });
-
-        // Act
-        var result = await _projectService.GetProcessAsync(processTemplateType);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(expectedProcess.TypeId, result.TypeId);
-        Assert.Equal(expectedProcess.Name, result.Name);
-    }
-
-    [Fact]
-    public async Task GetProcessAsync_ReturnsNull_WhenNotFound()
-    {
-        // Arrange
-        var processTemplateType = "NonExistentTemplateType";
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.NotFound
-            });
-
-        // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => _projectService.GetProcessAsync(processTemplateType));
     }
 }
