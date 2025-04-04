@@ -4,8 +4,6 @@ namespace CloneDevOpsTemplate.IServices;
 
 public interface IProjectService
 {
-    Task<Processes?> GetProcessesAsync();
-    Task<Process?> GetProcessAsync(string processTemplateType);
     Task<Projects?> GetAllProjectsAsync();
     Task<Project?> GetProjectAsync(Guid projectId);
     Task<Project?> GetProjectAsync(string projectName);
