@@ -18,7 +18,7 @@ public class Team : BaseTeam
     public string Description { get; set; } = string.Empty;
     public string IdentityUrl { get; set; } = string.Empty;
     public string ProjectName { get; set; } = string.Empty;
-    public string ProjectId { get; set; } = string.Empty;
+    public Guid ProjectId { get; set; }
 }
 
 public class MapTeams
