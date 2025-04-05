@@ -22,7 +22,7 @@ public class IterationController(IIterationService iterationService, ICloneManag
             return View(iterations);
         }
 
-        iterations = await _iterationService.GetIterationsAsync(projectId) ?? new();
+        iterations = await _iterationService.GetAllAsync(projectId, TreeStructureGroup.Iterations) ?? new();
         return View(iterations);
     }
 
@@ -35,7 +35,7 @@ public class IterationController(IIterationService iterationService, ICloneManag
             return View(areas);
         }
 
-        areas = await _iterationService.GetAreaAsync(projectId) ?? new();
+        areas = await _iterationService.GetAllAsync(projectId, TreeStructureGroup.Areas) ?? new();
         return View(areas);
     }
 
@@ -54,7 +54,7 @@ public class IterationController(IIterationService iterationService, ICloneManag
             return await CloneIterations();
         }
 
-        await _cloneManager.CloneIterationsAsync(templateProjectId, projectId);
+        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations);
         ViewBag.SuccessMessage = "Success";
 
         return await CloneIterations();
@@ -74,7 +74,7 @@ public class IterationController(IIterationService iterationService, ICloneManag
             return await CloneIterations();
         }
 
-        await _cloneManager.CloneAreasAsync(templateProjectId, projectId);
+        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas);
         ViewBag.SuccessMessage = "Success";
 
         return await CloneIterations();

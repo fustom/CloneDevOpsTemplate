@@ -29,7 +29,7 @@ public class IterationControllerTest
         var projectId = Guid.NewGuid();
         var expectedIterations = new Iteration();
         _mockIterationService
-            .Setup(service => service.GetIterationsAsync(projectId))
+            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Iterations))
             .ReturnsAsync(expectedIterations);
 
         // Act
@@ -46,7 +46,7 @@ public class IterationControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         _mockIterationService
-            .Setup(service => service.GetIterationsAsync(projectId))
+            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Iterations))
             .ReturnsAsync((Iteration?)null);
 
         // Act
@@ -82,7 +82,7 @@ public class IterationControllerTest
         var projectId = Guid.NewGuid();
         var expectedAreas = new Iteration();
         _mockIterationService
-            .Setup(service => service.GetAreaAsync(projectId))
+            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Areas))
             .ReturnsAsync(expectedAreas);
 
         // Act
@@ -99,7 +99,7 @@ public class IterationControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         _mockIterationService
-            .Setup(service => service.GetAreaAsync(projectId))
+            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Areas))
             .ReturnsAsync((Iteration?)null);
 
         // Act
@@ -176,7 +176,7 @@ public class IterationControllerTest
         // Assert
         Assert.IsType<ViewResult>(result);
         Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
-        _mockCloneManager.Verify(manager => manager.CloneIterationsAsync(templateProjectId, projectId), Times.Once);
+        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations), Times.Once);
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class IterationControllerTest
         // Assert
         Assert.IsType<ViewResult>(result);
         Assert.Null(_controller.ViewBag.SuccessMessage);
-        _mockCloneManager.Verify(manager => manager.CloneIterationsAsync(It.IsAny<Guid>(), It.IsAny<Guid>()), Times.Never);
+        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TreeStructureGroup>()), Times.Never);
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public class IterationControllerTest
         // Assert
         Assert.IsType<ViewResult>(result);
         Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
-        _mockCloneManager.Verify(manager => manager.CloneAreasAsync(templateProjectId, projectId), Times.Once);
+        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas), Times.Once);
     }
 
     [Fact]
@@ -261,6 +261,6 @@ public class IterationControllerTest
         // Assert
         Assert.IsType<ViewResult>(result);
         Assert.Null(_controller.ViewBag.SuccessMessage);
-        _mockCloneManager.Verify(manager => manager.CloneAreasAsync(It.IsAny<Guid>(), It.IsAny<Guid>()), Times.Never);
+        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TreeStructureGroup>()), Times.Never);
     }
 }
