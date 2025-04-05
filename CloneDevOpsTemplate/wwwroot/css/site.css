@@ -22,14 +22,15 @@ body {
   margin-top: 30px;
 }
 
+.form-group {
+  margin-bottom: 10px;
+}
+
 .form-container-login {
   width: 30%;
   margin: 0 auto;
   margin-top: 50px;
 
-  .form-group {
-    margin-bottom: 10px;
-  }
   .form-control {
     margin-bottom: 10px;
   }
@@ -38,7 +39,46 @@ body {
   }
 }
 
+.form-container-clone {
+
+  .form-hidden-label {
+    visibility: hidden;
+  }
+
+  .form-button {
+    width: 20%;
+  }
+}
+
 .login-message {
   font-size: large;
   font-weight: bold;
+}
+
+.navbar-nav {
+
+  .nav-item-button {
+    margin-right: 5px;
+  }
+  
+  .nav-item-button-logout {
+    float: left;
+  }
+}
+
+.card-separator {
+  margin-bottom: 50px;
+}
+
+.board-header {
+  min-width: 80px;
+}
+
+.board-row {
+  background: rgb(230,230,230);
+  padding: 10px;
+}
+
+.link-horizontal {
+  display: inline-block;
 }
