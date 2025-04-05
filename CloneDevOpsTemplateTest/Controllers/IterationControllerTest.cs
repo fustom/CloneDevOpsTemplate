@@ -29,7 +29,7 @@ public class IterationControllerTest
         var projectId = Guid.NewGuid();
         var expectedIterations = new Iteration();
         _mockIterationService
-            .Setup(service => service.GetIterationsAsync(projectId))
+            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Iterations))
             .ReturnsAsync(expectedIterations);
 
         // Act
@@ -46,7 +46,7 @@ public class IterationControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         _mockIterationService
-            .Setup(service => service.GetIterationsAsync(projectId))
+            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Iterations))
             .ReturnsAsync((Iteration?)null);
 
         // Act
@@ -82,7 +82,7 @@ public class IterationControllerTest
         var projectId = Guid.NewGuid();
         var expectedAreas = new Iteration();
         _mockIterationService
-            .Setup(service => service.GetAreaAsync(projectId))
+            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Areas))
             .ReturnsAsync(expectedAreas);
 
         // Act
@@ -99,7 +99,7 @@ public class IterationControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         _mockIterationService
-            .Setup(service => service.GetAreaAsync(projectId))
+            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Iterations))
             .ReturnsAsync((Iteration?)null);
 
         // Act

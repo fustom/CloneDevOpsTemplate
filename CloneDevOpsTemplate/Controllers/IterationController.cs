@@ -22,7 +22,7 @@ public class IterationController(IIterationService iterationService, ICloneManag
             return View(iterations);
         }
 
-        iterations = await _iterationService.GetIterationsAsync(projectId) ?? new();
+        iterations = await _iterationService.GetAllAsync(projectId, TreeStructureGroup.Iterations) ?? new();
         return View(iterations);
     }
 
@@ -35,7 +35,7 @@ public class IterationController(IIterationService iterationService, ICloneManag
             return View(areas);
         }
 
-        areas = await _iterationService.GetAreaAsync(projectId) ?? new();
+        areas = await _iterationService.GetAllAsync(projectId, TreeStructureGroup.Areas) ?? new();
         return View(areas);
     }
 

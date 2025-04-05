@@ -47,16 +47,16 @@ public class CloneManager(IProjectService projectService, IIterationService iter
 
     public async Task CloneIterationsAsync(Guid templateProjectId, Guid projectId)
     {
-        Iteration templateIterations = await _iterationService.GetIterationsAsync(templateProjectId) ?? new();
-        Iteration iterations = await _iterationService.CreateIterationAsync(projectId, templateIterations);
-        await _iterationService.MoveIterationAsync(projectId, iterations.Children, "");
+        Iteration templateIterations = await _iterationService.GetAllAsync(templateProjectId, TreeStructureGroup.Iterations) ?? new();
+        Iteration iterations = await _iterationService.CreateAsync(projectId, templateIterations, TreeStructureGroup.Iterations);
+        await _iterationService.MoveAsync(projectId, iterations.Children, TreeStructureGroup.Iterations, "");
     }
 
     public async Task CloneAreasAsync(Guid templateProjectId, Guid projectId)
     {
-        Iteration templateAreas = await _iterationService.GetAreaAsync(templateProjectId) ?? new();
-        Iteration areas = await _iterationService.CreateAreaAsync(projectId, templateAreas);
-        await _iterationService.MoveAreaAsync(projectId, areas.Children, "");
+        Iteration templateAreas = await _iterationService.GetAllAsync(templateProjectId, TreeStructureGroup.Areas) ?? new();
+        Iteration areas = await _iterationService.CreateAsync(projectId, templateAreas, TreeStructureGroup.Areas);
+        await _iterationService.MoveAsync(projectId, areas.Children, TreeStructureGroup.Areas, "");
     }
 
     public async Task CloneTeamsAndSettingsAndBoardsAsync(Project templateProject, Project project)
