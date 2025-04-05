@@ -84,14 +84,14 @@ public class CloneManagerTest
         var templateIterations = new Iteration();
         var createdIterations = new Iteration { Children = new List<Iteration>() };
 
-        _mockIterationService.Setup(s => s.GetIterationsAsync(templateProjectId)).ReturnsAsync(templateIterations);
-        _mockIterationService.Setup(s => s.CreateIterationAsync(projectId, templateIterations)).ReturnsAsync(createdIterations);
+        _mockIterationService.Setup(s => s.GetAllAsync(templateProjectId, TreeStructureGroup.Iterations)).ReturnsAsync(templateIterations);
+        _mockIterationService.Setup(s => s.CreateAsync(projectId, templateIterations, TreeStructureGroup.Iterations)).ReturnsAsync(createdIterations);
 
         // Act
-        await _cloneManager.CloneIterationsAsync(templateProjectId, projectId);
+        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations);
 
         // Assert
-        _mockIterationService.Verify(s => s.MoveIterationAsync(projectId, createdIterations.Children, ""), Times.Once);
+        _mockIterationService.Verify(s => s.MoveAsync(projectId, createdIterations.Children, TreeStructureGroup.Iterations, ""), Times.Once);
     }
 
     [Fact]
@@ -104,14 +104,14 @@ public class CloneManagerTest
         var templateAreas = new Iteration();
         var createdAreas = new Iteration { Children = new List<Iteration>() };
 
-        _mockIterationService.Setup(s => s.GetAreaAsync(templateProjectId)).ReturnsAsync(templateAreas);
-        _mockIterationService.Setup(s => s.CreateAreaAsync(projectId, templateAreas)).ReturnsAsync(createdAreas);
+        _mockIterationService.Setup(s => s.GetAllAsync(templateProjectId, TreeStructureGroup.Areas)).ReturnsAsync(templateAreas);
+        _mockIterationService.Setup(s => s.CreateAsync(projectId, templateAreas, TreeStructureGroup.Areas)).ReturnsAsync(createdAreas);
 
         // Act
-        await _cloneManager.CloneAreasAsync(templateProjectId, projectId);
+        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas);
 
         // Assert
-        _mockIterationService.Verify(s => s.MoveAreaAsync(projectId, createdAreas.Children, ""), Times.Once);
+        _mockIterationService.Verify(s => s.MoveAsync(projectId, createdAreas.Children, TreeStructureGroup.Areas, ""), Times.Once);
     }
 
     [Fact]

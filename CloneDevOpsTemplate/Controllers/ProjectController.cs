@@ -70,8 +70,8 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
         }
 
         await Task.WhenAll(
-            _cloneManager.CloneIterationsAsync(templateProjectId, project.Id),
-            _cloneManager.CloneAreasAsync(templateProjectId, project.Id)
+            _cloneManager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Iterations),
+            _cloneManager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Areas)
         );
         await Task.WhenAll(
             _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(templateProject, project),

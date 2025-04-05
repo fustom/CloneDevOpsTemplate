@@ -2,10 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using CloneDevOpsTemplate.Models;
 using CloneDevOpsTemplate.Services;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using Moq.Protected;
 using MyTestProject.Service.Tests.Common;
-using Microsoft.Extensions.Configuration;
 
 namespace CloneDevOpsTemplateTest.Services;
 
@@ -48,7 +48,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.GetIterationAsync(projectId, name);
+        var result = await _iterationService.GetAsync(projectId, TreeStructureGroup.Iterations, name);
 
         // Assert
         Assert.NotNull(result);
@@ -75,7 +75,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.GetIterationsAsync(projectId);
+        var result = await _iterationService.GetAllAsync(projectId, TreeStructureGroup.Iterations);
 
         // Assert
         Assert.NotNull(result);
@@ -103,7 +103,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.CreateIterationAsync(projectId, createIterationRequest);
+        var result = await _iterationService.CreateAsync(projectId, TreeStructureGroup.Iterations, createIterationRequest);
 
         // Assert
         Assert.NotNull(result);
@@ -131,7 +131,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        await _iterationService.MoveIterationAsync(projectId, path, id);
+        await _iterationService.MoveAsync(projectId, TreeStructureGroup.Iterations, path, id);
 
         // Assert
         _httpMessageHandlerMock.Protected().Verify(
@@ -175,7 +175,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.CreateIterationAsync(projectId, iterations);
+        var result = await _iterationService.CreateAsync(projectId, iterations, TreeStructureGroup.Iterations);
 
         // Assert
         Assert.NotNull(result);
@@ -225,7 +225,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.CreateIterationAsync(projectId, iterations);
+        var result = await _iterationService.CreateAsync(projectId, iterations, TreeStructureGroup.Iterations);
 
         // Assert
         Assert.NotNull(result);
@@ -259,7 +259,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        await _iterationService.MoveIterationAsync(projectId, iterations, "");
+        await _iterationService.MoveAsync(projectId, iterations, TreeStructureGroup.Iterations, "");
 
         // Assert
         _httpMessageHandlerMock.Protected().Verify(
@@ -301,7 +301,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        await _iterationService.MoveIterationAsync(projectId, iterations, "");
+        await _iterationService.MoveAsync(projectId, iterations, TreeStructureGroup.Iterations, "");
 
         // Assert
         _httpMessageHandlerMock.Protected().Verify(
@@ -333,7 +333,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.CreateAreaAsync(projectId, createIterationRequest);
+        var result = await _iterationService.CreateAsync(projectId, TreeStructureGroup.Areas, createIterationRequest);
 
         // Assert
         Assert.NotNull(result);
@@ -372,7 +372,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.CreateAreaAsync(projectId, createIterationRequest);
+        var result = await _iterationService.CreateAsync(projectId, TreeStructureGroup.Areas, createIterationRequest);
 
         // Assert
         Assert.NotNull(result);
@@ -398,7 +398,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.CreateAreaAsync(projectId, createIterationRequest);
+        var result = await _iterationService.CreateAsync(projectId, TreeStructureGroup.Areas, createIterationRequest);
 
         // Assert
         Assert.NotNull(result);
@@ -439,7 +439,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.CreateAreaAsync(projectId, iterations);
+        var result = await _iterationService.CreateAsync(projectId, iterations, TreeStructureGroup.Areas);
 
         // Assert
         Assert.NotNull(result);
@@ -489,7 +489,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.CreateAreaAsync(projectId, iterations);
+        var result = await _iterationService.CreateAsync(projectId, iterations, TreeStructureGroup.Areas);
 
         // Assert
         Assert.NotNull(result);
@@ -519,7 +519,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        await _iterationService.MoveAreaAsync(projectId, path, id);
+        await _iterationService.MoveAsync(projectId, TreeStructureGroup.Areas, path, id);
 
         // Assert
         _httpMessageHandlerMock.Protected().Verify(
@@ -528,7 +528,7 @@ public class IterationServiceTest
             ItExpr.Is<HttpRequestMessage>(req =>
                 req.Method == HttpMethod.Post &&
                 req.RequestUri != null &&
-                req.RequestUri.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/areas/{path}?api-version=7.1") &&
+                req.RequestUri.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/Areas/{path}?api-version=7.1") &&
                 req.Content != null),
             ItExpr.IsAny<CancellationToken>()
         );
@@ -555,7 +555,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        var result = await _iterationService.MoveAreaAsync(projectId, path, id);
+        var result = await _iterationService.MoveAsync(projectId, TreeStructureGroup.Areas, path, id);
 
         // Assert
         Assert.NotNull(result);
@@ -566,7 +566,7 @@ public class IterationServiceTest
             ItExpr.Is<HttpRequestMessage>(req =>
                 req.Method == HttpMethod.Post &&
                 req.RequestUri != null &&
-                req.RequestUri.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/areas/{path}?api-version=7.1") &&
+                req.RequestUri.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/Areas/{path}?api-version=7.1") &&
                 req.Content != null),
             ItExpr.IsAny<CancellationToken>()
         );
@@ -595,7 +595,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        await _iterationService.MoveAreaAsync(projectId, iterations, "");
+        await _iterationService.MoveAsync(projectId, iterations, TreeStructureGroup.Areas, "");
 
         // Assert
         _httpMessageHandlerMock.Protected().Verify(
@@ -637,7 +637,7 @@ public class IterationServiceTest
             .ReturnsAsync(response);
 
         // Act
-        await _iterationService.MoveAreaAsync(projectId, iterations, "");
+        await _iterationService.MoveAsync(projectId, iterations, TreeStructureGroup.Areas, "");
 
         // Assert
         _httpMessageHandlerMock.Protected().Verify(
@@ -668,7 +668,7 @@ public class IterationServiceTest
             });
 
         // Act
-        var result = await _iterationService.GetAreaAsync(projectId);
+        var result = await _iterationService.GetAllAsync(projectId, TreeStructureGroup.Areas);
 
         // Assert
         Assert.NotNull(result);
@@ -693,6 +693,6 @@ public class IterationServiceTest
             });
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => _iterationService.GetAreaAsync(projectId));
+        await Assert.ThrowsAsync<HttpRequestException>(() => _iterationService.GetAllAsync(projectId, TreeStructureGroup.Areas));
     }
 }
