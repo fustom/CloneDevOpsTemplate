@@ -99,7 +99,7 @@ public class IterationControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         _mockIterationService
-            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Iterations))
+            .Setup(service => service.GetAllAsync(projectId, TreeStructureGroup.Areas))
             .ReturnsAsync((Iteration?)null);
 
         // Act
