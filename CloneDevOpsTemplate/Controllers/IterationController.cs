@@ -54,7 +54,7 @@ public class IterationController(IIterationService iterationService, ICloneManag
             return await CloneIterations();
         }
 
-        await _cloneManager.CloneIterationsAsync(templateProjectId, projectId);
+        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations);
         ViewBag.SuccessMessage = "Success";
 
         return await CloneIterations();
@@ -74,7 +74,7 @@ public class IterationController(IIterationService iterationService, ICloneManag
             return await CloneIterations();
         }
 
-        await _cloneManager.CloneAreasAsync(templateProjectId, projectId);
+        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas);
         ViewBag.SuccessMessage = "Success";
 
         return await CloneIterations();

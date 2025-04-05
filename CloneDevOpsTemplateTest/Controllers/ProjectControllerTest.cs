@@ -164,11 +164,11 @@ public class ProjectControllerTest
             .ReturnsAsync(Tuple.Create(project, templateProject, message));
 
         _mockCloneManager
-            .Setup(manager => manager.CloneIterationsAsync(templateProjectId, project.Id))
+            .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Iterations))
             .Returns(Task.CompletedTask);
 
         _mockCloneManager
-            .Setup(manager => manager.CloneAreasAsync(templateProjectId, project.Id))
+            .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Areas))
             .Returns(Task.CompletedTask);
 
         _mockCloneManager

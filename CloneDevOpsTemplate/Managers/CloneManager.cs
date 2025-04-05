@@ -45,18 +45,11 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         throw new TimeoutException("Project creation timed out.");
     }
 
-    public async Task CloneIterationsAsync(Guid templateProjectId, Guid projectId)
+    public async Task CloneClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup)
     {
-        Iteration templateIterations = await _iterationService.GetAllAsync(templateProjectId, TreeStructureGroup.Iterations) ?? new();
-        Iteration iterations = await _iterationService.CreateAsync(projectId, templateIterations, TreeStructureGroup.Iterations);
-        await _iterationService.MoveAsync(projectId, iterations.Children, TreeStructureGroup.Iterations, "");
-    }
-
-    public async Task CloneAreasAsync(Guid templateProjectId, Guid projectId)
-    {
-        Iteration templateAreas = await _iterationService.GetAllAsync(templateProjectId, TreeStructureGroup.Areas) ?? new();
-        Iteration areas = await _iterationService.CreateAsync(projectId, templateAreas, TreeStructureGroup.Areas);
-        await _iterationService.MoveAsync(projectId, areas.Children, TreeStructureGroup.Areas, "");
+        Iteration templateIterations = await _iterationService.GetAllAsync(templateProjectId, structureGroup) ?? new();
+        Iteration iterations = await _iterationService.CreateAsync(projectId, templateIterations, structureGroup);
+        await _iterationService.MoveAsync(projectId, iterations.Children, structureGroup, "");
     }
 
     public async Task CloneTeamsAndSettingsAndBoardsAsync(Project templateProject, Project project)
