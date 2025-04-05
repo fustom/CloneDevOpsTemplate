@@ -5,6 +5,6 @@
 
 <h1>Clone areas</h1>
 
-<h2 class="text-success">@ViewBag.SuccessMessage</h2>
-
-@{ await Html.RenderPartialAsync("_CloneByProject", Tuple.Create(Model, "Iteration", "CloneAreas")); }
+@{
+    await Html.RenderPartialAsync("_CloneByProject", Tuple.Create(Model, "Iteration", "CloneAreas"));
+}
