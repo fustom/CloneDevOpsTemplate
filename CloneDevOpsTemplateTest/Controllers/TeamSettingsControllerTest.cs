@@ -217,4 +217,149 @@ public class TeamSettingsControllerTest
         Assert.IsType<ViewResult>(result);
         Assert.Null(_controller.ViewBag.SuccessMessage);
     }
+
+    [Fact]
+    public async Task CloneTeamIterations_ReturnsViewResult_WithTeams()
+    {
+        // Arrange
+        Team[] teams =
+        [
+            new() { Id = Guid.NewGuid(), Name = "Team1" },
+            new() { Id = Guid.NewGuid(), Name = "Team2" }
+        ];
+        var teamsResponse = new Teams { Value = teams };
+
+        _mockTeamsService
+            .Setup(service => service.GetAllTeamsAsync())
+            .ReturnsAsync(teamsResponse);
+
+        // Act
+        var result = await _controller.CloneTeamIterations();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsAssignableFrom<IEnumerable<Team>>(viewResult.Model);
+        Assert.Equal(teams, model);
+    }
+
+    [Fact]
+    public async Task CloneTeamIterations_ReturnsViewResult_WithEmptyTeams_WhenServiceReturnsNull()
+    {
+        // Arrange
+        _mockTeamsService
+            .Setup(service => service.GetAllTeamsAsync())
+            .ReturnsAsync((Teams?)null);
+
+        // Act
+        var result = await _controller.CloneTeamIterations();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsAssignableFrom<IEnumerable<Team>>(viewResult.Model);
+        Assert.Empty(model);
+    }
+
+    [Fact]
+    public async Task CloneTeamIterations_Post_ReturnsViewResult_WithSuccessMessage_WhenModelStateIsValid()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var templateTeamId = Guid.NewGuid();
+        var projectTeamId = Guid.NewGuid();
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneTeamIterationsAsync(templateProjectId, projectId, templateTeamId, projectTeamId))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.CloneTeamIterations(templateProjectId, projectId, templateTeamId, projectTeamId);
+
+        // Assert
+        Assert.IsType<ViewResult>(result);
+        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
+    }
+
+    [Fact]
+    public async Task CloneTeamIterations_Post_ReturnsViewResult_WhenModelStateIsInvalid()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var templateTeamId = Guid.NewGuid();
+        var projectTeamId = Guid.NewGuid();
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.CloneTeamIterations(templateProjectId, projectId, templateTeamId, projectTeamId);
+
+        // Assert
+        Assert.IsType<ViewResult>(result);
+        Assert.Null(_controller.ViewBag.SuccessMessage);
+    }
+
+    [Fact]
+    public async Task Iterations_ReturnsViewResult_WithIterations()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var teamId = Guid.NewGuid();
+        var iterations = new TeamIterations
+        {
+            Value =
+            [
+                new TeamIterationSettings { Name = "Iteration1" },
+                new TeamIterationSettings { Name = "Iteration2" }
+            ]
+        };
+
+        _mockTeamSettingsService
+            .Setup(service => service.GetIterations(projectId, teamId))
+            .ReturnsAsync(iterations);
+
+        // Act
+        var result = await _controller.Iterations(projectId, teamId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsAssignableFrom<IEnumerable<TeamIterationSettings>>(viewResult.Model);
+        Assert.Equal(iterations.Value, model);
+    }
+
+    [Fact]
+    public async Task Iterations_ReturnsViewResult_WithEmptyIterations_WhenServiceReturnsNull()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var teamId = Guid.NewGuid();
+
+        _mockTeamSettingsService
+            .Setup(service => service.GetIterations(projectId, teamId))
+            .ReturnsAsync((TeamIterations?)null);
+
+        // Act
+        var result = await _controller.Iterations(projectId, teamId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsAssignableFrom<IEnumerable<TeamIterationSettings>>(viewResult.Model);
+        Assert.Empty(model);
+    }
+
+    [Fact]
+    public async Task Iterations_ReturnsViewResult_WithEmptyIterations_WhenModelStateIsInvalid()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var teamId = Guid.NewGuid();
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.Iterations(projectId, teamId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsAssignableFrom<IEnumerable<TeamIterationSettings>>(viewResult.Model);
+        Assert.Empty(model);
+    }
 }

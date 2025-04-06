@@ -40,6 +40,20 @@ public class TeamSettingsController(ITeamSettingsService teamSettingsService, IC
     }
 
     [HttpGet]
+    public async Task<IActionResult> Iterations(Guid projectId, Guid teamId)
+    {
+        TeamIterations iterations = new();
+
+        if (!ModelState.IsValid)
+        {
+            return View(iterations.Value);
+        }
+
+        iterations = await _teamSettingsService.GetIterations(projectId, teamId) ?? new();
+        return View(iterations.Value);
+    }
+
+    [HttpGet]
     public async Task<IActionResult> CloneTeamSettings()
     {
         var teams = await _teamsService.GetAllTeamsAsync() ?? new();
@@ -58,5 +72,25 @@ public class TeamSettingsController(ITeamSettingsService teamSettingsService, IC
         ViewBag.SuccessMessage = "Success";
 
         return await CloneTeamSettings();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CloneTeamIterations()
+    {
+        return await CloneTeamSettings();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CloneTeamIterations(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
+    {
+        if (!ModelState.IsValid)
+        {
+            return await CloneTeamIterations();
+        }
+
+        await _cloneManager.CloneTeamIterationsAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
+        ViewBag.SuccessMessage = "Success";
+
+        return await CloneTeamIterations();
     }
 }

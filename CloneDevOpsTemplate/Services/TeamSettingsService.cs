@@ -27,4 +27,18 @@ public class TeamSettingsService(IHttpClientFactory httpClientFactory) : ITeamSe
     {
         return _client.PatchAsJsonAsync($"{projectId}/{teamId}/_apis/work/teamsettings/teamfieldvalues?api-version=7.1", teamFieldValues);
     }
+
+    public Task<TeamIterations?> GetIterations(Guid projectId, Guid teamId)
+    {
+        return _client.GetFromJsonAsync<TeamIterations>($"{projectId}/{teamId}/_apis/work/teamsettings/iterations");
+    }
+
+    public Task<HttpResponseMessage> CreateIteration(Guid projectId, Guid teamId, Guid iterationId)
+    {
+        return _client.PostAsJsonAsync($"{projectId}/{teamId}/_apis/work/teamsettings/iterations?api-version=7.1", new { id = iterationId });
+    }
+    public Task<HttpResponseMessage> DeleteIteration(Guid projectId, Guid teamId, Guid iterationId)
+    {
+        return _client.DeleteAsync($"{projectId}/{teamId}/_apis/work/teamsettings/iterations/{iterationId}?api-version=7.1");
+    }
 }

@@ -1,0 +1,22 @@
+@model TeamIterationSettings[]
+@{
+    ViewData["Title"] = "Iterations";
+}
+
+@Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+<h1>Iterations</h1>
+
+<table class="table table-striped">
+    <th class="table-primary">Iteration</th>
+    <th class="table-primary">Start Date</th>
+    <th class="table-primary">End Date</th>
+    @foreach (var iteration in Model)
+    {
+        <tr>
+            <td>@iteration.Name</td>
+            <td>@iteration.Attributes.StartDate</td>
+            <td>@iteration.Attributes.FinishDate</td>
+        </tr>
+    }
+</table>

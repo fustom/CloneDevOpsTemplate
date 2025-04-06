@@ -63,8 +63,8 @@ public class TeamIterationSettings
 
 public class TeamIterationAttributes
 {
-    public DateTime FinishDate { set; get; }
-    public DateTime StartDate { set; get; }
+    public DateTime? FinishDate { set; get; }
+    public DateTime? StartDate { set; get; }
     public TimeFrame TimeFrame { set; get; }
 }
 
@@ -86,4 +86,10 @@ public class Values
 {
     public string Value { get; set; } = string.Empty;
     public bool IncludeChildren { get; set; }
+}
+
+public class TeamIterations
+{
+    public int Count { get; set; }
+    public TeamIterationSettings[] Value { get; set; } = [];
 }
