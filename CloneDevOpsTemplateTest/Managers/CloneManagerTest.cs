@@ -201,7 +201,6 @@ public class CloneManagerTest
 
         // Assert
         _mockTeamsService.Verify(s => s.CreateTeamFromTemplateAsync(project.Id, It.IsAny<Team[]>(), templateProject.DefaultTeam.Id, project.DefaultTeam.Id), Times.Once);
-        _mockTeamSettingsService.Verify(s => s.GetTeamSettings(project.Id, project.DefaultTeam.Id), Times.Once);
 
         foreach (var mappedTeam in mapTeams)
         {
@@ -223,38 +222,41 @@ public class CloneManagerTest
         var projectId = Guid.NewGuid();
         var templateTeamId = Guid.NewGuid();
         var projectTeamId = Guid.NewGuid();
+        var templateIterationId = Guid.NewGuid();
+        var newIterationId = Guid.NewGuid();
 
         var templateTeamSettings = new TeamSettings
         {
             BacklogVisibilities = new BacklogVisibilities { EpicCategory = true, FeatureCategory = false, RequirementCategory = true },
+            BacklogIteration = new TeamIterationSettings { Id = templateIterationId },
             BugsBehavior = BugsBehavior.AsTasks,
-            DefaultIteration = new TeamIterationSettings { Id = Guid.NewGuid() },
+            DefaultIteration = new TeamIterationSettings { Id = templateIterationId },
             DefaultIterationMacro = "macro",
             WorkingDays = [CloneDevOpsTemplate.Models.DayOfWeek.Monday, CloneDevOpsTemplate.Models.DayOfWeek.Tuesday]
-        };
-
-        var teamSettings = new TeamSettings
-        {
-            BacklogIteration = new() { Id = Guid.NewGuid() },
-            DefaultIteration = new() { Id = Guid.NewGuid() }
         };
 
         _mockTeamSettingsService.Setup(s => s.GetTeamSettings(templateProjectId, templateTeamId))
             .ReturnsAsync(templateTeamSettings);
 
+        _mockIterationService.Setup(s => s.GetAllAsync(templateProjectId, TreeStructureGroup.Iterations))
+            .ReturnsAsync(new Iteration { Identifier = templateIterationId });
+
+        _mockIterationService.Setup(s => s.GetAllAsync(projectId, TreeStructureGroup.Iterations))
+            .ReturnsAsync(new Iteration { Identifier = newIterationId });
+
         _mockTeamSettingsService.Setup(s => s.UpdateTeamSettings(projectId, projectTeamId, It.IsAny<PatchTeamSettings>()))
             .Returns(Task.FromResult(new HttpResponseMessage()));
 
         // Act
-        await _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, teamSettings.BacklogIteration.Id);
+        await _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
 
         // Assert
         _mockTeamSettingsService.Verify(s => s.GetTeamSettings(templateProjectId, templateTeamId), Times.Once);
         _mockTeamSettingsService.Verify(s => s.UpdateTeamSettings(projectId, projectTeamId, It.Is<PatchTeamSettings>(settings =>
-            settings.BacklogIteration == teamSettings.BacklogIteration.Id &&
+            settings.BacklogIteration == newIterationId &&
             settings.BacklogVisibilities == templateTeamSettings.BacklogVisibilities &&
             settings.BugsBehavior == templateTeamSettings.BugsBehavior &&
-            settings.DefaultIteration == (templateTeamSettings.DefaultIterationMacro == null ? teamSettings.DefaultIteration.Id : null) &&
+            settings.DefaultIteration == (templateTeamSettings.DefaultIterationMacro == null ? newIterationId : null) &&
             settings.DefaultIterationMacro == templateTeamSettings.DefaultIterationMacro &&
             settings.WorkingDays.SequenceEqual(templateTeamSettings.WorkingDays)
         )), Times.Once);

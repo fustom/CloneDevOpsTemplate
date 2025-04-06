@@ -52,14 +52,40 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         await _iterationService.MoveAsync(projectId, iterations.Children, structureGroup, "");
     }
 
+    private async Task<Dictionary<Guid, Guid>> MapClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup)
+    {
+        var templateClassificationNodes = await _iterationService.GetAllAsync(templateProjectId, structureGroup) ?? new();
+        var classificationNodes = await _iterationService.GetAllAsync(projectId, structureGroup) ?? new();
+        var ClassificationNodeMap = new Dictionary<Guid, Guid>
+        {
+            { templateClassificationNodes.Identifier, classificationNodes.Identifier }
+        };
+
+        MapClassificationNodes(templateClassificationNodes, classificationNodes, ClassificationNodeMap);
+
+        return ClassificationNodeMap;
+    }
+
+    private static void MapClassificationNodes(Iteration templateIterations, Iteration iterations, Dictionary<Guid, Guid> iterationMap)
+    {
+        foreach (var templateIteration in templateIterations.Children)
+        {
+            var iteration = iterations.Children.FirstOrDefault(i => i.Name == templateIteration.Name);
+            if (iteration != null)
+            {
+                iterationMap.Add(templateIteration.Identifier, iteration.Identifier);
+                MapClassificationNodes(templateIteration, iteration, iterationMap);
+            }
+        }
+    }
+
     public async Task CloneTeamsAndSettingsAndBoardsAsync(Project templateProject, Project project)
     {
         Dictionary<Guid, Guid> mapTeams = await CloneTeamsAsync(templateProject, project);
-        var teamSettings = await _teamSettingsService.GetTeamSettings(project.Id, project.DefaultTeam.Id) ?? new();
 
         foreach (var mappedTeam in mapTeams)
         {
-            await CloneTeamSettingsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value, teamSettings.BacklogIteration?.Id);
+            await CloneTeamSettingsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value);
             await CloneTeamFieldValuesAsync(templateProject, project, mappedTeam.Key, mappedTeam.Value);
             await CloneBoardsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value);
         }
@@ -98,15 +124,19 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         return await CloneTeamsAsync(templateProject, project);
     }
 
-    public async Task CloneTeamSettingsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId, Guid? backlogIterationId)
+    public async Task CloneTeamSettingsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
     {
         var templateTeamSettings = await _teamSettingsService.GetTeamSettings(templateProjectId, templateTeamId) ?? new();
+        var iterationMap = await MapClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations);
+        var mappedBacklogIterationId = iterationMap.GetValueOrDefault(templateTeamSettings.BacklogIteration?.Id ?? Guid.Empty);
+        var mappedDefaultIterationId = iterationMap.GetValueOrDefault(templateTeamSettings.DefaultIteration?.Id ?? Guid.Empty);
+
         PatchTeamSettings newTeamSettings = new()
         {
-            BacklogIteration = backlogIterationId,
+            BacklogIteration = mappedBacklogIterationId,
             BacklogVisibilities = templateTeamSettings.BacklogVisibilities,
             BugsBehavior = templateTeamSettings.BugsBehavior,
-            DefaultIteration = templateTeamSettings.DefaultIterationMacro is null ? templateTeamSettings.DefaultIteration?.Id : null,
+            DefaultIteration = templateTeamSettings.DefaultIterationMacro is null ? mappedDefaultIterationId : null,
             DefaultIterationMacro = templateTeamSettings.DefaultIterationMacro,
             WorkingDays = templateTeamSettings.WorkingDays
         };
