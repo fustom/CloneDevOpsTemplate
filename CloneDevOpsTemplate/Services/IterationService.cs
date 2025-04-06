@@ -13,9 +13,14 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         return _client.GetFromJsonAsync<Iteration>($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{name}");
     }
 
+    public Task<Iteration?> GetAsync(Guid projectId, TreeStructureGroup structureGroup, int depth)
+    {
+        return _client.GetFromJsonAsync<Iteration>($"{projectId}/_apis/wit/classificationNodes/{structureGroup}?$depth={depth}");
+    }
+
     public Task<Iteration?> GetAllAsync(Guid projectId, TreeStructureGroup structureGroup)
     {
-        return _client.GetFromJsonAsync<Iteration>($"{projectId}/_apis/wit/classificationNodes/{structureGroup}?$depth=10");
+        return GetAsync(projectId, structureGroup, int.MaxValue);
     }
 
     public async Task<Iteration> CreateAsync(Guid projectId, TreeStructureGroup structureGroup, CreateIterationRequest iteration)

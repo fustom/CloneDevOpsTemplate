@@ -1,50 +1,41 @@
-@using Microsoft.AspNetCore.Html;
-
 @model Iteration
 
 <div class="accordion" id="accordionExample">
-    @ShowIteration(Model)
-</div>
-
-@functions
-{
-    public static IHtmlContent ShowIteration(Iteration iteration)
-    {
-        var content = new HtmlContentBuilder()
-            .AppendHtml("""<div class="accordion-item">""")
-            .AppendHtml($"""<h2 class="accordion-header" id="heading{iteration.Id}">""")
-            .AppendHtml($"""<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{iteration.Id}" aria-expanded="true" aria-controls="collapse{iteration.Id}">""")
-            .AppendHtml($"<h3>{iteration.Name}</h3>")
-            .AppendHtml("</button>")
-            .AppendHtml("</h2>")
-            .AppendHtml($"""<div id="collapse{iteration.Id}" class="accordion-collapse collapse" aria-labelledby="heading{iteration.Id}">""")
-            .AppendHtml("""<div class="accordion-body accordion">""")
-            .AppendHtml($"<div>Id: {iteration.Id}</div>");
-
-
-        if (iteration.Attributes != null)
+    @{
+        void ShowIteration(Iteration iteration)
         {
-            if (iteration.Attributes.StartDate != null)
-            {
-                content.AppendHtml($"<div>Start: {iteration.Attributes.StartDate}</div>");
-            }
-            if (iteration.Attributes.FinishDate != null)
-            {
-                content.AppendHtml($"<div>Finish: {iteration.Attributes.FinishDate}</div>");
-            }
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-@iteration.Id">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse-@iteration.Id" aria-expanded="true" aria-controls="collapse-@iteration.Id">
+                        <h3>@iteration.Name</h3>
+                    </button>
+                </h2>
+                <div id="collapse-@iteration.Id" class="accordion-collapse collapse" aria-labelledby="heading-@iteration.Id">
+                    <div class="accordion-body accordion">
+                        <div>Id: @iteration.Id</div>
+                        @if (iteration.Attributes != null)
+                        {
+                            if (iteration.Attributes.StartDate != null)
+                            {
+                                <div>Start: @iteration.Attributes.StartDate</div>
+                            }
+                            if (iteration.Attributes.FinishDate != null)
+                            {
+                                <div>Finish: @iteration.Attributes.FinishDate</div>
+                            }
+                        }
+                        @if (iteration.HasChildren)
+                        {
+                            foreach (var child in iteration.Children)
+                            {
+                                ShowIteration(child);
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
         }
-        if (iteration.HasChildren)
-        {
-            foreach (var child in iteration.Children)
-            {
-                content.AppendHtml(ShowIteration(child));
-            }
-        }
-
-        content.AppendHtml("</div>");
-        content.AppendHtml("</div>");
-        content.AppendHtml("</div>");
-
-        return content;
+        ShowIteration(Model);
     }
-}
+</div>
