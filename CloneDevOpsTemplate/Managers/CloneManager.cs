@@ -66,7 +66,7 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         return ClassificationNodeMap;
     }
 
-    private static void MapClassificationNodes(Iteration templateIterations, Iteration iterations, Dictionary<Guid, Guid> iterationMap)
+    public static void MapClassificationNodes(Iteration templateIterations, Iteration iterations, Dictionary<Guid, Guid> iterationMap)
     {
         foreach (var templateIteration in templateIterations.Children)
         {

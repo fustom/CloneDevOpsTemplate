@@ -302,4 +302,130 @@ public class CloneManagerTest
             values.Values.Any(v => v.Value == "NewProject\\Area2")
         )), Times.Once);
     }
+
+    [Fact]
+    public void MapClassificationNodes_ShouldMapNodesCorrectly()
+    {
+        // Arrange
+        var templateIterations = new Iteration
+        {
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "Iteration1",
+                    Identifier = Guid.NewGuid(),
+                    Children =
+                    [
+                        new Iteration
+                        {
+                            Name = "SubIteration1",
+                            Identifier = Guid.NewGuid()
+                        }
+                    ]
+                },
+                new Iteration
+                {
+                    Name = "Iteration2",
+                    Identifier = Guid.NewGuid()
+                }
+            ]
+        };
+
+        var iterations = new Iteration
+        {
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "Iteration1",
+                    Identifier = Guid.NewGuid(),
+                    Children =
+                    [
+                        new Iteration
+                        {
+                            Name = "SubIteration1",
+                            Identifier = Guid.NewGuid()
+                        }
+                    ]
+                },
+                new Iteration
+                {
+                    Name = "Iteration2",
+                    Identifier = Guid.NewGuid()
+                }
+            ]
+        };
+
+        var iterationMap = new Dictionary<Guid, Guid>();
+
+        // Act
+        CloneManager.MapClassificationNodes(templateIterations, iterations, iterationMap);
+
+        // Assert
+        Assert.Equal(3, iterationMap.Count);
+        Assert.Equal(iterations.Children[0].Identifier, iterationMap[templateIterations.Children[0].Identifier]);
+        Assert.Equal(iterations.Children[0].Children[0].Identifier, iterationMap[templateIterations.Children[0].Children[0].Identifier]);
+        Assert.Equal(iterations.Children[1].Identifier, iterationMap[templateIterations.Children[1].Identifier]);
+    }
+
+    [Fact]
+    public void MapClassificationNodes_ShouldHandleEmptyChildren()
+    {
+        // Arrange
+        var templateIterations = new Iteration
+        {
+            Children = []
+        };
+
+        var iterations = new Iteration
+        {
+            Children = []
+        };
+
+        var iterationMap = new Dictionary<Guid, Guid>();
+
+        // Act
+        CloneManager.MapClassificationNodes(templateIterations, iterations, iterationMap);
+
+        // Assert
+        Assert.Empty(iterationMap);
+    }
+
+    [Fact]
+    public void MapClassificationNodes_ShouldNotMapIfNamesDoNotMatch()
+    {
+        // Arrange
+        var templateIterations = new Iteration
+        {
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "Iteration1",
+                    Identifier = Guid.NewGuid()
+                }
+            ]
+        };
+
+        var iterations = new Iteration
+        {
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "DifferentIteration",
+                    Identifier = Guid.NewGuid()
+                }
+            ]
+        };
+
+        var iterationMap = new Dictionary<Guid, Guid>();
+
+        // Act
+        CloneManager.MapClassificationNodes(templateIterations, iterations, iterationMap);
+
+        // Assert
+        Assert.Empty(iterationMap);
+    }
 }
