@@ -318,7 +318,7 @@ public class TeamSettingsServiceTest
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(expectedIterations.Count, result.Count);
+        Assert.Equal(expectedIterations.Value.Length, result.Value.Length);
         Assert.Equal(expectedIterations.Value[0].Name, result.Value[0].Name);
     }
 
