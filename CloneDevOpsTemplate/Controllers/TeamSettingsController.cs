@@ -54,8 +54,7 @@ public class TeamSettingsController(ITeamSettingsService teamSettingsService, IC
             return await CloneTeamSettings();
         }
 
-        // TODO: Add backlog Iteration ID
-        await _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, null);
+        await _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
         ViewBag.SuccessMessage = "Success";
 
         return await CloneTeamSettings();

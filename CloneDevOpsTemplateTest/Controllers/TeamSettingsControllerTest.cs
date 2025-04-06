@@ -189,7 +189,7 @@ public class TeamSettingsControllerTest
         var projectTeamId = Guid.NewGuid();
 
         _mockCloneManager
-            .Setup(manager => manager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, null))
+            .Setup(manager => manager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId))
             .Returns(Task.CompletedTask);
 
         // Act

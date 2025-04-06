@@ -201,7 +201,6 @@ public class CloneManagerTest
 
         // Assert
         _mockTeamsService.Verify(s => s.CreateTeamFromTemplateAsync(project.Id, It.IsAny<Team[]>(), templateProject.DefaultTeam.Id, project.DefaultTeam.Id), Times.Once);
-        _mockTeamSettingsService.Verify(s => s.GetTeamSettings(project.Id, project.DefaultTeam.Id), Times.Once);
 
         foreach (var mappedTeam in mapTeams)
         {
@@ -223,38 +222,41 @@ public class CloneManagerTest
         var projectId = Guid.NewGuid();
         var templateTeamId = Guid.NewGuid();
         var projectTeamId = Guid.NewGuid();
+        var templateIterationId = Guid.NewGuid();
+        var newIterationId = Guid.NewGuid();
 
         var templateTeamSettings = new TeamSettings
         {
             BacklogVisibilities = new BacklogVisibilities { EpicCategory = true, FeatureCategory = false, RequirementCategory = true },
+            BacklogIteration = new TeamIterationSettings { Id = templateIterationId },
             BugsBehavior = BugsBehavior.AsTasks,
-            DefaultIteration = new TeamIterationSettings { Id = Guid.NewGuid() },
+            DefaultIteration = new TeamIterationSettings { Id = templateIterationId },
             DefaultIterationMacro = "macro",
             WorkingDays = [CloneDevOpsTemplate.Models.DayOfWeek.Monday, CloneDevOpsTemplate.Models.DayOfWeek.Tuesday]
-        };
-
-        var teamSettings = new TeamSettings
-        {
-            BacklogIteration = new() { Id = Guid.NewGuid() },
-            DefaultIteration = new() { Id = Guid.NewGuid() }
         };
 
         _mockTeamSettingsService.Setup(s => s.GetTeamSettings(templateProjectId, templateTeamId))
             .ReturnsAsync(templateTeamSettings);
 
+        _mockIterationService.Setup(s => s.GetAllAsync(templateProjectId, TreeStructureGroup.Iterations))
+            .ReturnsAsync(new Iteration { Identifier = templateIterationId });
+
+        _mockIterationService.Setup(s => s.GetAllAsync(projectId, TreeStructureGroup.Iterations))
+            .ReturnsAsync(new Iteration { Identifier = newIterationId });
+
         _mockTeamSettingsService.Setup(s => s.UpdateTeamSettings(projectId, projectTeamId, It.IsAny<PatchTeamSettings>()))
             .Returns(Task.FromResult(new HttpResponseMessage()));
 
         // Act
-        await _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, teamSettings.BacklogIteration.Id);
+        await _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
 
         // Assert
         _mockTeamSettingsService.Verify(s => s.GetTeamSettings(templateProjectId, templateTeamId), Times.Once);
         _mockTeamSettingsService.Verify(s => s.UpdateTeamSettings(projectId, projectTeamId, It.Is<PatchTeamSettings>(settings =>
-            settings.BacklogIteration == teamSettings.BacklogIteration.Id &&
+            settings.BacklogIteration == newIterationId &&
             settings.BacklogVisibilities == templateTeamSettings.BacklogVisibilities &&
             settings.BugsBehavior == templateTeamSettings.BugsBehavior &&
-            settings.DefaultIteration == (templateTeamSettings.DefaultIterationMacro == null ? teamSettings.DefaultIteration.Id : null) &&
+            settings.DefaultIteration == (templateTeamSettings.DefaultIterationMacro == null ? newIterationId : null) &&
             settings.DefaultIterationMacro == templateTeamSettings.DefaultIterationMacro &&
             settings.WorkingDays.SequenceEqual(templateTeamSettings.WorkingDays)
         )), Times.Once);
@@ -299,5 +301,131 @@ public class CloneManagerTest
             values.Values.Any(v => v.Value == "NewProject\\Area1") &&
             values.Values.Any(v => v.Value == "NewProject\\Area2")
         )), Times.Once);
+    }
+
+    [Fact]
+    public void MapClassificationNodes_ShouldMapNodesCorrectly()
+    {
+        // Arrange
+        var templateIterations = new Iteration
+        {
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "Iteration1",
+                    Identifier = Guid.NewGuid(),
+                    Children =
+                    [
+                        new Iteration
+                        {
+                            Name = "SubIteration1",
+                            Identifier = Guid.NewGuid()
+                        }
+                    ]
+                },
+                new Iteration
+                {
+                    Name = "Iteration2",
+                    Identifier = Guid.NewGuid()
+                }
+            ]
+        };
+
+        var iterations = new Iteration
+        {
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "Iteration1",
+                    Identifier = Guid.NewGuid(),
+                    Children =
+                    [
+                        new Iteration
+                        {
+                            Name = "SubIteration1",
+                            Identifier = Guid.NewGuid()
+                        }
+                    ]
+                },
+                new Iteration
+                {
+                    Name = "Iteration2",
+                    Identifier = Guid.NewGuid()
+                }
+            ]
+        };
+
+        var iterationMap = new Dictionary<Guid, Guid>();
+
+        // Act
+        CloneManager.MapClassificationNodes(templateIterations, iterations, iterationMap);
+
+        // Assert
+        Assert.Equal(3, iterationMap.Count);
+        Assert.Equal(iterations.Children[0].Identifier, iterationMap[templateIterations.Children[0].Identifier]);
+        Assert.Equal(iterations.Children[0].Children[0].Identifier, iterationMap[templateIterations.Children[0].Children[0].Identifier]);
+        Assert.Equal(iterations.Children[1].Identifier, iterationMap[templateIterations.Children[1].Identifier]);
+    }
+
+    [Fact]
+    public void MapClassificationNodes_ShouldHandleEmptyChildren()
+    {
+        // Arrange
+        var templateIterations = new Iteration
+        {
+            Children = []
+        };
+
+        var iterations = new Iteration
+        {
+            Children = []
+        };
+
+        var iterationMap = new Dictionary<Guid, Guid>();
+
+        // Act
+        CloneManager.MapClassificationNodes(templateIterations, iterations, iterationMap);
+
+        // Assert
+        Assert.Empty(iterationMap);
+    }
+
+    [Fact]
+    public void MapClassificationNodes_ShouldNotMapIfNamesDoNotMatch()
+    {
+        // Arrange
+        var templateIterations = new Iteration
+        {
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "Iteration1",
+                    Identifier = Guid.NewGuid()
+                }
+            ]
+        };
+
+        var iterations = new Iteration
+        {
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "DifferentIteration",
+                    Identifier = Guid.NewGuid()
+                }
+            ]
+        };
+
+        var iterationMap = new Dictionary<Guid, Guid>();
+
+        // Act
+        CloneManager.MapClassificationNodes(templateIterations, iterations, iterationMap);
+
+        // Assert
+        Assert.Empty(iterationMap);
     }
 }
