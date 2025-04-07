@@ -47,9 +47,10 @@ public class CloneManager(IProjectService projectService, IIterationService iter
 
     public async Task CloneClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup)
     {
-        Iteration templateIterations = await _iterationService.GetAllAsync(templateProjectId, structureGroup) ?? new();
-        Iteration iterations = await _iterationService.CreateAsync(projectId, templateIterations, structureGroup);
-        await _iterationService.MoveAsync(projectId, iterations.Children, structureGroup, "");
+        var classificationNodes = await _iterationService.GetAllAsync(projectId, structureGroup) ?? new();
+        await _iterationService.DeleteAsync(projectId, structureGroup, classificationNodes);
+        var templateClassificationNodes = await _iterationService.GetAllAsync(templateProjectId, structureGroup) ?? new();
+        await _iterationService.CreateAsync(projectId, templateClassificationNodes, structureGroup, "");
     }
 
     private async Task<Dictionary<Guid, Guid>> MapClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup)

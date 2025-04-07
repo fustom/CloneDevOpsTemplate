@@ -1,4 +1,3 @@
-using System.Net;
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Models;
 
@@ -23,59 +22,30 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         return GetAsync(projectId, structureGroup, int.MaxValue);
     }
 
-    public async Task<Iteration> CreateAsync(Guid projectId, TreeStructureGroup structureGroup, CreateIterationRequest iteration)
+    public async Task<HttpResponseMessage> CreateAsync(Guid projectId, TreeStructureGroup structureGroup, ClassificationNodeBase classificationNode, string path)
     {
-        var result = await _client.PostAsJsonAsync($"{projectId}/_apis/wit/classificationNodes/{structureGroup}?api-version=7.1", iteration);
-        if (result.IsSuccessStatusCode || result.StatusCode == HttpStatusCode.BadRequest)
-        {
-            return await result.Content.ReadFromJsonAsync<Iteration>() ?? new();
-        }
-        if (result.StatusCode == HttpStatusCode.Conflict)
-        {
-            return await GetAsync(projectId, structureGroup, iteration.Name) ?? new();
-        }
-        return new();
+        return await _client.PostAsJsonAsync($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{path}?api-version=7.1", classificationNode);
     }
 
-    public async Task<Iteration> CreateAsync(Guid projectId, Iteration iterations, TreeStructureGroup structureGroup)
+    public async Task CreateAsync(Guid projectId, Iteration classificationNodes, TreeStructureGroup structureGroup, string path)
     {
-        Iteration response = new();
-
-        foreach (Iteration iteration in iterations.Children)
+        foreach (var classificationNode in classificationNodes.Children)
         {
-            Iteration resp = await CreateAsync(projectId, structureGroup, new CreateIterationRequest
-            {
-                Name = iteration.Name
-            });
-
-            Iteration child = await CreateAsync(projectId, iteration, structureGroup);
-            if (child.Children.Count > 0)
-            {
-                resp.Children.AddRange(child.Children);
-            }
-            if (resp.Id > 0)
-            {
-                response.Children.Add(resp);
-            }
+            await CreateAsync(projectId, structureGroup, classificationNode, path);
+            await CreateAsync(projectId, classificationNode, structureGroup, classificationNode.Name);
         }
-
-        return response;
     }
 
-    public Task<HttpResponseMessage> MoveAsync(Guid projectId, TreeStructureGroup structureGroup, string path, int Id)
+    public async Task<HttpResponseMessage> DeleteAsync(Guid projectId, TreeStructureGroup structureGroup, string name)
     {
-        return _client.PostAsJsonAsync($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{path}?api-version=7.1", new { id = Id });
+        return await _client.DeleteAsync($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{name}?api-version=7.1");
     }
 
-    public async Task MoveAsync(Guid projectId, List<Iteration> iterations, TreeStructureGroup structureGroup, string name)
+    public async Task DeleteAsync(Guid projectId, TreeStructureGroup structureGroup, Iteration classificationNodes)
     {
-        foreach (Iteration iteration in iterations)
+        foreach (var classificationNode in classificationNodes.Children)
         {
-            await MoveAsync(projectId, structureGroup, name, iteration.Id);
-            if (iteration.Children.Count > 0)
-            {
-                await MoveAsync(projectId, iteration.Children, structureGroup, $"{name}/{iteration.Name}");
-            }
+            await DeleteAsync(projectId, structureGroup, classificationNode.Name);
         }
     }
 }
