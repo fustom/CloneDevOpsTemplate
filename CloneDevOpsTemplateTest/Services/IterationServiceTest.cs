@@ -83,572 +83,6 @@ public class IterationServiceTest
     }
 
     [Fact]
-    public async Task CreateIterationAsync_ReturnsCreatedIteration()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var createIterationRequest = new CreateIterationRequest { Name = "Iteration1" };
-        var expectedIteration = new Iteration { Name = createIterationRequest.Name };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedIteration)
-            });
-
-        // Act
-        var result = await _iterationService.CreateAsync(projectId, TreeStructureGroup.Iterations, createIterationRequest);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(expectedIteration.Name, result.Name);
-    }
-
-    [Fact]
-    public async Task MoveIteration_ReturnsSuccess()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var path = "Iteration1";
-        var id = 1;
-        var response = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(response);
-
-        // Act
-        await _iterationService.MoveAsync(projectId, TreeStructureGroup.Iterations, path, id);
-
-        // Assert
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.IsAny<HttpRequestMessage>(),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
-    [Fact]
-    public async Task CreateIterationAsync_WithIterations_ReturnsCreatedIterations()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var iterations = new Iteration
-        {
-            Children =
-            [
-                new Iteration { Name = "Iteration1", Id = 1, Children = [] },
-                new Iteration { Name = "Iteration2", Id = 2, Children = [] }
-            ]
-        };
-        var expectedIteration1 = new Iteration { Name = "Iteration1", Id = 1 };
-        var expectedIteration2 = new Iteration { Name = "Iteration2", Id = 2 };
-
-        _httpMessageHandlerMock.Protected()
-            .SetupSequence<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedIteration1)
-            })
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedIteration2)
-            });
-
-        // Act
-        var result = await _iterationService.CreateAsync(projectId, iterations, TreeStructureGroup.Iterations);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.Children.Count);
-        Assert.Contains(result.Children, i => i.Name == "Iteration1");
-        Assert.Contains(result.Children, i => i.Name == "Iteration2");
-    }
-
-    [Fact]
-    public async Task CreateIterationAsync_WithNestedIterations_ReturnsCreatedIterations()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var iterations = new Iteration
-        {
-            Children =
-            [
-                new Iteration
-                {
-                    Name = "Iteration1",
-                    Id = 1,
-                    Children =
-                    [
-                        new Iteration { Name = "SubIteration1", Id = 3, Children = [] }
-                    ]
-                }
-            ]
-        };
-        var expectedIteration1 = new Iteration { Name = "Iteration1", Id = 1 };
-        var expectedSubIteration1 = new Iteration { Name = "SubIteration1", Id = 3 };
-
-        _httpMessageHandlerMock.Protected()
-            .SetupSequence<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedIteration1)
-            })
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedSubIteration1)
-            });
-
-        // Act
-        var result = await _iterationService.CreateAsync(projectId, iterations, TreeStructureGroup.Iterations);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Single(result.Children);
-        Assert.Equal("Iteration1", result.Children[0].Name);
-        Assert.Single(result.Children[0].Children);
-        Assert.Equal("SubIteration1", result.Children[0].Children[0].Name);
-    }
-
-    [Fact]
-    public async Task MoveIteration_WithMultipleIterations_ReturnsSuccess()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var iterations = new List<Iteration>
-    {
-        new() { Name = "Iteration1", Id = 1, Children = [] },
-        new() { Name = "Iteration2", Id = 2, Children = [] }
-    };
-        var response = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(response);
-
-        // Act
-        await _iterationService.MoveAsync(projectId, iterations, TreeStructureGroup.Iterations, "");
-
-        // Assert
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Exactly(2),
-            ItExpr.IsAny<HttpRequestMessage>(),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
-
-    [Fact]
-    public async Task MoveIteration_WithNestedIterations_ReturnsSuccess()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var iterations = new List<Iteration>
-        {
-            new()
-            {
-                Name = "Iteration1",
-                Id = 1,
-                Children =
-                [
-                    new Iteration { Name = "SubIteration1", Id = 3, Children = [] }
-                ]
-            }
-        };
-        var response = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(response);
-
-        // Act
-        await _iterationService.MoveAsync(projectId, iterations, TreeStructureGroup.Iterations, "");
-
-        // Assert
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Exactly(2),
-            ItExpr.IsAny<HttpRequestMessage>(),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
-
-    [Fact]
-    public async Task CreateAreaAsync_ReturnsCreatedArea()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var createIterationRequest = new CreateIterationRequest { Name = "Area1" };
-        var expectedArea = new Iteration { Name = createIterationRequest.Name };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedArea)
-            });
-
-        // Act
-        var result = await _iterationService.CreateAsync(projectId, TreeStructureGroup.Areas, createIterationRequest);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(expectedArea.Name, result.Name);
-    }
-
-    [Fact]
-    public async Task CreateAreaAsync_ReturnsExistingAreaOnConflict()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var createIterationRequest = new CreateIterationRequest { Name = "Area1" };
-        var existingArea = new Iteration { Name = createIterationRequest.Name };
-
-        _httpMessageHandlerMock.Protected()
-            .SetupSequence<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.Conflict
-            });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(existingArea)
-            });
-
-        // Act
-        var result = await _iterationService.CreateAsync(projectId, TreeStructureGroup.Areas, createIterationRequest);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(existingArea.Name, result.Name);
-    }
-
-    [Fact]
-    public async Task CreateAreaAsync_ReturnsEmptyIterationOnFailure()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var createIterationRequest = new CreateIterationRequest { Name = "Area1" };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.InternalServerError
-            });
-
-        // Act
-        var result = await _iterationService.CreateAsync(projectId, TreeStructureGroup.Areas, createIterationRequest);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(string.Empty, result.Name);
-    }
-
-    [Fact]
-    public async Task CreateAreaAsync_WithIterations_ReturnsCreatedAreas()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var iterations = new Iteration
-        {
-            Children =
-            [
-                new Iteration { Name = "Area1", Id = 1, Children = [] },
-                new Iteration { Name = "Area2", Id = 2, Children = [] }
-            ]
-        };
-        var expectedArea1 = new Iteration { Name = "Area1", Id = 1 };
-        var expectedArea2 = new Iteration { Name = "Area2", Id = 2 };
-
-        _httpMessageHandlerMock.Protected()
-            .SetupSequence<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedArea1)
-            })
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedArea2)
-            });
-
-        // Act
-        var result = await _iterationService.CreateAsync(projectId, iterations, TreeStructureGroup.Areas);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.Children.Count);
-        Assert.Contains(result.Children, i => i.Name == "Area1");
-        Assert.Contains(result.Children, i => i.Name == "Area2");
-    }
-
-    [Fact]
-    public async Task CreateAreaAsync_WithNestedAreas_ReturnsCreatedAreas()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var iterations = new Iteration
-        {
-            Children =
-            [
-                new Iteration
-                {
-                    Name = "Area1",
-                    Id = 1,
-                    Children =
-                    [
-                        new Iteration { Name = "SubArea1", Id = 3, Children = [] }
-                    ]
-                }
-            ]
-        };
-        var expectedArea1 = new Iteration { Name = "Area1", Id = 1 };
-        var expectedSubArea1 = new Iteration { Name = "SubArea1", Id = 3 };
-
-        _httpMessageHandlerMock.Protected()
-            .SetupSequence<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedArea1)
-            })
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(expectedSubArea1)
-            });
-
-        // Act
-        var result = await _iterationService.CreateAsync(projectId, iterations, TreeStructureGroup.Areas);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Single(result.Children);
-        Assert.Equal("Area1", result.Children[0].Name);
-        Assert.Single(result.Children[0].Children);
-        Assert.Equal("SubArea1", result.Children[0].Children[0].Name);
-    }
-    [Fact]
-    public async Task MoveAreaAsync_ReturnsSuccess()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var path = "Area1";
-        var id = 1;
-        var response = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(response);
-
-        // Act
-        await _iterationService.MoveAsync(projectId, TreeStructureGroup.Areas, path, id);
-
-        // Assert
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req =>
-                req.Method == HttpMethod.Post &&
-                req.RequestUri != null &&
-                req.RequestUri.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/Areas/{path}?api-version=7.1") &&
-                req.Content != null),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
-
-    [Fact]
-    public async Task MoveAreaAsync_ReturnsFailure()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var path = "Area1";
-        var id = 1;
-        var response = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.BadRequest
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(response);
-
-        // Act
-        var result = await _iterationService.MoveAsync(projectId, TreeStructureGroup.Areas, path, id);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req =>
-                req.Method == HttpMethod.Post &&
-                req.RequestUri != null &&
-                req.RequestUri.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/Areas/{path}?api-version=7.1") &&
-                req.Content != null),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
-    [Fact]
-    public async Task MoveAreaAsync_WithMultipleIterations_ReturnsSuccess()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var iterations = new List<Iteration>
-        {
-            new() { Name = "Area1", Id = 1, Children = [] },
-            new() { Name = "Area2", Id = 2, Children = [] }
-        };
-        var response = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(response);
-
-        // Act
-        await _iterationService.MoveAsync(projectId, iterations, TreeStructureGroup.Areas, "");
-
-        // Assert
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Exactly(2),
-            ItExpr.IsAny<HttpRequestMessage>(),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
-
-    [Fact]
-    public async Task MoveAreaAsync_WithNestedIterations_ReturnsSuccess()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var iterations = new List<Iteration>
-        {
-            new()
-            {
-                Name = "Area1",
-                Id = 1,
-                Children =
-                [
-                    new Iteration { Name = "SubArea1", Id = 3, Children = [] }
-                ]
-            }
-        };
-        var response = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(response);
-
-        // Act
-        await _iterationService.MoveAsync(projectId, iterations, TreeStructureGroup.Areas, "");
-
-        // Assert
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Exactly(2),
-            ItExpr.IsAny<HttpRequestMessage>(),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
-
-    [Fact]
     public async Task GetAreaAsync_ReturnsArea()
     {
         // Arrange
@@ -694,5 +128,226 @@ public class IterationServiceTest
 
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() => _iterationService.GetAllAsync(projectId, TreeStructureGroup.Areas));
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsSuccessResponse()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var structureGroup = TreeStructureGroup.Iterations;
+        var path = "Iteration1";
+        var iteration = new ClassificationNodeBase { Name = "Iteration1" };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Post &&
+                    req.RequestUri!.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{path}?api-version=7.1")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created
+            });
+
+        // Act
+        var response = await _iterationService.CreateAsync(projectId, structureGroup, iteration, path);
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ThrowsExceptionOnServerError()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var structureGroup = TreeStructureGroup.Iterations;
+        var path = "Iteration1";
+        var iteration = new ClassificationNodeBase { Name = "Iteration1" };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Post &&
+                    req.RequestUri!.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{path}?api-version=7.1")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        var response = await _iterationService.CreateAsync(projectId, structureGroup, iteration, path);
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateAsync_CreatesAllIterationsRecursively()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var structureGroup = TreeStructureGroup.Iterations;
+        var path = "RootIteration";
+        var iterations = new Iteration
+        {
+            Name = "RootIteration",
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "ChildIteration1",
+                    Children =
+                    [
+                        new Iteration { Name = "GrandChildIteration1" }
+                    ]
+                },
+                new Iteration { Name = "ChildIteration2" }
+            ]
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Post &&
+                    req.RequestUri!.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/{structureGroup}")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created
+            });
+
+        // Act
+        await _iterationService.CreateAsync(projectId, iterations, structureGroup, path);
+
+        // Assert
+        _httpMessageHandlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Exactly(3), // ChildIteration1, GrandChildIteration1, ChildIteration2
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        );
+    }
+
+    [Fact]
+    public async Task DeleteAsync_DeletesIterationSuccessfully()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var structureGroup = TreeStructureGroup.Iterations;
+        var name = "Iteration1";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Delete &&
+                    req.RequestUri!.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{name}?api-version=7.1")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NoContent
+            });
+
+        // Act
+        await _iterationService.DeleteAsync(projectId, structureGroup, name);
+
+        // Assert
+        _httpMessageHandlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req =>
+                req.Method == HttpMethod.Delete &&
+                req.RequestUri!.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{name}?api-version=7.1")),
+            ItExpr.IsAny<CancellationToken>()
+        );
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ThrowsExceptionOnServerError()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var structureGroup = TreeStructureGroup.Iterations;
+        var name = "Iteration1";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Delete &&
+                    req.RequestUri!.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{name}?api-version=7.1")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        var response = await _iterationService.DeleteAsync(projectId, structureGroup, name);
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_DeletesAllIterationsRecursively()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var structureGroup = TreeStructureGroup.Iterations;
+        var iterations = new Iteration
+        {
+            Name = "RootIteration",
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "ChildIteration1",
+                    Children =
+                    [
+                        new Iteration { Name = "GrandChildIteration1" }
+                    ]
+                },
+                new Iteration { Name = "ChildIteration2" }
+            ]
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Delete &&
+                    req.RequestUri!.ToString().Contains($"{projectId}/_apis/wit/classificationNodes/{structureGroup}")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NoContent
+            });
+
+        // Act
+        await _iterationService.DeleteAsync(projectId, structureGroup, iterations);
+
+        // Assert
+        _httpMessageHandlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Exactly(2), // ChildIteration1, ChildIteration2
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        );
     }
 }

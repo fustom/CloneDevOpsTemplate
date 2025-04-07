@@ -7,6 +7,8 @@ public interface IIterationService
     Task<Iteration?> GetAsync(Guid projectId, TreeStructureGroup structureGroup, string name);
     Task<Iteration?> GetAsync(Guid projectId, TreeStructureGroup structureGroup, int depth);
     Task<Iteration?> GetAllAsync(Guid projectId, TreeStructureGroup structureGroup);
-    Task<Iteration> CreateAsync(Guid projectId, Iteration iterations, TreeStructureGroup structureGroup);
-    Task MoveAsync(Guid projectId, List<Iteration> iterations, TreeStructureGroup structureGroup, string name);
+    Task<HttpResponseMessage> CreateAsync(Guid projectId, TreeStructureGroup structureGroup, ClassificationNodeBase classificationNode, string path);
+    Task CreateAsync(Guid projectId, Iteration classificationNodes, TreeStructureGroup structureGroup, string path);
+    Task<HttpResponseMessage> DeleteAsync(Guid projectId, TreeStructureGroup structureGroup, string name);
+    Task DeleteAsync(Guid projectId, TreeStructureGroup structureGroup, Iteration classificationNodes);
 }

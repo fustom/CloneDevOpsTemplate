@@ -61,10 +61,8 @@ public class TeamIterationSettings
     public string Url { set; get; } = string.Empty;
 }
 
-public class TeamIterationAttributes
+public class TeamIterationAttributes : Attributes
 {
-    public DateTime? FinishDate { set; get; }
-    public DateTime? StartDate { set; get; }
     public TimeFrame TimeFrame { set; get; }
 }
 

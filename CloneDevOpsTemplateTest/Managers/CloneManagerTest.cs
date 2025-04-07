@@ -75,46 +75,6 @@ public class CloneManagerTest
     }
 
     [Fact]
-    public async Task CloneIterationsAsync_ShouldCloneIterations()
-    {
-        // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var projectId = Guid.NewGuid();
-
-        var templateIterations = new Iteration();
-        var createdIterations = new Iteration { Children = new List<Iteration>() };
-
-        _mockIterationService.Setup(s => s.GetAllAsync(templateProjectId, TreeStructureGroup.Iterations)).ReturnsAsync(templateIterations);
-        _mockIterationService.Setup(s => s.CreateAsync(projectId, templateIterations, TreeStructureGroup.Iterations)).ReturnsAsync(createdIterations);
-
-        // Act
-        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations);
-
-        // Assert
-        _mockIterationService.Verify(s => s.MoveAsync(projectId, createdIterations.Children, TreeStructureGroup.Iterations, ""), Times.Once);
-    }
-
-    [Fact]
-    public async Task CloneAreasAsync_ShouldCloneAreas()
-    {
-        // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var projectId = Guid.NewGuid();
-
-        var templateAreas = new Iteration();
-        var createdAreas = new Iteration { Children = new List<Iteration>() };
-
-        _mockIterationService.Setup(s => s.GetAllAsync(templateProjectId, TreeStructureGroup.Areas)).ReturnsAsync(templateAreas);
-        _mockIterationService.Setup(s => s.CreateAsync(projectId, templateAreas, TreeStructureGroup.Areas)).ReturnsAsync(createdAreas);
-
-        // Act
-        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas);
-
-        // Assert
-        _mockIterationService.Verify(s => s.MoveAsync(projectId, createdAreas.Children, TreeStructureGroup.Areas, ""), Times.Once);
-    }
-
-    [Fact]
     public async Task CloneRepositoriesAsync_ShouldCloneRepositories()
     {
         // Arrange
@@ -479,5 +439,45 @@ public class CloneManagerTest
         _mockTeamSettingsService.Verify(s => s.DeleteIteration(projectId, projectTeamId, oldIterations.Value[0].Id), Times.Once);
         _mockTeamSettingsService.Verify(s => s.GetIterations(templateProjectId, templateTeamId), Times.Once);
         _mockTeamSettingsService.Verify(s => s.CreateIteration(projectId, projectTeamId, iterationMap[templateIterations.Value[0].Id]), Times.Once);
+    }
+
+    [Fact]
+    public async Task CloneClassificationNodes_ShouldCloneNodesCorrectly()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var structureGroup = TreeStructureGroup.Iterations;
+
+        var existingClassificationNodes = new Iteration
+        {
+            Identifier = Guid.NewGuid(),
+            Children = []
+        };
+
+        var templateClassificationNodes = new Iteration
+        {
+            Identifier = Guid.NewGuid(),
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "Iteration1",
+                    Identifier = Guid.NewGuid()
+                }
+            ]
+        };
+
+        _mockIterationService.Setup(s => s.GetAllAsync(projectId, structureGroup)).ReturnsAsync(existingClassificationNodes);
+        _mockIterationService.Setup(s => s.GetAllAsync(templateProjectId, structureGroup)).ReturnsAsync(templateClassificationNodes);
+
+        // Act
+        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, structureGroup);
+
+        // Assert
+        _mockIterationService.Verify(s => s.GetAllAsync(projectId, structureGroup), Times.Once);
+        _mockIterationService.Verify(s => s.DeleteAsync(projectId, structureGroup, existingClassificationNodes), Times.Once);
+        _mockIterationService.Verify(s => s.GetAllAsync(templateProjectId, structureGroup), Times.Once);
+        _mockIterationService.Verify(s => s.CreateAsync(projectId, templateClassificationNodes, structureGroup, ""), Times.Once);
     }
 }
