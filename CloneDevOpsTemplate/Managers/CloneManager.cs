@@ -86,6 +86,7 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         foreach (var mappedTeam in mapTeams)
         {
             await CloneTeamSettingsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value);
+            await CloneTeamIterationsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value);
             await CloneTeamFieldValuesAsync(templateProject, project, mappedTeam.Key, mappedTeam.Value);
             await CloneBoardsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value);
         }
@@ -112,7 +113,6 @@ public class CloneManager(IProjectService projectService, IIterationService iter
     public async Task<Dictionary<Guid, Guid>> CloneTeamsAsync(Project templateProject, Project project)
     {
         Teams templateTeams = await _teamsService.GetTeamsAsync(templateProject.Id) ?? new();
-        // TODO: TeamIterationMap
         return await _teamsService.CreateTeamFromTemplateAsync(project.Id, templateTeams.Value, templateProject.DefaultTeam.Id, project.DefaultTeam.Id);
     }
 
@@ -170,5 +170,24 @@ public class CloneManager(IProjectService projectService, IIterationService iter
             _boardService.MoveCardSettingsAsync(projectId, projectTeamId, templateProjectId, templateTeamId, projectBoards),
             _boardService.MoveCardStylesAsync(projectId, projectTeamId, templateProjectId, templateTeamId, projectBoards)
         );
+    }
+
+    public async Task CloneTeamIterationsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
+    {
+        var oldIterations = await _teamSettingsService.GetIterations(projectId, projectTeamId) ?? new();
+        foreach (var iteration in oldIterations.Value)
+        {
+            await _teamSettingsService.DeleteIteration(projectId, projectTeamId, iteration.Id);
+        }
+
+        var iterations = await _teamSettingsService.GetIterations(templateProjectId, templateTeamId) ?? new();
+        var iterationMap = await MapClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations);
+        foreach (var iteration in iterations.Value)
+        {
+            if (iterationMap.TryGetValue(iteration.Id, out var mappedIterationId))
+            {
+                await _teamSettingsService.CreateIteration(projectId, projectTeamId, mappedIterationId);
+            }
+        }
     }
 }

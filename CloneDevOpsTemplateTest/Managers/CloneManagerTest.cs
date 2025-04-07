@@ -428,4 +428,56 @@ public class CloneManagerTest
         // Assert
         Assert.Empty(iterationMap);
     }
+
+    [Fact]
+    public async Task CloneTeamIterationsAsync_ShouldCloneTeamIterations()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var templateTeamId = Guid.NewGuid();
+        var projectTeamId = Guid.NewGuid();
+
+        var oldIterations = new TeamIterations
+        {
+            Value =
+            [
+                new TeamIterationSettings { Id = Guid.NewGuid() }
+            ]
+        };
+
+        var templateIterations = new TeamIterations
+        {
+            Value =
+            [
+                new TeamIterationSettings { Id = Guid.NewGuid() }
+            ]
+        };
+
+        var iterationMap = new Dictionary<Guid, Guid>
+        {
+            { templateIterations.Value[0].Id, Guid.NewGuid() }
+        };
+
+        _mockTeamSettingsService.Setup(s => s.GetIterations(projectId, projectTeamId)).ReturnsAsync(oldIterations);
+        _mockTeamSettingsService.Setup(s => s.GetIterations(templateProjectId, templateTeamId)).ReturnsAsync(templateIterations);
+        _mockIterationService.Setup(s => s.GetAllAsync(templateProjectId, TreeStructureGroup.Iterations))
+            .ReturnsAsync(new Iteration { Identifier = templateIterations.Value[0].Id });
+        _mockIterationService.Setup(s => s.GetAllAsync(projectId, TreeStructureGroup.Iterations))
+            .ReturnsAsync(new Iteration { Identifier = iterationMap[templateIterations.Value[0].Id] });
+
+        _mockTeamSettingsService.Setup(s => s.DeleteIteration(projectId, projectTeamId, oldIterations.Value[0].Id))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
+        _mockTeamSettingsService.Setup(s => s.CreateIteration(projectId, projectTeamId, iterationMap[templateIterations.Value[0].Id]))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
+
+        // Act
+        await _cloneManager.CloneTeamIterationsAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
+
+        // Assert
+        _mockTeamSettingsService.Verify(s => s.GetIterations(projectId, projectTeamId), Times.Once);
+        _mockTeamSettingsService.Verify(s => s.DeleteIteration(projectId, projectTeamId, oldIterations.Value[0].Id), Times.Once);
+        _mockTeamSettingsService.Verify(s => s.GetIterations(templateProjectId, templateTeamId), Times.Once);
+        _mockTeamSettingsService.Verify(s => s.CreateIteration(projectId, projectTeamId, iterationMap[templateIterations.Value[0].Id]), Times.Once);
+    }
 }
