@@ -161,7 +161,7 @@ public class ProjectControllerTest
 
         _mockCloneManager
             .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
-            .ReturnsAsync(Tuple.Create(project, templateProject, message));
+            .ReturnsAsync(new CloneProjectResult { Project = project, TemplateProject = templateProject, ErrorMessage = message });
 
         _mockCloneManager
             .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Iterations))
@@ -204,7 +204,7 @@ public class ProjectControllerTest
 
         _mockCloneManager
             .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
-            .ReturnsAsync(Tuple.Create(project, templateProject, (string?)message));
+            .ReturnsAsync(new CloneProjectResult { Project = project, TemplateProject = templateProject, ErrorMessage = message });
 
         // Act
         var result = await _controller.CreateProject(templateProjectId, newProjectName, description, visibility);
@@ -272,7 +272,7 @@ public class ProjectControllerTest
 
         _mockCloneManager
             .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
-            .ReturnsAsync(Tuple.Create((Project?)null!, (Project?)null!, (string?)message));
+            .ReturnsAsync(new CloneProjectResult { Project = null!, TemplateProject = null!, ErrorMessage = message });
 
         // Act
         var result = await _controller.CloneProject(templateProjectId, newProjectName, description, visibility);
@@ -294,7 +294,7 @@ public class ProjectControllerTest
 
         _mockCloneManager
             .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
-            .ReturnsAsync(Tuple.Create((Project?)null!, (Project?)null!, (string?)null));
+            .ReturnsAsync(new CloneProjectResult { Project = null!, TemplateProject = null!, ErrorMessage = null });
 
         // Act
         var result = await _controller.CloneProject(templateProjectId, newProjectName, description, visibility);

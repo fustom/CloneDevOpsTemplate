@@ -61,24 +61,24 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             return await CreateProject();
         }
 
-        (Project project, Project templateProject, string? errorMessage) = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility);
+        var cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility);
 
-        if (errorMessage is not null)
+        if (cloneProjectResult.ErrorMessage is not null)
         {
-            ModelState.AddModelError("ErrorMessage", errorMessage);
+            ModelState.AddModelError("ErrorMessage", cloneProjectResult.ErrorMessage);
             return await CreateProject();
         }
 
         await Task.WhenAll(
-            _cloneManager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Iterations),
-            _cloneManager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Areas)
+            _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Iterations),
+            _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Areas)
         );
         await Task.WhenAll(
-            _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(templateProject, project),
-            _cloneManager.CloneRepositoriesAsync(templateProjectId, project.Id)
+            _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(cloneProjectResult.TemplateProject, cloneProjectResult.Project),
+            _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id)
         );
 
-        return RedirectToAction("Project", new { projectId = project.Id });
+        return RedirectToAction("Project", new { projectId = cloneProjectResult.Project.Id });
     }
 
     [HttpGet]
@@ -95,10 +95,10 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             return await Projects();
         }
 
-        (_, _, string? message) = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility);
-        if (message is not null)
+        var cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility);
+        if (cloneProjectResult.ErrorMessage is not null)
         {
-            ModelState.AddModelError("ErrorMessage", message);
+            ModelState.AddModelError("ErrorMessage", cloneProjectResult.ErrorMessage);
         }
         else
         {

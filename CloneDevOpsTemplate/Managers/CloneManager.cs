@@ -13,7 +13,7 @@ public class CloneManager(IProjectService projectService, IIterationService iter
     private readonly IRepositoryService _repositoryService = repositoryService;
     private readonly IServiceService _serviceService = serviceService;
 
-    public async Task<Tuple<Project, Project, string?>> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility)
+    public async Task<CloneProjectResult> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility)
     {
         Project templateProject = await _projectService.GetProjectAsync(templateProjectId) ?? new();
         CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(
@@ -25,7 +25,7 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         ) ?? new();
         Project project = await WaitForProjectCreationAsync(newProjectName);
 
-        return Tuple.Create(project, templateProject, createProjectResponse.Message);
+        return new CloneProjectResult { Project = project, TemplateProject = templateProject, ErrorMessage = createProjectResponse.Message };
     }
 
     private async Task<Project> WaitForProjectCreationAsync(string newProjectName)

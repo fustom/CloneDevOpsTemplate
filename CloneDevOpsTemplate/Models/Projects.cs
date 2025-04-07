@@ -63,3 +63,10 @@ public enum ProjectState
     Unchanged,
     WellFormed
 }
+
+public class CloneProjectResult
+{
+    public Project Project { get; set; } = new();
+    public Project TemplateProject { get; set; } = new();
+    public string? ErrorMessage { get; set; }
+}
