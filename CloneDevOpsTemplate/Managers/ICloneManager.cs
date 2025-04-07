@@ -6,7 +6,7 @@ public interface ICloneManager
 {
     Task CloneClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup);
     Task CloneBoardsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId);
-    Task<Tuple<Project, Project, string?>> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility);
+    Task<CloneProjectResult> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility);
     Task CloneRepositoriesAsync(Guid templateProjectId, Guid projectId);
     Task CloneTeamFieldValuesAsync(Project templateProject, Project project, Guid templateTeamId, Guid projectTeamId);
     Task CloneTeamFieldValuesAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId);

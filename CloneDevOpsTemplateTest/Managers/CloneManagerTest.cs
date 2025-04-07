@@ -69,9 +69,9 @@ public class CloneManagerTest
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(newProject, result.Item1);
-        Assert.Equal(templateProject, result.Item2);
-        Assert.Equal("Project created successfully", result.Item3);
+        Assert.Equal(newProject, result.Project);
+        Assert.Equal(templateProject, result.TemplateProject);
+        Assert.Equal("Project created successfully", result.ErrorMessage);
     }
 
     [Fact]
