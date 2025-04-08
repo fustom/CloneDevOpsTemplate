@@ -48,4 +48,9 @@ public class RepositoryService(IHttpClientFactory httpClientFactory) : IReposito
     {
         return _client.GetFromJsonAsync<GitImportRequest>($"{projectId}/_apis/git/repositories/{repositoryId}/importRequests/{importRequestId}");
     }
+
+    public Task<GitPullRequests?> GetGitPullRequest(Guid projectId)
+    {
+        return _client.GetFromJsonAsync<GitPullRequests>($"{projectId}/_apis/git/pullrequests");
+    }
 }

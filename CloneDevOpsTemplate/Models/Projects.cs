@@ -49,7 +49,8 @@ public class ProcessTemplate
 public enum Visibility
 {
     Private,
-    Public
+    Public,
+    Unchanged
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<ProjectState>))]
