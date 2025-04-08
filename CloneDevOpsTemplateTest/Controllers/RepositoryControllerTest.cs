@@ -195,4 +195,56 @@ public class RepositoryControllerTest
         Assert.Equal(mockProjects.Value, viewResult.Model);
         Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
     }
+
+    [Fact]
+    public async Task PullRequests_InvalidModelState_ReturnsDefaultView()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+        var mockPullRequests = new GitPullRequests { Value = Array.Empty<GitPullRequest>() };
+
+        // Act
+        var result = await _controller.PullRequests(Guid.NewGuid());
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var viewModel = Assert.IsType<GitPullRequest[]>(viewResult.Model);
+        Assert.Empty(viewModel);
+    }
+
+    [Fact]
+    public async Task PullRequests_ReturnsViewWithPullRequests()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var mockPullRequests = new GitPullRequests { Value = Array.Empty<GitPullRequest>() };
+        _mockRepositoryService
+            .Setup(service => service.GetGitPullRequest(projectId))
+            .ReturnsAsync(mockPullRequests);
+
+        // Act
+        var result = await _controller.PullRequests(projectId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(mockPullRequests.Value, viewResult.Model);
+    }
+
+    [Fact]
+    public async Task PullRequests_ReturnsViewWithEmptyPullRequests_WhenServiceReturnsNull()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        _mockRepositoryService
+            .Setup(service => service.GetGitPullRequest(projectId))
+            .ReturnsAsync((GitPullRequests?)null);
+
+        // Act
+        var result = await _controller.PullRequests(projectId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var viewModel = Assert.IsType<GitPullRequest[]>(viewResult.Model);
+        Assert.Empty(viewModel);
+    }
 }

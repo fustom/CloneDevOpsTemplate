@@ -39,6 +39,19 @@ public class RepositoryController(IRepositoryService repositoryService, ICloneMa
         return View("Repositories", repositories.Value);
     }
 
+    public async Task<IActionResult> PullRequests(Guid projectId)
+    {
+        GitPullRequests pullRequests = new();
+
+        if (!ModelState.IsValid)
+        {
+            return View(pullRequests.Value);
+        }
+
+        pullRequests = await _repositoryService.GetGitPullRequest(projectId) ?? new();
+        return View(pullRequests.Value);
+    }
+
     [HttpGet]
     public async Task<IActionResult> CloneRepository()
     {
