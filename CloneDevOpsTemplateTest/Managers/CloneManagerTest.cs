@@ -99,6 +99,10 @@ public class CloneManagerTest
 
         _mockRepositoryService.Setup(s => s.GetRepositoriesAsync(templateProjectId)).ReturnsAsync(templateRepositories);
         _mockRepositoryService.Setup(s => s.GetRepositoriesAsync(projectId)).ReturnsAsync(repositories);
+        _mockRepositoryService.Setup(s => s.GetImportRequestAsync(projectId, It.IsAny<Guid>(), It.IsAny<int>()))
+            .ReturnsAsync(new GitImportRequest { Status = GitAsyncOperationStatus.InProgress });
+        _mockRepositoryService.Setup(s => s.GetImportRequestAsync(projectId, It.IsAny<Guid>(), It.IsAny<int>()))
+            .ReturnsAsync(new GitImportRequest { Status = GitAsyncOperationStatus.Completed });
 
         // Act
         await _cloneManager.CloneRepositoriesAsync(templateProjectId, projectId);

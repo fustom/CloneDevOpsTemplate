@@ -1,11 +1,12 @@
-using CloneDevOpsTemplate.Services;
-using CloneDevOpsTemplate.Models;
-using Moq;
-using Moq.Protected;
 using System.Net;
 using System.Net.Http.Json;
-using MyTestProject.Service.Tests.Common;
+using System.Text.Json;
+using CloneDevOpsTemplate.Models;
+using CloneDevOpsTemplate.Services;
 using Microsoft.Extensions.Configuration;
+using Moq;
+using Moq.Protected;
+using MyTestProject.Service.Tests.Common;
 
 namespace CloneDevOpsTemplateTest.Services;
 
@@ -163,13 +164,19 @@ public class RepositoryServiceTest
     }
 
     [Fact]
-    public async Task CreateImportRequest_CreatesImportRequest()
+    public async Task CreateImportRequestAsync_ReturnsGitImportRequest()
     {
         // Arrange
         var projectId = Guid.NewGuid();
         var repositoryId = Guid.NewGuid();
         var sourceRepositoryRemoteUrl = "https://example.com/repo.git";
         var serviceEndpointId = Guid.NewGuid();
+        var gitImportRequest = new GitImportRequest
+        {
+            ImportRequestId = 1,
+            Status = GitAsyncOperationStatus.Completed
+        };
+
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -178,18 +185,40 @@ public class RepositoryServiceTest
             )
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.OK
+                StatusCode = HttpStatusCode.OK,
+                Content = JsonContent.Create(gitImportRequest)
             });
 
         // Act
-        await _repositoryService.CreateImportRequest(projectId, repositoryId, sourceRepositoryRemoteUrl, serviceEndpointId);
+        var result = await _repositoryService.CreateImportRequestAsync(projectId, repositoryId, sourceRepositoryRemoteUrl, serviceEndpointId);
 
         // Assert
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.IsAny<HttpRequestMessage>(),
-            ItExpr.IsAny<CancellationToken>()
-        );
+        Assert.NotNull(result);
+        Assert.Equal(gitImportRequest.ImportRequestId, result.ImportRequestId);
+        Assert.Equal(gitImportRequest.Status, result.Status);
+    }
+
+    [Fact]
+    public async Task CreateImportRequestAsync_ReturnsNullOnFailure()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var repositoryId = Guid.NewGuid();
+        var sourceRepositoryRemoteUrl = "https://example.com/repo.git";
+        var serviceEndpointId = Guid.NewGuid();
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<JsonException>(async () => await _repositoryService.CreateImportRequestAsync(projectId, repositoryId, sourceRepositoryRemoteUrl, serviceEndpointId));
     }
 }

@@ -95,20 +95,45 @@ public class CloneManager(IProjectService projectService, IIterationService iter
 
     public async Task CloneRepositoriesAsync(Guid templateProjectId, Guid projectId)
     {
-        Repositories repositories = await _repositoryService.GetRepositoriesAsync(projectId) ?? new();
-        Repositories templateRepositories = await _repositoryService.GetRepositoriesAsync(templateProjectId) ?? new();
+        var repositories = await _repositoryService.GetRepositoriesAsync(projectId) ?? new();
+        var templateRepositories = await _repositoryService.GetRepositoriesAsync(templateProjectId) ?? new();
 
         await Parallel.ForEachAsync(templateRepositories.Value, async (templateRepository, ct) =>
         {
-            Repository repository = await _repositoryService.CreateRepositoryAsync(projectId, templateRepository.Name) ?? new();
-            ServiceModel serviceModel = await _serviceService.CreateServiceAsync(templateRepository.Name, templateRepository.RemoteUrl, templateRepository.Name, projectId) ?? new();
-            await _repositoryService.CreateImportRequest(projectId, repository.Id, templateRepository.RemoteUrl, serviceModel.Id);
+            var repository = repositories.Value.FirstOrDefault(r => r.Name == templateRepository.Name)
+                             ?? await _repositoryService.CreateRepositoryAsync(projectId, templateRepository.Name) ?? new();
+
+            if (repository.Size > 0) return;
+
+            var serviceModel = (await _serviceService.GetServicesAsync(projectId) ?? new())
+                               .Value.FirstOrDefault(s => s.Name == templateRepository.Name)
+                               ?? await _serviceService.CreateServiceAsync(templateRepository.Name, templateRepository.RemoteUrl, templateRepository.Name, projectId) ?? new();
+
+            var importRequest = await _repositoryService.CreateImportRequestAsync(projectId, repository.Id, templateRepository.RemoteUrl, serviceModel.Id);
+            await WaitForImportAsync(projectId, repository.Id, importRequest?.ImportRequestId ?? 0);
         });
 
-        await Parallel.ForEachAsync(repositories.Value, async (repository, ct) =>
+        await Parallel.ForEachAsync(repositories.Value.Where(r => r.Size == 0), async (repository, ct) =>
         {
             await _repositoryService.DeleteRepositoryAsync(projectId, repository.Id);
         });
+    }
+
+    private async Task WaitForImportAsync(Guid projectId, Guid repositoryId, int importRequestId)
+    {
+        var timeout = DateTime.UtcNow.AddMinutes(5);
+
+        while (DateTime.UtcNow < timeout)
+        {
+            await Task.Delay(1000);
+            var importRequest = await _repositoryService.GetImportRequestAsync(projectId, repositoryId, importRequestId);
+            if (importRequest?.Status == GitAsyncOperationStatus.Completed)
+            {
+                return;
+            }
+        }
+
+        throw new TimeoutException("Project creation timed out.");
     }
 
     public async Task<Dictionary<Guid, Guid>> CloneTeamsAsync(Project templateProject, Project project)
