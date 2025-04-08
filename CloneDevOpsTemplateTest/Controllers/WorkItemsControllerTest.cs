@@ -21,15 +21,17 @@ public class WorkItemsControllerTest
     public async Task WorkItems_InvalidModelState_ReturnsEmptyView()
     {
         // Arrange
-        _controller.ModelState.AddModelError("Error", "Invalid model state");
+        Guid projectId = Guid.NewGuid();
+        _controller.ModelState.AddModelError("Error", "Invalid model state");        
 
         // Act
-        var result = await _controller.WorkItems(Guid.NewGuid(), "TestProject");
+        var result = await _controller.WorkItems(projectId, "TestProject");
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<WorkItem[]>(viewResult.Model);
-        Assert.Empty(model);
+        var model = Assert.IsType<Tuple<Guid, WorkItem[]>>(viewResult.Model);
+        Assert.Equal(projectId, model.Item1);
+        Assert.Empty(model.Item2);
     }
 
     [Fact]
@@ -69,10 +71,11 @@ public class WorkItemsControllerTest
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<WorkItem[]>(viewResult.Model);
-        Assert.Equal(2, model.Length);
-        Assert.Contains(model, w => w.Id == 1 && w.Fields.SystemTitle == "WorkItem1");
-        Assert.Contains(model, w => w.Id == 2 && w.Fields.SystemTitle == "WorkItem2");
+        var model = Assert.IsType<Tuple<Guid, WorkItem[]>>(viewResult.Model);
+        Assert.Equal(projectId, model.Item1);
+        Assert.Equal(2, model.Item2.Length);
+        Assert.Contains(model.Item2, w => w.Id == 1 && w.Fields.SystemTitle == "WorkItem1");
+        Assert.Contains(model.Item2, w => w.Id == 2 && w.Fields.SystemTitle == "WorkItem2");
     }
 
     [Fact]
@@ -91,7 +94,73 @@ public class WorkItemsControllerTest
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<WorkItem[]>(viewResult.Model);
-        Assert.Empty(model);
+        var model = Assert.IsType<Tuple<Guid, WorkItem[]>>(viewResult.Model);
+        Assert.Equal(projectId, model.Item1);
+        Assert.Empty(model.Item2);
+    }
+
+    [Fact]
+    public async Task WorkItem_InvalidModelState_ReturnsEmptyWorkItem()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+        // Act
+        var result = await _controller.WorkItem(Guid.NewGuid(), 1);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<WorkItem>(viewResult.Model);
+        Assert.NotNull(model);
+        Assert.Equal(0, model.Id);
+    }
+
+    [Fact]
+    public async Task WorkItem_ValidModelState_ReturnsWorkItem()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var workitemId = 1;
+        var expectedWorkItem = new WorkItem
+        {
+            Id = workitemId,
+            Fields = new Fields { SystemTitle = "Test WorkItem" }
+        };
+
+        _mockWorkItemService
+            .Setup(s => s.GetWorkItemAsync(projectId, workitemId))
+            .ReturnsAsync(expectedWorkItem);
+
+        // Act
+        var result = await _controller.WorkItem(projectId, workitemId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<WorkItem>(viewResult.Model);
+        Assert.NotNull(model);
+        Assert.Equal(expectedWorkItem.Id, model.Id);
+        Assert.Equal(expectedWorkItem.Fields.SystemTitle, model.Fields.SystemTitle);
+    }
+
+    [Fact]
+    public async Task WorkItem_ValidModelState_WorkItemNotFound_ReturnsEmptyWorkItem()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var workitemId = 1;
+
+        _mockWorkItemService
+            .Setup(s => s.GetWorkItemAsync(projectId, workitemId))
+            .ReturnsAsync((WorkItem?)null);
+
+        // Act
+        var result = await _controller.WorkItem(projectId, workitemId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<WorkItem>(viewResult.Model);
+        Assert.NotNull(model);
+        Assert.Equal(0, model.Id);
     }
 }
+
