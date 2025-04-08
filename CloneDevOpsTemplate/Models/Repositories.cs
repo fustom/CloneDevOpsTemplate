@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CloneDevOpsTemplate.Models;
 
 public class Repositories
@@ -21,9 +23,15 @@ public class Repository
     public bool IsInMaintenance { get; set; }
 }
 
-public class ImportRequest
+public class GitImportRequestBase
 {
     public ImportRequestParameters Parameters { get; set; } = new();
+}
+
+public class GitImportRequest : GitImportRequestBase
+{
+    public int ImportRequestId { get; set; }
+    public GitAsyncOperationStatus Status { get; set; }
 }
 
 public class ImportRequestParameters
@@ -36,4 +44,14 @@ public class ImportRequestParameters
 public class GitSource
 {
     public string Url { get; set; } = string.Empty;
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter<GitAsyncOperationStatus>))]
+public enum GitAsyncOperationStatus
+{
+    Abandoned,
+    Completed,
+    Failed,
+    InProgress,
+    Queued
 }

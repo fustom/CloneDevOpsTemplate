@@ -26,13 +26,13 @@ public class RepositoryService(IHttpClientFactory httpClientFactory) : IReposito
         return _client.DeleteAsync($"{projectId}/_apis/git/repositories/{repositoryId}?api-version=7.1");
     }
 
-    public Task<HttpResponseMessage> CreateImportRequest(Guid projectId, Guid repositoryId, string sourceRepositoryRemoteUrl, Guid serviceEndpointId)
+    public async Task<GitImportRequest?> CreateImportRequestAsync(Guid projectId, Guid repositoryId, string sourceRepositoryRemoteUrl, Guid serviceEndpointId)
     {
-        ImportRequest importRequest = new()
+        GitImportRequestBase importRequest = new()
         {
-            Parameters = new()
+            Parameters =
             {
-                GitSource = new()
+                GitSource =
                 {
                     Url = sourceRepositoryRemoteUrl
                 },
@@ -40,6 +40,12 @@ public class RepositoryService(IHttpClientFactory httpClientFactory) : IReposito
                 DeleteServiceEndpointAfterImportIsDone = true
             }
         };
-        return _client.PostAsJsonAsync($"{projectId}/_apis/git/repositories/{repositoryId}/importRequests?api-version=7.1", importRequest);
+        var result = await _client.PostAsJsonAsync($"{projectId}/_apis/git/repositories/{repositoryId}/importRequests?api-version=7.1", importRequest);
+        return await result.Content.ReadFromJsonAsync<GitImportRequest>();
+    }
+
+    public Task<GitImportRequest?> GetImportRequestAsync(Guid projectId, Guid repositoryId, int importRequestId)
+    {
+        return _client.GetFromJsonAsync<GitImportRequest>($"{projectId}/_apis/git/repositories/{repositoryId}/importRequests/{importRequestId}");
     }
 }
