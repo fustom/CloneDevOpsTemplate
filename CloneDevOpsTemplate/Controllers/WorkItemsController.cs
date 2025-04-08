@@ -17,7 +17,7 @@ public class WorkItemsController(IWorkItemService workItemService) : Controller
 
         if (!ModelState.IsValid)
         {
-            return View(workItems.ToArray());
+            return View(new Tuple<Guid, WorkItem[]>(projectId, [.. workItems]));
         }
 
         WorkItemsListQueryResult workItemsList = await _workItemService.GetWorkItemsListAsync(projectId, projectName) ?? new();
@@ -33,7 +33,20 @@ public class WorkItemsController(IWorkItemService workItemService) : Controller
                 workItems.AddRange(currentWorkItems.Value);
             }
         }
-        return View(workItems.ToArray());
+        return View(new Tuple<Guid, WorkItem[]>(projectId, [.. workItems]));
+    }
+
+    public async Task<IActionResult> WorkItem(Guid projectId, int workitemId)
+    {
+        WorkItem workItem = new();
+
+        if (!ModelState.IsValid)
+        {
+            return View(workItem);
+        }
+
+        workItem = await _workItemService.GetWorkItemAsync(projectId, workitemId) ?? new();
+        return View(workItem);
     }
 }
 

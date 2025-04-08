@@ -1,0 +1,98 @@
+@model WorkItem
+@{
+    ViewData["Title"] = "WorkItem";
+    var fields = Model.Fields;
+}
+
+@Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+<table class="table table-striped">
+    <thead>
+        <tr class="table-primary">
+            <th colspan="4">
+                <h2>@fields.SystemTitle</h2>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Description</td>
+            <td colspan="3">@fields.SystemDescription</td>
+        </tr>
+        <tr>
+            @{ var assignedTo = fields.SystemAssignedTo; }
+            <td>Assigned to</td>
+            <td>@assignedTo.DisplayName</td>
+            <td>@assignedTo.UniqueName</td>
+            <td>
+                <img src="@assignedTo.ImageUrl" alt="@assignedTo.DisplayName" />
+            </td>
+        </tr>
+        <tr>
+            <td>Effort</td>
+            <td colspan="3">@fields.MicrosoftVSTSSchedulingEffort</td>
+        </tr>
+        <tr>
+            <td>Priority</td>
+            <td colspan="3">@fields.MicrosoftVSTSCommonPriority</td>
+        </tr>
+        <tr>
+            <td>Workitem type</td>
+            <td colspan="3">@fields.SystemWorkItemType</td>
+        </tr>
+        <tr>
+            <td>Iteration path</td>
+            <td colspan="3">@fields.SystemIterationPath</td>
+        </tr>
+        <tr>
+            <td>State</td>
+            <td colspan="3">@fields.SystemState</td>
+        </tr>
+        <tr>
+            <td>Reason</td>
+            <td colspan="3">@fields.SystemReason</td>
+        </tr>
+        <tr>
+            @{ var createdBy = fields.SystemCreatedBy; }
+            <td>Created by</td>
+            <td>@createdBy.DisplayName</td>
+            <td>@createdBy.UniqueName</td>
+            <td>
+                <img src="@createdBy.ImageUrl" alt="@createdBy.DisplayName" />
+            </td>
+        </tr>
+        <tr>
+            <td>Created date</td>
+            <td colspan="3">@fields.SystemCreatedDate</td>
+        </tr>
+        <tr>
+            @{ var changedBy = fields.SystemChangedBy; }
+            <td>Changed by</td>
+            <td>@changedBy.DisplayName</td>
+            <td>@changedBy.UniqueName</td>
+            <td>
+                <img src="@changedBy.ImageUrl" alt="@changedBy.DisplayName" />
+            </td>
+        </tr>
+        <tr>
+            <td>Changed date</td>
+            <td colspan="3">@fields.SystemChangedDate</td>
+        </tr>
+        <tr>
+            <td>Area path</td>
+            <td colspan="3">@fields.SystemAreaPath</td>
+        </tr>
+        <tr>
+            <td>Team project</td>
+            <td colspan="3">@fields.SystemTeamProject</td>
+        </tr>
+        <tr>
+            <td>Board lane</td>
+            <td colspan="3">@fields.SystemBoardLane</td>
+        </tr>
+        <tr>
+            <td>Tags</td>
+            <td colspan="3">@fields.SystemTags</td>
+        </tr>
+    </tbody>
+</table>
