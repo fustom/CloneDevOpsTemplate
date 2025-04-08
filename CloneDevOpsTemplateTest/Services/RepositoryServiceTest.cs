@@ -221,4 +221,62 @@ public class RepositoryServiceTest
         // Act & Assert
         await Assert.ThrowsAsync<JsonException>(async () => await _repositoryService.CreateImportRequestAsync(projectId, repositoryId, sourceRepositoryRemoteUrl, serviceEndpointId));
     }
+
+    [Fact]
+    public async Task GetGitPullRequest_ReturnsGitPullRequests()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var gitPullRequests = new GitPullRequests
+        {
+            Count = 2,
+            Value =
+            [
+                new GitPullRequest { PullRequestId = 1, Title = "PR 1" },
+                new GitPullRequest { PullRequestId = 2, Title = "PR 2" }
+            ]
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = JsonContent.Create(gitPullRequests)
+            });
+
+        // Act
+        var result = await _repositoryService.GetGitPullRequest(projectId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(gitPullRequests.Count, result.Count);
+        Assert.Equal(gitPullRequests.Value[0].PullRequestId, result.Value[0].PullRequestId);
+        Assert.Equal(gitPullRequests.Value[1].PullRequestId, result.Value[1].PullRequestId);
+    }
+
+    [Fact]
+    public async Task GetGitPullRequest_ReturnsNullOnFailure()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() => _repositoryService.GetGitPullRequest(projectId));
+    }
 }
