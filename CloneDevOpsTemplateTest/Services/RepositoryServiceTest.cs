@@ -250,7 +250,7 @@ public class RepositoryServiceTest
             });
 
         // Act
-        var result = await _repositoryService.GetGitPullRequest(projectId);
+        var result = await _repositoryService.GetGitPullRequestAsync(projectId);
 
         // Assert
         Assert.NotNull(result);
@@ -277,6 +277,6 @@ public class RepositoryServiceTest
             });
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => _repositoryService.GetGitPullRequest(projectId));
+        await Assert.ThrowsAsync<HttpRequestException>(() => _repositoryService.GetGitPullRequestAsync(projectId));
     }
 }

@@ -19,17 +19,11 @@ public class ServiceModelBase
 public class ServiceModel : ServiceModelBase
 {
     public Guid Id { get; set; }
-    public User CreatedBy { get; set; } = new();
+    public IdentityRef CreatedBy { get; set; } = new();
     public string Description { get; set; } = string.Empty;
     public bool IsShared { get; set; }
     public bool IsOutdated { get; set; }
     public DateTime CreationDate { get; set; }
-}
-
-public class User
-{
-    public string DisplayName { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
 }
 
 public class ServiceAuthorization

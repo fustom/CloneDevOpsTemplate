@@ -48,7 +48,7 @@ public class RepositoryController(IRepositoryService repositoryService, ICloneMa
             return View(pullRequests.Value);
         }
 
-        pullRequests = await _repositoryService.GetGitPullRequest(projectId) ?? new();
+        pullRequests = await _repositoryService.GetGitPullRequestAsync(projectId) ?? new();
         return View(pullRequests.Value);
     }
 
@@ -71,5 +71,25 @@ public class RepositoryController(IRepositoryService repositoryService, ICloneMa
         ViewBag.SuccessMessage = "Success";
 
         return await CloneRepository();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ClonePullRequests()
+    {
+        return await CloneRepository();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ClonePullRequests(Guid templateProjectId, Guid projectId)
+    {
+        if (!ModelState.IsValid)
+        {
+            return await ClonePullRequests();
+        }
+
+        await _cloneManager.CloneGitPullRequestsAsync(templateProjectId, projectId);
+        ViewBag.SuccessMessage = "Success";
+
+        return await ClonePullRequests();
     }
 }

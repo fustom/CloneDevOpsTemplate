@@ -219,7 +219,7 @@ public class RepositoryControllerTest
         var projectId = Guid.NewGuid();
         var mockPullRequests = new GitPullRequests { Value = Array.Empty<GitPullRequest>() };
         _mockRepositoryService
-            .Setup(service => service.GetGitPullRequest(projectId))
+            .Setup(service => service.GetGitPullRequestAsync(projectId))
             .ReturnsAsync(mockPullRequests);
 
         // Act
@@ -236,7 +236,7 @@ public class RepositoryControllerTest
         // Arrange
         var projectId = Guid.NewGuid();
         _mockRepositoryService
-            .Setup(service => service.GetGitPullRequest(projectId))
+            .Setup(service => service.GetGitPullRequestAsync(projectId))
             .ReturnsAsync((GitPullRequests?)null);
 
         // Act

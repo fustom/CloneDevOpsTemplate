@@ -49,8 +49,13 @@ public class RepositoryService(IHttpClientFactory httpClientFactory) : IReposito
         return _client.GetFromJsonAsync<GitImportRequest>($"{projectId}/_apis/git/repositories/{repositoryId}/importRequests/{importRequestId}");
     }
 
-    public Task<GitPullRequests?> GetGitPullRequest(Guid projectId)
+    public Task<GitPullRequests?> GetGitPullRequestAsync(Guid projectId)
     {
         return _client.GetFromJsonAsync<GitPullRequests>($"{projectId}/_apis/git/pullrequests");
+    }
+
+    public Task<HttpResponseMessage> CreateGitPullRequestAsync(Guid projectId, Guid repositoryId, GitPullRequestBase pullRequest)
+    {
+        return _client.PostAsJsonAsync($"{projectId}/_apis/git/repositories/{repositoryId}/pullrequests?api-version=7.1", pullRequest);
     }
 }
