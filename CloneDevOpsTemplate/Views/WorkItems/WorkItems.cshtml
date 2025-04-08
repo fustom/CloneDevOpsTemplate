@@ -1,4 +1,4 @@
-@model WorkItem[]
+@model Tuple<Guid, WorkItem[]>
 @{
     ViewData["Title"] = "WorkItems";
 }
@@ -7,42 +7,29 @@
 
 @Html.ValidationSummary(false, "", new { @class = "text-danger" })
 
-@foreach (var fields in Model.Select(workitem => workitem.Fields))
-{
-    <table class="table table-striped">
-        <thead>
-            <tr class="table-primary">
-                <th colspan="4">
-                    <h2>@fields.SystemTitle</h2>
-                </th>
-            </tr>
-        </thead>
-        <tbody>
+<table class="table table-striped">
+    <thead>
+        <tr class="table-primary">
+            <th>ID</th>
+            <th>Title</th>
+            <th>AssignedTo</th>
+            <th>State</th>
+            <th>AreaPath</th>
+            <th>ActivityDate</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var workitem in Model.Item2)
+        {
             <tr>
-                @{ var assignedTo = fields.SystemAssignedTo; }
-                <td>Assigned to</td>
-                <td>@assignedTo.DisplayName</td>
-                <td>@assignedTo.UniqueName</td>
-                <td>
-                    <img src="@assignedTo.ImageUrl" alt="@assignedTo.DisplayName" />
-                </td>
+                @{ var fields = workitem.Fields; }
+                <td>@workitem.Id</td>
+                <td>@Html.ActionLink(fields.SystemTitle, "WorkItem", new { projectId = Model.Item1, workitemId = workitem.Id })</td>
+                <td>@fields.SystemAssignedTo.DisplayName</td>
+                <td>@fields.SystemState</td>
+                <td>@fields.SystemAreaPath</td>
+                <td>@fields.SystemCreatedDate</td>
             </tr>
-            <tr>
-                <td>Effort</td>
-                <td colspan="3">@fields.MicrosoftVSTSSchedulingEffort</td>
-            </tr>
-            <tr>
-                <td>Priority</td>
-                <td colspan="3">@fields.MicrosoftVSTSCommonPriority</td>
-            </tr>
-            <tr>
-                <td>Workitem type</td>
-                <td colspan="3">@fields.SystemWorkItemType</td>
-            </tr>
-            <tr>
-                <td>Iteration path</td>
-                <td colspan="3">@fields.SystemIterationPath</td>
-            </tr>
-        </tbody>
-    </table>
-}
+        }
+    </tbody>
+</table>
