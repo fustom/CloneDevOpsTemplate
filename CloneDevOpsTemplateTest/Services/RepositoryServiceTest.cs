@@ -279,4 +279,68 @@ public class RepositoryServiceTest
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() => _repositoryService.GetGitPullRequestAsync(projectId));
     }
+
+    [Fact]
+    public async Task CreateGitPullRequestAsync_ReturnsHttpResponseMessage()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var repositoryId = Guid.NewGuid();
+        var pullRequest = new GitPullRequestBase
+        {
+            Title = "New Pull Request",
+            Description = "This is a test pull request",
+            SourceRefName = "refs/heads/feature-branch",
+            TargetRefName = "refs/heads/main"
+        };
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.Created
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _repositoryService.CreateGitPullRequestAsync(projectId, repositoryId, pullRequest);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(HttpStatusCode.Created, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateGitPullRequestAsync_ThrowsExceptionOnFailure()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var repositoryId = Guid.NewGuid();
+        var pullRequest = new GitPullRequestBase
+        {
+            Title = "New Pull Request",
+            Description = "This is a test pull request",
+            SourceRefName = "refs/heads/feature-branch",
+            TargetRefName = "refs/heads/main"
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var response = await _repositoryService.CreateGitPullRequestAsync(projectId, repositoryId, pullRequest);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }

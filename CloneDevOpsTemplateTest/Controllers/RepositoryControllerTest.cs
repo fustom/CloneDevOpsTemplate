@@ -247,4 +247,77 @@ public class RepositoryControllerTest
         var viewModel = Assert.IsType<GitPullRequest[]>(viewResult.Model);
         Assert.Empty(viewModel);
     }
+
+    [Fact]
+    public async Task ClonePullRequests_Get_ReturnsViewWithProjects()
+    {
+        // Arrange
+        var mockProjects = new Projects { Value = Array.Empty<Project>() };
+        _mockProjectService
+            .Setup(service => service.GetAllProjectsAsync())
+            .ReturnsAsync(mockProjects);
+
+        // Act
+        var result = await _controller.ClonePullRequests();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(mockProjects.Value, viewResult.Model);
+    }
+
+    [Fact]
+    public async Task ClonePullRequests_Get_ReturnsViewWithEmptyProjects_WhenServiceReturnsNull()
+    {
+        // Arrange
+        _mockProjectService
+            .Setup(service => service.GetAllProjectsAsync())
+            .ReturnsAsync((Projects?)null);
+
+        // Act
+        var result = await _controller.ClonePullRequests();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var viewModel = Assert.IsType<ProjectBase[]>(viewResult.Model);
+        Assert.Empty(viewModel);
+    }
+
+    [Fact]
+    public async Task ClonePullRequests_Post_InvalidModelState_ReturnsViewWithProjects()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+        var mockProjects = new Projects { Value = Array.Empty<Project>() };
+        _mockProjectService
+            .Setup(service => service.GetAllProjectsAsync())
+            .ReturnsAsync(mockProjects);
+
+        // Act
+        var result = await _controller.ClonePullRequests(Guid.NewGuid(), Guid.NewGuid());
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(mockProjects.Value, viewResult.Model);
+    }
+
+    [Fact]
+    public async Task ClonePullRequests_Post_ValidModelState_ClonesPullRequestsAndReturnsViewWithProjects()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var mockProjects = new Projects { Value = Array.Empty<Project>() };
+        _mockProjectService
+            .Setup(service => service.GetAllProjectsAsync())
+            .ReturnsAsync(mockProjects);
+
+        // Act
+        var result = await _controller.ClonePullRequests(templateProjectId, projectId);
+
+        // Assert
+        _mockCloneManager.Verify(manager => manager.CloneGitPullRequestsAsync(templateProjectId, projectId), Times.Once);
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(mockProjects.Value, viewResult.Model);
+        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
+    }
 }
