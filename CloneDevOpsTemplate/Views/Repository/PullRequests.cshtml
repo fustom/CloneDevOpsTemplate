@@ -1,0 +1,34 @@
+@model GitPullRequest[]
+@{
+    ViewData["Title"] = "Pull Requests";
+}
+
+<h1>Pull Requests</h1>
+
+@Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>CreatedBy</th>
+            <th>Repository</th>
+            <th>Source</th>
+            <th>Target</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var pullRequest in Model)
+        {
+            <tr>
+                <td>@pullRequest.Title</td>
+                <td>@pullRequest.CreatedBy.DisplayName</td>
+                <td>@pullRequest.Repository.Name</td>
+                <td>@pullRequest.SourceRefName</td>
+                <td>@pullRequest.TargetRefName</td>
+                <td>@pullRequest.Status</td>
+            </tr>
+        }
+    </tbody>
+</table>
