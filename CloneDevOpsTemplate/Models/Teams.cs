@@ -25,13 +25,3 @@ public class MapTeams
 {
     public Dictionary<Guid, Guid> Teams { get; set; } = [];
 }
-
-public class TeamMember
-{
-    public Guid Id { get; set; }
-    public string DisplayName { get; set; } = string.Empty;
-    public string UniqueName { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
-    public string ImageUrl { get; set; } = string.Empty;
-    public string Descriptor { get; set; } = string.Empty;
-}

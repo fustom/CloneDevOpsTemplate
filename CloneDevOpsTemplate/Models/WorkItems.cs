@@ -55,11 +55,11 @@ public class Fields
     [JsonPropertyName("System.CreatedDate")]
     public DateTime SystemCreatedDate { get; set; }
     [JsonPropertyName("System.CreatedBy")]
-    public TeamMember SystemCreatedBy { get; set; } = new();
+    public IdentityRef SystemCreatedBy { get; set; } = new();
     [JsonPropertyName("System.ChangedDate")]
     public DateTime SystemChangedDate { get; set; }
     [JsonPropertyName("System.ChangedBy")]
-    public TeamMember SystemChangedBy { get; set; } = new();
+    public IdentityRef SystemChangedBy { get; set; } = new();
     [JsonPropertyName("System.Title")]
     public string SystemTitle { get; set; } = string.Empty;
     [JsonPropertyName("Microsoft.VSTS.Scheduling.Effort")]
@@ -67,7 +67,7 @@ public class Fields
     [JsonPropertyName("System.Description")]
     public string SystemDescription { get; set; } = string.Empty;
     [JsonPropertyName("System.AssignedTo")]
-    public TeamMember SystemAssignedTo { get; set; } = new();
+    public IdentityRef SystemAssignedTo { get; set; } = new();
     [JsonPropertyName("System.BoardLane")]
     public string SystemBoardLane { get; set; } = string.Empty;
     [JsonPropertyName("Microsoft.VSTS.Scheduling.RemainingWork")]
