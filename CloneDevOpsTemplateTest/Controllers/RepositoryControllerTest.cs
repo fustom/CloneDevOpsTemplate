@@ -201,7 +201,6 @@ public class RepositoryControllerTest
     {
         // Arrange
         _controller.ModelState.AddModelError("Error", "Invalid model state");
-        var mockPullRequests = new GitPullRequests { Value = Array.Empty<GitPullRequest>() };
 
         // Act
         var result = await _controller.PullRequests(Guid.NewGuid());
