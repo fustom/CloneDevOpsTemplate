@@ -216,4 +216,33 @@ public class CloneManager(IProjectService projectService, IIterationService iter
             }
         }
     }
+
+    public async Task CloneGitPullRequestsAsync(Guid templateProjectId, Guid projectId)
+    {
+        var templatePullRequests = await _repositoryService.GetGitPullRequestAsync(templateProjectId) ?? new();
+        var mappedRespositories = await MapRepositories(templateProjectId, projectId);
+        foreach (var templatePullRequest in templatePullRequests.Value)
+        {
+            var repository = mappedRespositories.GetValueOrDefault(templatePullRequest.Repository.Id);
+            await _repositoryService.CreateGitPullRequestAsync(projectId, repository, templatePullRequest);
+        }
+    }
+
+    public async Task<Dictionary<Guid, Guid>> MapRepositories(Guid templateProjectId, Guid projectId)
+    {
+        var mappedRespositories = new Dictionary<Guid, Guid>();
+        var repositories = await _repositoryService.GetRepositoriesAsync(projectId) ?? new();
+        var templateRepositories = await _repositoryService.GetRepositoriesAsync(templateProjectId) ?? new();
+
+        foreach (var templateRepository in templateRepositories.Value)
+        {
+            var mappedRespository = repositories.Value.FirstOrDefault(r => r.Name == templateRepository.Name);
+            if (mappedRespository is not null)
+            {
+                mappedRespositories.Add(templateRepository.Id, mappedRespository.Id);
+            }
+        }
+
+        return mappedRespositories;
+    }
 }

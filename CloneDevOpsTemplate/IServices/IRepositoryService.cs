@@ -10,5 +10,6 @@ public interface IRepositoryService
     Task<HttpResponseMessage> DeleteRepositoryAsync(Guid projectId, Guid repositoryId);
     Task<GitImportRequest?> CreateImportRequestAsync(Guid projectId, Guid repositoryId, string sourceRepositoryRemoteUrl, Guid serviceEndpointId);
     Task<GitImportRequest?> GetImportRequestAsync(Guid projectId, Guid repositoryId, int importRequestId);
-    Task<GitPullRequests?> GetGitPullRequest(Guid projectId);
+    Task<GitPullRequests?> GetGitPullRequestAsync(Guid projectId);
+    Task<HttpResponseMessage> CreateGitPullRequestAsync(Guid projectId, Guid repositoryId, GitPullRequestBase pullRequest);
 }

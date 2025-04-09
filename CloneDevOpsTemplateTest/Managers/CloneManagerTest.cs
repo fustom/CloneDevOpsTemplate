@@ -484,4 +484,43 @@ public class CloneManagerTest
         _mockIterationService.Verify(s => s.GetAllAsync(templateProjectId, structureGroup), Times.Once);
         _mockIterationService.Verify(s => s.CreateAsync(projectId, templateClassificationNodes, structureGroup, ""), Times.Once);
     }
+
+    [Fact]
+    public async Task CloneGitPullRequestsAsync_ShouldClonePullRequests()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+
+        var templateRepositoryId = Guid.NewGuid();
+        var mappedRepositoryId = Guid.NewGuid();
+
+        var templatePullRequests = new GitPullRequests
+        {
+            Value =
+            [
+                new GitPullRequest
+                {
+                    Repository = new Repository { Id = templateRepositoryId },
+                    Title = "Sample Pull Request"
+                }
+            ]
+        };
+
+        _mockRepositoryService.Setup(s => s.GetGitPullRequestAsync(templateProjectId))
+            .ReturnsAsync(templatePullRequests);
+
+        _mockRepositoryService.Setup(s => s.GetRepositoriesAsync(templateProjectId))
+            .ReturnsAsync(new Repositories { Value = [new Repository { Name = "Repo1", Id = templateRepositoryId }] });
+
+        _mockRepositoryService.Setup(s => s.GetRepositoriesAsync(projectId))
+            .ReturnsAsync(new Repositories { Value = [new Repository { Name = "Repo1", Id = mappedRepositoryId }] });
+
+        // Act
+        await _cloneManager.CloneGitPullRequestsAsync(templateProjectId, projectId);
+
+        // Assert
+        _mockRepositoryService.Verify(s => s.GetGitPullRequestAsync(templateProjectId), Times.Once);
+        _mockRepositoryService.Verify(s => s.CreateGitPullRequestAsync(projectId, mappedRepositoryId, It.IsAny<GitPullRequest>()), Times.Once);
+    }
 }
