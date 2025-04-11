@@ -1,0 +1,28 @@
+@model TestPlan[]
+@{
+    ViewData["Title"] = "Test plans";
+}
+
+<h1>Test plans</h1>
+
+@Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>State</th>
+            <th>ProjectName</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var testPlan in Model)
+        {
+            <tr>
+                <td>@testPlan.Name</td>
+                <td>@testPlan.State</td>
+                <td>@testPlan.Project.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>
