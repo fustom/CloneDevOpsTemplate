@@ -32,6 +32,7 @@ builder.Services.AddScoped<ITeamSettingsService, TeamSettingsService>();
 builder.Services.AddScoped<IRepositoryService, RepositoryService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<IWorkItemService, WorkItemService>();
+builder.Services.AddScoped<ITestService, TestService>();
 builder.Services.AddScoped<ICloneManager, CloneManager>();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, DevOpsAuthorizationMiddleware>();
 
