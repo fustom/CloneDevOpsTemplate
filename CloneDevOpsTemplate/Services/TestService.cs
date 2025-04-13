@@ -1,11 +1,7 @@
+using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Models;
 
 namespace CloneDevOpsTemplate.Services;
-
-public interface ITestService
-{
-    Task<TestPlans?> GetTestPlansAsync(Guid projectId);
-}
 
 public class TestService(IHttpClientFactory httpClientFactory) : ITestService
 {
