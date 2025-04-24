@@ -17,7 +17,7 @@
     <tbody>
         <tr>
             <td>Description</td>
-            <td colspan="3">@fields.SystemDescription</td>
+            <td colspan="3">@Html.Raw(fields.SystemDescription)</td>
         </tr>
         <tr>
             @{ var assignedTo = fields.SystemAssignedTo; }
