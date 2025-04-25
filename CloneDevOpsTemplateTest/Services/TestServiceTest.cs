@@ -74,4 +74,54 @@ public class TestServiceTest
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() => _testService.GetTestPlansAsync(projectId));
     }
+
+    [Fact]
+    public async Task GetTestSuitesAsync_ReturnsTestSuites_WhenApiResponseIsSuccessful()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var testPlanId = 1;
+        var expectedTestSuites = new TestSuites { Count = 1, Value = [new TestSuite { Id = 1, Name = "suite" }] };
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = JsonContent.Create(expectedTestSuites)
+            });
+
+        // Act
+        var result = await _testService.GetTestSuitesAsync(projectId, testPlanId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equivalent(expectedTestSuites, result);
+    }
+
+    [Fact]
+    public async Task GetTestSuitesAsync_ThrowsHttpRequestException_WhenApiResponseIsNotFound()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var testPlanId = 1;
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() => _testService.GetTestSuitesAsync(projectId, testPlanId));
+    }
 }

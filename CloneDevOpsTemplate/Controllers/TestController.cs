@@ -22,4 +22,17 @@ public class TestController(ITestService testService) : Controller
         testPlans = await _testService.GetTestPlansAsync(projectId) ?? new();
         return View(testPlans.Value);
     }
+
+    public async Task<IActionResult> TestSuites(Guid projectId, int testPlanId)
+    {
+        TestSuites testSuites = new();
+
+        if (!ModelState.IsValid)
+        {
+            return View(testSuites.Value);
+        }
+
+        testSuites = await _testService.GetTestSuitesAsync(projectId, testPlanId) ?? new();
+        return View(testSuites.Value);
+    }
 }
