@@ -119,4 +119,60 @@ public class TestControllerTest
         var viewModel = Assert.IsType<TestSuite[]>(viewResult.Model);
         Assert.Empty(viewModel);
     }
+
+    [Fact]
+    public async Task TestCases_InvalidModelState_ReturnsViewWithEmptyValue()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+        var projectId = Guid.NewGuid();
+        var testPlanId = 1;
+        var testSuiteId = 1;
+
+        // Act
+        var result = await _controller.TestCases(projectId, testPlanId, testSuiteId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var viewModel = Assert.IsType<TestCase[]>(viewResult.Model);
+        Assert.Empty(viewModel);
+    }
+
+    [Fact]
+    public async Task TestCases_ValidModelState_ReturnsViewWithTestCasesValue()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var testPlanId = 1;
+        var testSuiteId = 1;
+        var testCases = new TestCases { Value = [new TestCase { Order = 1, WorkItem = new WorkItemDetails { Name = "test case" } }] };
+        _mockTestService.Setup(service => service.GetTestCasesAsync(projectId, testPlanId, testSuiteId))
+            .ReturnsAsync(testCases);
+
+        // Act
+        var result = await _controller.TestCases(projectId, testPlanId, testSuiteId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(testCases.Value, viewResult.Model);
+    }
+
+    [Fact]
+    public async Task TestCases_ValidModelState_NullTestCases_ReturnsViewWithEmptyValue()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var testPlanId = 1;
+        var testSuiteId = 1;
+        _mockTestService.Setup(service => service.GetTestCasesAsync(projectId, testPlanId, testSuiteId))
+            .ReturnsAsync((TestCases)null!);
+
+        // Act
+        var result = await _controller.TestCases(projectId, testPlanId, testSuiteId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var viewModel = Assert.IsType<TestCase[]>(viewResult.Model);
+        Assert.Empty(viewModel);
+    }
 }

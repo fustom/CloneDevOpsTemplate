@@ -1,0 +1,32 @@
+@model TestCase[]
+@{
+    ViewData["Title"] = "Test cases";
+}
+
+<h1>Test cases</h1>
+
+@Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Order</th>
+            <th>ProjectName</th>
+            <th>TestPlanName</th>
+            <th>TestSuiteName</th>
+            <th>WorkItem</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var testCase in Model)
+        {
+            <tr>
+                <td>@testCase.Order</td>
+                <td>@testCase.Project.Name</td>
+                <td>@testCase.TestPlan.Name</td>
+                <td>@testCase.TestSuite.Name</td>
+                <td>@Html.ActionLink(testCase.WorkItem.Name, "WorkItem", "WorkItems", new { projectId = testCase.Project.Id, workitemId = testCase.WorkItem.Id })</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -16,4 +16,9 @@ public class TestService(IHttpClientFactory httpClientFactory) : ITestService
     {
         return _client.GetFromJsonAsync<TestSuites>($"{projectId}/_apis/testplan/plans/{testPlanId}/suites");
     }
+
+    public Task<TestCases?> GetTestCasesAsync(Guid projectId, int testPlanId, int testSuiteId)
+    {
+        return _client.GetFromJsonAsync<TestCases>($"{projectId}/_apis/testplan/plans/{testPlanId}/suites/{testSuiteId}/testcase");
+    }
 }
