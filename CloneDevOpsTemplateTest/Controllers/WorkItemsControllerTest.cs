@@ -22,7 +22,7 @@ public class WorkItemsControllerTest
     {
         // Arrange
         Guid projectId = Guid.NewGuid();
-        _controller.ModelState.AddModelError("Error", "Invalid model state");        
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
 
         // Act
         var result = await _controller.WorkItems(projectId, "TestProject");
@@ -51,8 +51,8 @@ public class WorkItemsControllerTest
             ]
         };
 
-        var workItem1 = new WorkItem { Id = 1, Fields = new Fields { SystemTitle = "WorkItem1" } };
-        var workItem2 = new WorkItem { Id = 2, Fields = new Fields { SystemTitle = "WorkItem2" } };
+        var workItem1 = new WorkItem { Id = 1, Fields = new WorkItemFields { SystemTitle = "WorkItem1" } };
+        var workItem2 = new WorkItem { Id = 2, Fields = new WorkItemFields { SystemTitle = "WorkItem2" } };
         var workItems = new WorkItems
         {
             Value = [workItem1, workItem2]
@@ -124,7 +124,7 @@ public class WorkItemsControllerTest
         var expectedWorkItem = new WorkItem
         {
             Id = workitemId,
-            Fields = new Fields { SystemTitle = "Test WorkItem" }
+            Fields = new WorkItemFields { SystemTitle = "Test WorkItem" }
         };
 
         _mockWorkItemService

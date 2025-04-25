@@ -6,4 +6,5 @@ public interface ITestService
 {
     Task<TestPlans?> GetTestPlansAsync(Guid projectId);
     Task<TestSuites?> GetTestSuitesAsync(Guid projectId, int testPlanId);
+    Task<TestCases?> GetTestCasesAsync(Guid projectId, int testPlanId, int testSuiteId);
 }

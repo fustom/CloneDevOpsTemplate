@@ -1,12 +1,12 @@
-using CloneDevOpsTemplate.Services;
-using CloneDevOpsTemplate.Models;
-using Moq;
-using Moq.Protected;
 using System.Net;
 using System.Net.Http.Json;
 using CloneDevOpsTemplate.Constants;
-using MyTestProject.Service.Tests.Common;
+using CloneDevOpsTemplate.Models;
+using CloneDevOpsTemplate.Services;
 using Microsoft.Extensions.Configuration;
+using Moq;
+using Moq.Protected;
+using MyTestProject.Service.Tests.Common;
 
 namespace CloneDevOpsTemplateTest.Services;
 
@@ -25,7 +25,7 @@ public class WorkItemServiceTest
         };
         var httpClientFactoryMock = new Mock<IHttpClientFactory>();
         httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
-        _workItemService = new WorkItemService(httpClientFactoryMock.Object);        
+        _workItemService = new WorkItemService(httpClientFactoryMock.Object);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class WorkItemServiceTest
         Assert.NotNull(result);
         Assert.Equal(expectedResponse.AsOf, result.AsOf);
         Assert.True(result.WorkItems.Length > 0);
-        Assert.Equal(expectedResponse.WorkItems[0].Id, result.WorkItems[0].Id);        
+        Assert.Equal(expectedResponse.WorkItems[0].Id, result.WorkItems[0].Id);
     }
 
     [Fact]
@@ -94,9 +94,9 @@ public class WorkItemServiceTest
         {
             Value =
             [
-                new WorkItem { Id = 1, Fields = new Fields { SystemTitle = "Work Item 1" } },
-                new WorkItem { Id = 2, Fields = new Fields { SystemTitle = "Work Item 2" } },
-                new WorkItem { Id = 3, Fields = new Fields { SystemTitle = "Work Item 3" } }
+                new WorkItem { Id = 1, Fields = new WorkItemFields { SystemTitle = "Work Item 1" } },
+                new WorkItem { Id = 2, Fields = new WorkItemFields { SystemTitle = "Work Item 2" } },
+                new WorkItem { Id = 3, Fields = new WorkItemFields { SystemTitle = "Work Item 3" } }
             ]
         };
 
@@ -157,7 +157,7 @@ public class WorkItemServiceTest
         // Arrange
         var projectId = Guid.NewGuid();
         var workItemId = 123;
-        var expectedWorkItem = new WorkItem { Id = workItemId, Fields = new Fields { SystemTitle ="Test Work Item" } };
+        var expectedWorkItem = new WorkItem { Id = workItemId, Fields = new WorkItemFields { SystemTitle = "Test Work Item" } };
 
         _httpMessageHandlerMock
             .Protected()

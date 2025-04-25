@@ -33,12 +33,12 @@ public class WorkItem
 {
     public int Id { get; set; }
     public int Rev { get; set; }
-    public Fields Fields { get; set; } = new();
+    public WorkItemFields Fields { get; set; } = new();
     public Relations[] Relations { get; set; } = [];
     public string Url { get; set; } = string.Empty;
 }
 
-public class Fields
+public class WorkItemFields
 {
     [JsonPropertyName("System.AreaPath")]
     public string SystemAreaPath { get; set; } = string.Empty;
@@ -70,12 +70,14 @@ public class Fields
     public IdentityRef SystemAssignedTo { get; set; } = new();
     [JsonPropertyName("System.BoardLane")]
     public string SystemBoardLane { get; set; } = string.Empty;
+    [JsonPropertyName("System.Tags")]
+    public string SystemTags { get; set; } = string.Empty;
+    [JsonPropertyName("System.Rev")]
+    public int SystemRev { get; set; }
     [JsonPropertyName("Microsoft.VSTS.Scheduling.RemainingWork")]
     public float MicrosoftVSTSSchedulingRemainingWork { get; set; }
     [JsonPropertyName("Microsoft.VSTS.Common.Priority")]
     public float MicrosoftVSTSCommonPriority { get; set; }
-    [JsonPropertyName("System.Tags")]
-    public string SystemTags { get; set; } = string.Empty;
     [JsonPropertyName("Microsoft.VSTS.TCM.Steps")]
     public string MicrosoftVSTSTCMSteps { get; set; } = string.Empty;
     [JsonPropertyName("Microsoft.VSTS.TCM.Parameters")]
@@ -86,6 +88,12 @@ public class Fields
     public string MicrosoftVSTSTCMAutomationStatus { get; set; } = string.Empty;
     [JsonPropertyName("Microsoft.VSTS.Common.AcceptanceCriteria")]
     public string MicrosoftVSTSCommonAcceptanceCriteria { get; set; } = string.Empty;
+    [JsonPropertyName("Microsoft.VSTS.Common.StateChangeDate")]
+    public DateTime MicrosoftVSTSCommonStateChangeDate { get; set; }
+    [JsonPropertyName("Microsoft.VSTS.Common.ActivatedBy")]
+    public IdentityRef MicrosoftVSTSCommonActivatedBy { get; set; } = new();
+    [JsonPropertyName("Microsoft.VSTS.Common.ActivatedDate")]
+    public DateTime MicrosoftVSTSCommonActivatedDate { get; set; }
 }
 
 public class Relations
