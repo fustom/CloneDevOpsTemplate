@@ -66,4 +66,57 @@ public class TestControllerTest
         var viewModel = Assert.IsType<TestPlan[]>(viewResult.Model);
         Assert.Empty(viewModel);
     }
+
+    [Fact]
+    public async Task TestSuites_InvalidModelState_ReturnsViewWithEmptyValue()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
+        var projectId = Guid.NewGuid();
+        var testPlanId = 1;
+
+        // Act
+        var result = await _controller.TestSuites(projectId, testPlanId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var viewModel = Assert.IsType<TestSuite[]>(viewResult.Model);
+        Assert.Empty(viewModel);
+    }
+
+    [Fact]
+    public async Task TestSuites_ValidModelState_ReturnsViewWithTestSuitesValue()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var testPlanId = 1;
+        var testSuites = new TestSuites { Value = [new TestSuite { Name = "Test Suite Value" }] };
+        _mockTestService.Setup(service => service.GetTestSuitesAsync(projectId, testPlanId))
+            .ReturnsAsync(testSuites);
+
+        // Act
+        var result = await _controller.TestSuites(projectId, testPlanId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(testSuites.Value, viewResult.Model);
+    }
+
+    [Fact]
+    public async Task TestSuites_ValidModelState_NullTestSuites_ReturnsViewWithEmptyValue()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var testPlanId = 1;
+        _mockTestService.Setup(service => service.GetTestSuitesAsync(projectId, testPlanId))
+            .ReturnsAsync((TestSuites)null!);
+
+        // Act
+        var result = await _controller.TestSuites(projectId, testPlanId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var viewModel = Assert.IsType<TestSuite[]>(viewResult.Model);
+        Assert.Empty(viewModel);
+    }
 }

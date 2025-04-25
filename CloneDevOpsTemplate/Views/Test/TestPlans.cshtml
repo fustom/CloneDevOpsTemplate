@@ -13,6 +13,7 @@
             <th>Name</th>
             <th>State</th>
             <th>ProjectName</th>
+            <th>TestSuites</th>
         </tr>
     </thead>
     <tbody>
@@ -22,6 +23,7 @@
                 <td>@testPlan.Name</td>
                 <td>@testPlan.State</td>
                 <td>@testPlan.Project.Name</td>
+                <td>@Html.ActionLink("Test suites", "TestSuites", "Test", new { projectId = testPlan.Project.Id, testPlanId = testPlan.Id })</td>
             </tr>
         }
     </tbody>
