@@ -1,10 +1,7 @@
 {
 	"name": "C# (.NET)",
-	"image": "mcr.microsoft.com/devcontainers/dotnet:9.0-bookworm",
+	"image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
 	"features": {
-		"ghcr.io/devcontainers/features/dotnet:2": {
-			"version": "latest"
-		},
 		"ghcr.io/devcontainers/features/github-cli:1": {
 			"installDirectlyFromGitHubRelease": true,
 			"version": "latest"
@@ -13,7 +10,6 @@
 			"version": "latest"
 		}
 	},
-	"postCreateCommand": "bash ./.devcontainer/postCreateCommand.sh",
 	"customizations": {
 		"vscode": {
 			"extensions": [
