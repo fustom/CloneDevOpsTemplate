@@ -1,9 +1,13 @@
 @model Tuple<ProjectBase[], string, string>
+@{
+    var operationId = Guid.NewGuid();
+}
 
 @Html.ValidationSummary(false, "", new { @class = "text-danger" })
 
-@using (Html.BeginForm(Model.Item3, Model.Item2, FormMethod.Post, new { @class = "form-container-clone input-group-lg" }))
+@using (Html.BeginForm(Model.Item3, Model.Item2, FormMethod.Post, new { @class = "form-container-clone input-group-lg", id = "createProjectForm" }))
 {
+    @Html.Hidden("operationId", operationId)
     <div class="form-group row">
         @Html.Label("templateProjectId", "Select a project to clone", new { @class = "col-sm-2 col-form-label" })
         <div class="col-sm-10">
@@ -39,3 +43,36 @@
         </div>
     </div>
 }
+
+<div id="migrationProgress" class="mt-3" hidden>
+    <div class="progress" role="progressbar" aria-label="Migration progress">
+        <div id="migrationProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+    </div>
+    <p id="migrationProgressMessage" class="mt-2" aria-live="polite">Starting...</p>
+</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('createProjectForm');
+        const progressUrl = '@Url.Action("MigrationProgress", "Project", new { operationId })';
+
+        form.addEventListener('submit', function () {
+            document.getElementById('createButton').disabled = true;
+            document.getElementById('migrationProgress').hidden = false;
+            const bar = document.getElementById('migrationProgressBar');
+            const message = document.getElementById('migrationProgressMessage');
+
+            setInterval(async function () {
+                try {
+                    const response = await fetch(progressUrl, { cache: 'no-store' });
+                    if (response.status !== 200) return;
+                    const progress = await response.json();
+                    bar.style.width = Math.round(progress.step / progress.totalSteps * 100) + '%';
+                    message.textContent = `Step ${progress.step} of ${progress.totalSteps}: ${progress.message}`;
+                } catch {
+                    // Ignore transient polling errors.
+                }
+            }, 1000);
+        });
+    })();
+</script>

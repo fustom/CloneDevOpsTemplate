@@ -20,7 +20,8 @@ public class ProjectControllerTest
 
         _controller = new ProjectController(
             _mockProjectService.Object,
-            _mockCloneManager.Object
+            _mockCloneManager.Object,
+            new MigrationProgressTracker()
         );
     }
 
