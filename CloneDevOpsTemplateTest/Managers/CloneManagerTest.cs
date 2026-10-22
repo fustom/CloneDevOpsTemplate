@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Managers;
 using CloneDevOpsTemplate.Models;
@@ -14,6 +15,7 @@ public class CloneManagerTest
     private readonly Mock<IBoardService> _mockBoardService;
     private readonly Mock<IRepositoryService> _mockRepositoryService;
     private readonly Mock<IServiceService> _mockServiceService;
+    private readonly Mock<IPolicyService> _mockPolicyService;
     private readonly CloneManager _cloneManager;
 
     public CloneManagerTest()
@@ -25,6 +27,7 @@ public class CloneManagerTest
         _mockBoardService = new Mock<IBoardService>();
         _mockRepositoryService = new Mock<IRepositoryService>();
         _mockServiceService = new Mock<IServiceService>();
+        _mockPolicyService = new Mock<IPolicyService>();
 
         _cloneManager = new CloneManager(
             _mockProjectService.Object,
@@ -33,7 +36,8 @@ public class CloneManagerTest
             _mockTeamSettingsService.Object,
             _mockBoardService.Object,
             _mockRepositoryService.Object,
-            _mockServiceService.Object
+            _mockServiceService.Object,
+            _mockPolicyService.Object
         );
     }
 
@@ -522,5 +526,59 @@ public class CloneManagerTest
         // Assert
         _mockRepositoryService.Verify(s => s.GetGitPullRequestAsync(templateProjectId), Times.Once);
         _mockRepositoryService.Verify(s => s.CreateGitPullRequestAsync(projectId, mappedRepositoryId, It.IsAny<GitPullRequest>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CloneBranchPoliciesAsync_ShouldCloneBranchPolicies()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+
+        var templateRepositoryId = Guid.NewGuid();
+        var mappedRepositoryId = Guid.NewGuid();
+        var policyTypeId = Guid.NewGuid();
+
+        var settings = new JsonObject
+        {
+            ["minimumApproverCount"] = 2,
+            ["scope"] = new JsonArray
+            {
+                new JsonObject { ["repositoryId"] = templateRepositoryId.ToString(), ["refName"] = "refs/heads/main" }
+            }
+        };
+
+        var templatePolicyConfigurations = new PolicyConfigurations
+        {
+            Value =
+            [
+                new PolicyConfiguration
+                {
+                    IsEnabled = true,
+                    IsBlocking = true,
+                    Type = new PolicyType { Id = policyTypeId },
+                    Settings = settings
+                }
+            ]
+        };
+
+        _mockPolicyService.Setup(s => s.GetPolicyConfigurationsAsync(templateProjectId))
+            .ReturnsAsync(templatePolicyConfigurations);
+
+        _mockRepositoryService.Setup(s => s.GetRepositoriesAsync(templateProjectId))
+            .ReturnsAsync(new Repositories { Value = [new Repository { Name = "Repo1", Id = templateRepositoryId }] });
+
+        _mockRepositoryService.Setup(s => s.GetRepositoriesAsync(projectId))
+            .ReturnsAsync(new Repositories { Value = [new Repository { Name = "Repo1", Id = mappedRepositoryId }] });
+
+        // Act
+        await _cloneManager.CloneBranchPoliciesAsync(templateProjectId, projectId);
+
+        // Assert
+        _mockPolicyService.Verify(s => s.GetPolicyConfigurationsAsync(templateProjectId), Times.Once);
+        _mockPolicyService.Verify(s => s.CreatePolicyConfigurationAsync(projectId, It.Is<PolicyConfiguration>(p =>
+            p.Type.Id == policyTypeId &&
+            p.Settings["scope"]![0]!["repositoryId"]!.GetValue<string>() == mappedRepositoryId.ToString()
+        )), Times.Once);
     }
 }

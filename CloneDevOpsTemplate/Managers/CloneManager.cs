@@ -1,9 +1,10 @@
+using System.Text.Json.Nodes;
 using CloneDevOpsTemplate.IServices;
 using CloneDevOpsTemplate.Models;
 
 namespace CloneDevOpsTemplate.Managers;
 
-public class CloneManager(IProjectService projectService, IIterationService iterationService, ITeamsService teamsService, ITeamSettingsService teamSettingsService, IBoardService boardService, IRepositoryService repositoryService, IServiceService serviceService) : ICloneManager
+public class CloneManager(IProjectService projectService, IIterationService iterationService, ITeamsService teamsService, ITeamSettingsService teamSettingsService, IBoardService boardService, IRepositoryService repositoryService, IServiceService serviceService, IPolicyService policyService) : ICloneManager
 {
     private readonly IProjectService _projectService = projectService;
     private readonly IIterationService _iterationService = iterationService;
@@ -12,6 +13,7 @@ public class CloneManager(IProjectService projectService, IIterationService iter
     private readonly IBoardService _boardService = boardService;
     private readonly IRepositoryService _repositoryService = repositoryService;
     private readonly IServiceService _serviceService = serviceService;
+    private readonly IPolicyService _policyService = policyService;
 
     public async Task<CloneProjectResult> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility)
     {
@@ -244,5 +246,42 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         }
 
         return mappedRespositories;
+    }
+
+    public async Task CloneBranchPoliciesAsync(Guid templateProjectId, Guid projectId)
+    {
+        var templatePolicyConfigurations = await _policyService.GetPolicyConfigurationsAsync(templateProjectId) ?? new();
+        var mappedRepositories = await MapRepositories(templateProjectId, projectId);
+
+        await Parallel.ForEachAsync(templatePolicyConfigurations.Value.Where(p => !p.IsDeleted), async (templatePolicyConfiguration, ct) =>
+        {
+            PolicyConfiguration policyConfiguration = new()
+            {
+                IsEnabled = templatePolicyConfiguration.IsEnabled,
+                IsBlocking = templatePolicyConfiguration.IsBlocking,
+                Type = new PolicyType { Id = templatePolicyConfiguration.Type.Id },
+                Settings = MapPolicyScopeRepositories(templatePolicyConfiguration.Settings, mappedRepositories)
+            };
+            await _policyService.CreatePolicyConfigurationAsync(projectId, policyConfiguration);
+        });
+    }
+
+    private static JsonObject MapPolicyScopeRepositories(JsonObject settings, Dictionary<Guid, Guid> mappedRepositories)
+    {
+        var mappedSettings = settings.DeepClone().AsObject();
+        if (mappedSettings["scope"] is JsonArray scopes)
+        {
+            foreach (var scope in scopes.OfType<JsonObject>())
+            {
+                if (scope["repositoryId"]?.GetValue<string>() is string repositoryIdText
+                    && Guid.TryParse(repositoryIdText, out var repositoryId)
+                    && mappedRepositories.TryGetValue(repositoryId, out var mappedRepositoryId))
+                {
+                    scope["repositoryId"] = mappedRepositoryId.ToString();
+                }
+            }
+        }
+
+        return mappedSettings;
     }
 }

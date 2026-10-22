@@ -92,4 +92,24 @@ public class RepositoryController(IRepositoryService repositoryService, ICloneMa
 
         return await ClonePullRequests();
     }
+
+    [HttpGet]
+    public async Task<IActionResult> CloneBranchPolicies()
+    {
+        return await CloneRepository();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CloneBranchPolicies(Guid templateProjectId, Guid projectId)
+    {
+        if (!ModelState.IsValid)
+        {
+            return await CloneBranchPolicies();
+        }
+
+        await _cloneManager.CloneBranchPoliciesAsync(templateProjectId, projectId);
+        ViewBag.SuccessMessage = "Success";
+
+        return await CloneBranchPolicies();
+    }
 }

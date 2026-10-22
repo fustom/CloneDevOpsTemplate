@@ -78,7 +78,10 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id)
         );
 
-        await _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id);
+        await Task.WhenAll(
+            _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id),
+            _cloneManager.CloneBranchPoliciesAsync(templateProjectId, cloneProjectResult.Project.Id)
+        );
 
         return RedirectToAction("Project", new { projectId = cloneProjectResult.Project.Id });
     }

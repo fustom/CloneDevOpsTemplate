@@ -16,4 +16,5 @@ public interface ICloneManager
     Task CloneTeamSettingsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId);
     Task CloneTeamIterationsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId);
     Task CloneGitPullRequestsAsync(Guid templateProjectId, Guid projectId);
+    Task CloneBranchPoliciesAsync(Guid templateProjectId, Guid projectId);
 }
