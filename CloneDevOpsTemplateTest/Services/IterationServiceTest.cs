@@ -350,4 +350,91 @@ public class IterationServiceTest
             ItExpr.IsAny<CancellationToken>()
         );
     }
+
+    [Fact]
+    public async Task CreateAsync_Bulk_UsesFullPathForNestedNodes()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var requestedUris = new List<string>();
+        var nodes = new Iteration
+        {
+            Children =
+            [
+                new Iteration
+                {
+                    Name = "A",
+                    Children = [new Iteration { Name = "B", Children = [new Iteration { Name = "C" }] }]
+                }
+            ]
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) => requestedUris.Add(Uri.UnescapeDataString(req.RequestUri!.AbsolutePath)))
+            .ReturnsAsync(() => new HttpResponseMessage(HttpStatusCode.Created));
+
+        // Act
+        var result = await _iterationService.CreateAsync(projectId, nodes, TreeStructureGroup.Iterations, "");
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Collection(requestedUris,
+            uri => Assert.EndsWith("/classificationNodes/Iterations/", uri),
+            uri => Assert.EndsWith("/classificationNodes/Iterations/A", uri),
+            uri => Assert.EndsWith("/classificationNodes/Iterations/A/B", uri));
+    }
+
+    [Fact]
+    public async Task CreateAsync_Bulk_ReportsFailureAndSkipsChildrenOfFailedNode()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var nodes = new Iteration
+        {
+            Children =
+            [
+                new Iteration { Name = "Broken", Children = [new Iteration { Name = "Child" }] },
+                new Iteration { Name = "Fine" }
+            ]
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+            {
+                var body = req.Content!.ReadAsStringAsync().Result;
+                return body.Contains("Broken")
+                    ? new HttpResponseMessage(HttpStatusCode.BadRequest) { ReasonPhrase = "Bad Request", Content = JsonContent.Create(new ErrorResponse { Message = "TF1: Invalid name." }) }
+                    : new HttpResponseMessage(HttpStatusCode.Created);
+            });
+
+        // Act
+        var result = await _iterationService.CreateAsync(projectId, nodes, TreeStructureGroup.Areas, "");
+
+        // Assert
+        Assert.Equal(["Creating 'Broken' failed (400 Bad Request: TF1: Invalid name.)."], result.Errors);
+        _httpMessageHandlerMock.Protected().Verify("SendAsync", Times.Exactly(2), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_Bulk_ReportsFailedDeletes()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var nodes = new Iteration { Children = [new Iteration { Name = "Sprint 1" }, new Iteration { Name = "Sprint 2" }] };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+                Uri.UnescapeDataString(req.RequestUri!.AbsolutePath).EndsWith("Sprint 2")
+                    ? new HttpResponseMessage(HttpStatusCode.NotFound) { ReasonPhrase = "Not Found" }
+                    : new HttpResponseMessage(HttpStatusCode.NoContent));
+
+        // Act
+        var result = await _iterationService.DeleteAsync(projectId, TreeStructureGroup.Iterations, nodes);
+
+        // Assert
+        Assert.Equal(["Removing 'Sprint 2' failed (404 Not Found)."], result.Errors);
+    }
 }

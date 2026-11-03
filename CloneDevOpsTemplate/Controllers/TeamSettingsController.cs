@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace CloneDevOpsTemplate.Controllers;
 
 [Authorize]
-public class TeamSettingsController(ITeamSettingsService teamSettingsService, ICloneManager cloneManager, ITeamsService teamsService) : Controller
+public class TeamSettingsController(ITeamSettingsService teamSettingsService, ICloneManager cloneManager, ITeamsService teamsService, IMigrationProgressTracker progressTracker) : Controller
 {
     private readonly ITeamSettingsService _teamSettingsService = teamSettingsService;
     private readonly ICloneManager _cloneManager = cloneManager;
     private readonly ITeamsService _teamsService = teamsService;
+    private readonly IMigrationProgressTracker _progressTracker = progressTracker;
 
     public async Task<IActionResult> TeamSettings(Guid projectId, Guid teamId)
     {
@@ -54,43 +55,46 @@ public class TeamSettingsController(ITeamSettingsService teamSettingsService, IC
     }
 
     [HttpGet]
-    public async Task<IActionResult> CloneTeamSettings()
+    public async Task<IActionResult> CloneTeamSettings(Guid operationId = default)
     {
-        var teams = await _teamsService.GetAllTeamsAsync() ?? new();
-        return View(teams.Value);
+        return await CloneFormView(nameof(CloneTeamSettings), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
-    public async Task<IActionResult> CloneTeamSettings(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
+    public async Task<IActionResult> CloneTeamSettings(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId, Guid operationId = default)
     {
         if (!ModelState.IsValid)
         {
-            return await CloneTeamSettings();
+            return await CloneFormView(nameof(CloneTeamSettings));
         }
 
-        await _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
-        ViewBag.SuccessMessage = "Success";
-
-        return await CloneTeamSettings();
+        operationId = await _progressTracker.RunAsync(operationId, "Cloning team settings...", "Team settings cloned successfully.",
+            progress => _cloneManager.CloneTeamSettingsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, progress));
+        return RedirectToAction(nameof(CloneTeamSettings), new { operationId });
     }
 
     [HttpGet]
-    public async Task<IActionResult> CloneTeamIterations()
+    public async Task<IActionResult> CloneTeamIterations(Guid operationId = default)
     {
-        return await CloneTeamSettings();
+        return await CloneFormView(nameof(CloneTeamIterations), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
-    public async Task<IActionResult> CloneTeamIterations(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
+    public async Task<IActionResult> CloneTeamIterations(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId, Guid operationId = default)
     {
         if (!ModelState.IsValid)
         {
-            return await CloneTeamIterations();
+            return await CloneFormView(nameof(CloneTeamIterations));
         }
 
-        await _cloneManager.CloneTeamIterationsAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
-        ViewBag.SuccessMessage = "Success";
+        operationId = await _progressTracker.RunAsync(operationId, "Cloning team iterations...", "Team iterations cloned successfully.",
+            progress => _cloneManager.CloneTeamIterationsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, progress));
+        return RedirectToAction(nameof(CloneTeamIterations), new { operationId });
+    }
 
-        return await CloneTeamIterations();
+    private async Task<ViewResult> CloneFormView(string action, MigrationProgress? finishedMigration = null)
+    {
+        Teams teams = await _teamsService.GetAllTeamsAsync() ?? new();
+        return View(action, new CloneFormViewModel<Team>(teams.Value, "TeamSettings", action, finishedMigration));
     }
 }

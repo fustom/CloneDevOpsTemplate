@@ -1,13 +1,17 @@
-@model Tuple<ProjectBase[], string, string>
+@model CloneFormViewModel<ProjectBase>
+@{
+    var operationId = Guid.NewGuid();
+}
 
 @Html.ValidationSummary(false, "", new { @class = "text-danger" })
 
-@using (Html.BeginForm(Model.Item3, Model.Item2, FormMethod.Post, new { @class = "form-container-clone input-group-lg" }))
+@using (Html.BeginForm(Model.Action, Model.Controller, FormMethod.Post, new { @class = "form-container-clone input-group-lg", id = "createProjectForm" }))
 {
+    @Html.Hidden("operationId", operationId)
     <div class="form-group row">
         @Html.Label("templateProjectId", "Select a project to clone", new { @class = "col-sm-2 col-form-label" })
         <div class="col-sm-10">
-            @Html.DropDownList("templateProjectId", new SelectList(Model.Item1, "Id", "Name"), "Select a project", new { @class = "form-select form-control" })
+            @Html.DropDownList("templateProjectId", new SelectList(Model.Items, "Id", "Name"), "Select a project", new { @class = "form-select form-control" })
         </div>
     </div>
 
@@ -39,3 +43,5 @@
         </div>
     </div>
 }
+
+@{ await Html.RenderPartialAsync("_MigrationProgress", new MigrationProgressPanelViewModel(operationId, "createProjectForm", "createButton", Model.FinishedMigration)); }

@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace CloneDevOpsTemplate.Controllers;
 
 [Authorize]
-public class RepositoryController(IRepositoryService repositoryService, ICloneManager cloneManager, IProjectService projectService) : Controller
+public class RepositoryController(IRepositoryService repositoryService, ICloneManager cloneManager, IProjectService projectService, IMigrationProgressTracker progressTracker) : Controller
 {
     private readonly IRepositoryService _repositoryService = repositoryService;
     private readonly ICloneManager _cloneManager = cloneManager;
     private readonly IProjectService _projectService = projectService;
+    private readonly IMigrationProgressTracker _progressTracker = progressTracker;
 
     public async Task<IActionResult> Repositories()
     {
@@ -53,43 +54,46 @@ public class RepositoryController(IRepositoryService repositoryService, ICloneMa
     }
 
     [HttpGet]
-    public async Task<IActionResult> CloneRepository()
+    public async Task<IActionResult> CloneRepository(Guid operationId = default)
     {
-        Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
-        return View(projects.Value);
+        return await CloneFormView(nameof(CloneRepository), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
-    public async Task<IActionResult> CloneRepository(Guid templateProjectId, Guid projectId)
+    public async Task<IActionResult> CloneRepository(Guid templateProjectId, Guid projectId, Guid operationId = default)
     {
         if (!ModelState.IsValid)
         {
-            return await CloneRepository();
+            return await CloneFormView(nameof(CloneRepository));
         }
 
-        await _cloneManager.CloneRepositoriesAsync(templateProjectId, projectId);
-        ViewBag.SuccessMessage = "Success";
-
-        return await CloneRepository();
+        operationId = await _progressTracker.RunAsync(operationId, "Cloning repositories...", "Repositories cloned successfully.",
+            progress => _cloneManager.CloneRepositoriesAsync(templateProjectId, projectId, progress));
+        return RedirectToAction(nameof(CloneRepository), new { operationId });
     }
 
     [HttpGet]
-    public async Task<IActionResult> ClonePullRequests()
+    public async Task<IActionResult> ClonePullRequests(Guid operationId = default)
     {
-        return await CloneRepository();
+        return await CloneFormView(nameof(ClonePullRequests), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
-    public async Task<IActionResult> ClonePullRequests(Guid templateProjectId, Guid projectId)
+    public async Task<IActionResult> ClonePullRequests(Guid templateProjectId, Guid projectId, Guid operationId = default)
     {
         if (!ModelState.IsValid)
         {
-            return await ClonePullRequests();
+            return await CloneFormView(nameof(ClonePullRequests));
         }
 
-        await _cloneManager.CloneGitPullRequestsAsync(templateProjectId, projectId);
-        ViewBag.SuccessMessage = "Success";
+        operationId = await _progressTracker.RunAsync(operationId, "Cloning pull requests...", "Pull requests cloned successfully.",
+            progress => _cloneManager.CloneGitPullRequestsAsync(templateProjectId, projectId, progress));
+        return RedirectToAction(nameof(ClonePullRequests), new { operationId });
+    }
 
-        return await ClonePullRequests();
+    private async Task<ViewResult> CloneFormView(string action, MigrationProgress? finishedMigration = null)
+    {
+        Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
+        return View(action, new CloneFormViewModel<ProjectBase>(projects.Value, "Repository", action, finishedMigration));
     }
 }

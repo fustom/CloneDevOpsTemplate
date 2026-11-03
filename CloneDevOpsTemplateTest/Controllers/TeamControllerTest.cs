@@ -12,6 +12,7 @@ public class TeamControllerTest
     private readonly Mock<ITeamsService> _mockTeamsService;
     private readonly Mock<ICloneManager> _mockCloneManager;
     private readonly Mock<IProjectService> _mockProjectService;
+    private readonly MigrationProgressTracker _progressTracker = new();
     private readonly TeamController _controller;
 
     public TeamControllerTest()
@@ -19,7 +20,7 @@ public class TeamControllerTest
         _mockTeamsService = new Mock<ITeamsService>();
         _mockCloneManager = new Mock<ICloneManager>();
         _mockProjectService = new Mock<IProjectService>();
-        _controller = new TeamController(_mockTeamsService.Object, _mockCloneManager.Object, _mockProjectService.Object);
+        _controller = new TeamController(_mockTeamsService.Object, _mockCloneManager.Object, _mockProjectService.Object, _progressTracker);
     }
 
     [Fact]
@@ -114,136 +115,218 @@ public class TeamControllerTest
     }
 
     [Fact]
-    public async Task CloneTeams_ReturnsViewWithProjects()
+    public async Task CloneTeams_Get_ReturnsCloneFormWithItems()
     {
         // Arrange
-        var mockProjects = new Projects
-        {
-            Value =
-            [
-                new Project { Id = Guid.NewGuid(), Name = "Project A" }
-            ]
-        };
-        _mockProjectService.Setup(service => service.GetAllProjectsAsync()).ReturnsAsync(mockProjects);
+        _mockProjectService.Setup(s => s.GetAllProjectsAsync()).ReturnsAsync(new Projects { Value = [new ProjectBase { Name = "Source" }] });
 
         // Act
         var result = await _controller.CloneTeams();
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(mockProjects.Value, viewResult.Model);
+        Assert.Equal(nameof(TeamController.CloneTeams), viewResult.ViewName);
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(viewResult.Model);
+        Assert.Equal("Source", Assert.Single(model.Items).Name);
+        Assert.Equal("Team", model.Controller);
+        Assert.Equal(nameof(TeamController.CloneTeams), model.Action);
+        Assert.Null(model.FinishedMigration);
     }
 
     [Fact]
-    public async Task CloneTeams_NoProjects_ReturnsViewWithEmptyList()
+    public async Task CloneTeams_Get_NullItems_ReturnsEmptyCloneForm()
     {
         // Arrange
-        _mockProjectService.Setup(service => service.GetAllProjectsAsync()).ReturnsAsync((Projects)null!);
+        _mockProjectService.Setup(s => s.GetAllProjectsAsync()).ReturnsAsync((Projects?)null);
 
         // Act
         var result = await _controller.CloneTeams();
 
         // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var viewModel = Assert.IsType<ProjectBase[]>(viewResult.Model);
-        Assert.Empty(viewModel);
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Empty(model.Items);
     }
 
     [Fact]
-    public async Task CloneTeams_InvalidModelState_ReturnsCloneTeamsView()
+    public async Task CloneTeams_Get_WithFinishedOperation_ShowsItOnce()
     {
         // Arrange
+        var operationId = Guid.NewGuid();
+        _progressTracker.Fail(operationId, "Boom");
+
+        // Act
+        var result = await _controller.CloneTeams(operationId);
+
+        // Assert
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Equal(MigrationStatus.Failed, model.FinishedMigration?.Status);
+        Assert.Null(_progressTracker.Get(operationId));
+    }
+
+    [Fact]
+    public async Task CloneTeams_Post_InvalidModelState_ReturnsCloneFormWithoutCloning()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid();
         _controller.ModelState.AddModelError("Error", "Invalid model state");
-
-        // Act
-        var result = await _controller.CloneTeams(Guid.NewGuid(), Guid.NewGuid());
-
-        // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var viewModel = Assert.IsType<ProjectBase[]>(viewResult.Model);
-        Assert.Empty(viewModel);
-    }
-
-    [Fact]
-    public async Task CloneTeams_ValidModelState_ClonesTeamsAndReturnsCloneTeamsView()
-    {
-        // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var projectId = Guid.NewGuid();
 
         // Act
         var result = await _controller.CloneTeams(templateProjectId, projectId);
 
         // Assert
-        _mockCloneManager.Verify(manager => manager.CloneTeamsAsync(templateProjectId, projectId), Times.Once);
-        Assert.IsType<ViewResult>(result);
-        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(nameof(TeamController.CloneTeams), viewResult.ViewName);
+        Assert.IsType<CloneFormViewModel<ProjectBase>>(viewResult.Model);
+        Assert.Empty(_mockCloneManager.Invocations);
     }
 
     [Fact]
-    public async Task CloneTeamFieldValues_ReturnsTeamsView()
+    public async Task CloneTeams_Post_Success_CompletesProgressAndRedirects()
     {
         // Arrange
-        var mockTeams = new Teams
-        {
-            Value =
-            [
-                new Team { Id = Guid.NewGuid(), Name = "Team A" }
-            ]
-        };
-        _mockTeamsService.Setup(service => service.GetAllTeamsAsync()).ReturnsAsync(mockTeams);
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        _mockCloneManager.Setup(m => m.CloneTeamsAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>())).ReturnsAsync(new CloneTeamsResult());
+
+        // Act
+        var result = await _controller.CloneTeams(templateProjectId, projectId, operationId);
+
+        // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(TeamController.CloneTeams), redirectResult.ActionName);
+        Assert.Equal(operationId, redirectResult.RouteValues?["operationId"]);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Succeeded, progress?.Status);
+        Assert.Equal("Teams cloned successfully.", progress?.Message);
+        _mockCloneManager.Verify(m => m.CloneTeamsAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CloneTeams_Post_Failure_FailsProgressAndRedirects()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        var failure = new CloneTeamsResult();
+        failure.AddError("Boom");
+        _mockCloneManager.Setup(m => m.CloneTeamsAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>())).ReturnsAsync(failure);
+
+        // Act
+        var result = await _controller.CloneTeams(templateProjectId, projectId, operationId);
+
+        // Assert
+        Assert.IsType<RedirectToActionResult>(result);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Failed, progress?.Status);
+        Assert.Equal("Cloning teams failed: Boom", progress?.Message);
+        Assert.Equal(0, _controller.ModelState.ErrorCount);
+    }
+
+    [Fact]
+    public async Task CloneTeamFieldValues_Get_ReturnsCloneFormWithItems()
+    {
+        // Arrange
+        _mockTeamsService.Setup(s => s.GetAllTeamsAsync()).ReturnsAsync(new Teams { Value = [new Team { Name = "Source" }] });
 
         // Act
         var result = await _controller.CloneTeamFieldValues();
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(mockTeams.Value, viewResult.Model);
+        Assert.Equal(nameof(TeamController.CloneTeamFieldValues), viewResult.ViewName);
+        var model = Assert.IsType<CloneFormViewModel<Team>>(viewResult.Model);
+        Assert.Equal("Source", Assert.Single(model.Items).Name);
+        Assert.Equal("Team", model.Controller);
+        Assert.Equal(nameof(TeamController.CloneTeamFieldValues), model.Action);
+        Assert.Null(model.FinishedMigration);
     }
 
     [Fact]
-    public async Task CloneTeamFieldValues_InvalidModelState_ReturnsDefaultTeamsView()
+    public async Task CloneTeamFieldValues_Get_NullItems_ReturnsEmptyCloneForm()
     {
         // Arrange
-        _controller.ModelState.AddModelError("Error", "Invalid model state");
+        _mockTeamsService.Setup(s => s.GetAllTeamsAsync()).ReturnsAsync((Teams?)null);
 
         // Act
         var result = await _controller.CloneTeamFieldValues();
 
         // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.IsType<Team[]>(viewResult.Model);
+        var model = Assert.IsType<CloneFormViewModel<Team>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Empty(model.Items);
     }
 
     [Fact]
-    public async Task CloneTeamFieldValues_InvalidModelState_ReturnsCloneTeamFieldValuesView()
+    public async Task CloneTeamFieldValues_Get_WithFinishedOperation_ShowsItOnce()
     {
         // Arrange
-        _controller.ModelState.AddModelError("Error", "Invalid model state");
+        var operationId = Guid.NewGuid();
+        _progressTracker.Fail(operationId, "Boom");
 
         // Act
-        var result = await _controller.CloneTeamFieldValues(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var result = await _controller.CloneTeamFieldValues(operationId);
 
         // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.IsType<Team[]>(viewResult.Model);
+        var model = Assert.IsType<CloneFormViewModel<Team>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Equal(MigrationStatus.Failed, model.FinishedMigration?.Status);
+        Assert.Null(_progressTracker.Get(operationId));
     }
 
     [Fact]
-    public async Task CloneTeamFieldValues_ValidModelState_ClonesTeamFieldValuesAndReturnsCloneTeamFieldValuesView()
+    public async Task CloneTeamFieldValues_Post_InvalidModelState_ReturnsCloneFormWithoutCloning()
     {
         // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var projectId = Guid.NewGuid();
-        var templateTeamId = Guid.NewGuid();
-        var projectTeamId = Guid.NewGuid();
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid(), templateTeamId = Guid.NewGuid(), projectTeamId = Guid.NewGuid();
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
 
         // Act
         var result = await _controller.CloneTeamFieldValues(templateProjectId, projectId, templateTeamId, projectTeamId);
 
         // Assert
-        _mockCloneManager.Verify(manager => manager.CloneTeamFieldValuesAsync(templateProjectId, projectId, templateTeamId, projectTeamId), Times.Once);
-        Assert.IsType<ViewResult>(result);
-        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(nameof(TeamController.CloneTeamFieldValues), viewResult.ViewName);
+        Assert.IsType<CloneFormViewModel<Team>>(viewResult.Model);
+        Assert.Empty(_mockCloneManager.Invocations);
+    }
+
+    [Fact]
+    public async Task CloneTeamFieldValues_Post_Success_CompletesProgressAndRedirects()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid(), templateTeamId = Guid.NewGuid(), projectTeamId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        _mockCloneManager.Setup(m => m.CloneTeamFieldValuesAsync(templateProjectId, projectId, templateTeamId, projectTeamId, It.IsAny<IProgress<string>?>())).ReturnsAsync(new CloneResult());
+
+        // Act
+        var result = await _controller.CloneTeamFieldValues(templateProjectId, projectId, templateTeamId, projectTeamId, operationId);
+
+        // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(TeamController.CloneTeamFieldValues), redirectResult.ActionName);
+        Assert.Equal(operationId, redirectResult.RouteValues?["operationId"]);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Succeeded, progress?.Status);
+        Assert.Equal("Team field values cloned successfully.", progress?.Message);
+        _mockCloneManager.Verify(m => m.CloneTeamFieldValuesAsync(templateProjectId, projectId, templateTeamId, projectTeamId, It.IsAny<IProgress<string>?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CloneTeamFieldValues_Post_Failure_FailsProgressAndRedirects()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid(), templateTeamId = Guid.NewGuid(), projectTeamId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        var failure = new CloneResult();
+        failure.AddError("Boom");
+        _mockCloneManager.Setup(m => m.CloneTeamFieldValuesAsync(templateProjectId, projectId, templateTeamId, projectTeamId, It.IsAny<IProgress<string>?>())).ReturnsAsync(failure);
+
+        // Act
+        var result = await _controller.CloneTeamFieldValues(templateProjectId, projectId, templateTeamId, projectTeamId, operationId);
+
+        // Assert
+        Assert.IsType<RedirectToActionResult>(result);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Failed, progress?.Status);
+        Assert.Equal("Cloning team field values failed: Boom", progress?.Message);
+        Assert.Equal(0, _controller.ModelState.ErrorCount);
     }
 }

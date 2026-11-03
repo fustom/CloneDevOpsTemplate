@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace CloneDevOpsTemplate.Controllers;
 
 [Authorize]
-public class BoardsController(IBoardService boardService, ICloneManager cloneManager, ITeamsService teamsService) : Controller
+public class BoardsController(IBoardService boardService, ICloneManager cloneManager, ITeamsService teamsService, IMigrationProgressTracker progressTracker) : Controller
 {
     private readonly IBoardService _boardService = boardService;
     private readonly ICloneManager _cloneManager = cloneManager;
     private readonly ITeamsService _teamsService = teamsService;
+    private readonly IMigrationProgressTracker _progressTracker = progressTracker;
 
     public async Task<IActionResult> Boards(Guid projectId, Guid teamId)
     {
@@ -62,24 +63,27 @@ public class BoardsController(IBoardService boardService, ICloneManager cloneMan
     }
 
     [HttpGet]
-    public async Task<IActionResult> CloneBoards()
+    public async Task<IActionResult> CloneBoards(Guid operationId = default)
     {
-        var teams = await _teamsService.GetAllTeamsAsync() ?? new();
-        return View(teams.Value);
+        return await CloneFormView(nameof(CloneBoards), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
-    public async Task<IActionResult> CloneBoards(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
+    public async Task<IActionResult> CloneBoards(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId, Guid operationId = default)
     {
         if (!ModelState.IsValid)
         {
-            return await CloneBoards();
+            return await CloneFormView(nameof(CloneBoards));
         }
 
-        await _cloneManager.CloneBoardsAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
-        ViewBag.SuccessMessage = "Success";
+        operationId = await _progressTracker.RunAsync(operationId, "Cloning boards...", "Boards cloned successfully.",
+            progress => _cloneManager.CloneBoardsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, progress));
+        return RedirectToAction(nameof(CloneBoards), new { operationId });
+    }
 
-        return await CloneBoards();
+    private async Task<ViewResult> CloneFormView(string action, MigrationProgress? finishedMigration = null)
+    {
+        Teams teams = await _teamsService.GetAllTeamsAsync() ?? new();
+        return View(action, new CloneFormViewModel<Team>(teams.Value, "Boards", action, finishedMigration));
     }
 }
-
