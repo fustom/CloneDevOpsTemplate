@@ -4,16 +4,16 @@ namespace CloneDevOpsTemplate.Managers;
 
 public interface ICloneManager
 {
-    Task CloneClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup);
+    Task CloneClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup, IProgress<string>? progress = null);
     Task CloneBoardsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId);
-    Task<CloneProjectResult> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility);
-    Task CloneRepositoriesAsync(Guid templateProjectId, Guid projectId);
+    Task<CloneProjectResult> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility, IProgress<string>? progress = null);
+    Task CloneRepositoriesAsync(Guid templateProjectId, Guid projectId, IProgress<string>? progress = null);
     Task CloneTeamFieldValuesAsync(Project templateProject, Project project, Guid templateTeamId, Guid projectTeamId);
     Task CloneTeamFieldValuesAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId);
     Task<Dictionary<Guid, Guid>> CloneTeamsAsync(Project templateProject, Project project);
     Task<Dictionary<Guid, Guid>> CloneTeamsAsync(Guid templateProjectId, Guid projectId);
-    Task CloneTeamsAndSettingsAndBoardsAsync(Project templateProject, Project project);
+    Task CloneTeamsAndSettingsAndBoardsAsync(Project templateProject, Project project, IProgress<string>? progress = null);
     Task CloneTeamSettingsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId);
     Task CloneTeamIterationsAsync(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId);
-    Task CloneGitPullRequestsAsync(Guid templateProjectId, Guid projectId);
+    Task CloneGitPullRequestsAsync(Guid templateProjectId, Guid projectId, IProgress<string>? progress = null);
 }

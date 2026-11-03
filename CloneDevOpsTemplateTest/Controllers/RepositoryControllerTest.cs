@@ -190,7 +190,7 @@ public class RepositoryControllerTest
         var result = await _controller.CloneRepository(templateProjectId, projectId);
 
         // Assert
-        _mockCloneManager.Verify(manager => manager.CloneRepositoriesAsync(templateProjectId, projectId), Times.Once);
+        _mockCloneManager.Verify(manager => manager.CloneRepositoriesAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>()), Times.Once);
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal(mockProjects.Value, viewResult.Model);
         Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
@@ -314,7 +314,7 @@ public class RepositoryControllerTest
         var result = await _controller.ClonePullRequests(templateProjectId, projectId);
 
         // Assert
-        _mockCloneManager.Verify(manager => manager.CloneGitPullRequestsAsync(templateProjectId, projectId), Times.Once);
+        _mockCloneManager.Verify(manager => manager.CloneGitPullRequestsAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>()), Times.Once);
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal(mockProjects.Value, viewResult.Model);
         Assert.Equal("Success", _controller.ViewBag.SuccessMessage);

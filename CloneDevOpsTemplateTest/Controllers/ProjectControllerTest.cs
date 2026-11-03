@@ -161,23 +161,23 @@ public class ProjectControllerTest
         string? message = null;
 
         _mockCloneManager
-            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
+            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, It.IsAny<IProgress<string>?>()))
             .ReturnsAsync(new CloneProjectResult { Project = project, TemplateProject = templateProject, ErrorMessage = message });
 
         _mockCloneManager
-            .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Iterations))
+            .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Iterations, It.IsAny<IProgress<string>?>()))
             .Returns(Task.CompletedTask);
 
         _mockCloneManager
-            .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Areas))
+            .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Areas, It.IsAny<IProgress<string>?>()))
             .Returns(Task.CompletedTask);
 
         _mockCloneManager
-            .Setup(manager => manager.CloneTeamsAndSettingsAndBoardsAsync(templateProject, project))
+            .Setup(manager => manager.CloneTeamsAndSettingsAndBoardsAsync(templateProject, project, It.IsAny<IProgress<string>?>()))
             .Returns(Task.CompletedTask);
 
         _mockCloneManager
-            .Setup(manager => manager.CloneRepositoriesAsync(templateProjectId, project.Id))
+            .Setup(manager => manager.CloneRepositoriesAsync(templateProjectId, project.Id, It.IsAny<IProgress<string>?>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -204,7 +204,7 @@ public class ProjectControllerTest
         string? message = "Error cloning project";
 
         _mockCloneManager
-            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
+            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, It.IsAny<IProgress<string>?>()))
             .ReturnsAsync(new CloneProjectResult { Project = project, TemplateProject = templateProject, ErrorMessage = message });
 
         // Act
@@ -272,7 +272,7 @@ public class ProjectControllerTest
         var message = "Error cloning project";
 
         _mockCloneManager
-            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
+            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, It.IsAny<IProgress<string>?>()))
             .ReturnsAsync(new CloneProjectResult { Project = null!, TemplateProject = null!, ErrorMessage = message });
 
         // Act
@@ -294,7 +294,7 @@ public class ProjectControllerTest
         var visibility = Visibility.Private;
 
         _mockCloneManager
-            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility))
+            .Setup(manager => manager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, It.IsAny<IProgress<string>?>()))
             .ReturnsAsync(new CloneProjectResult { Project = null!, TemplateProject = null!, ErrorMessage = null });
 
         // Act

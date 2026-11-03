@@ -66,8 +66,10 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
 
         try
         {
+            var details = _progressTracker.CreateDetailReporter(operationId);
+
             _progressTracker.Report(operationId, 1, CreateProjectTotalSteps, "Creating project...");
-            var cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility);
+            var cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, details);
 
             if (cloneProjectResult.ErrorMessage is not null)
             {
@@ -77,18 +79,18 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
 
             _progressTracker.Report(operationId, 2, CreateProjectTotalSteps, "Cloning iterations and areas...");
             await Task.WhenAll(
-                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Iterations),
-                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Areas)
+                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Iterations, details),
+                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Areas, details)
             );
 
             _progressTracker.Report(operationId, 3, CreateProjectTotalSteps, "Cloning teams, settings, boards and repositories...");
             await Task.WhenAll(
-                _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(cloneProjectResult.TemplateProject, cloneProjectResult.Project),
-                _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id)
+                _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(cloneProjectResult.TemplateProject, cloneProjectResult.Project, details),
+                _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id, details)
             );
 
             _progressTracker.Report(operationId, 4, CreateProjectTotalSteps, "Cloning pull requests...");
-            await _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id);
+            await _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id, details);
 
             return RedirectToAction("Project", new { projectId = cloneProjectResult.Project.Id });
         }
@@ -123,7 +125,7 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
         CloneProjectResult cloneProjectResult;
         try
         {
-            cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility);
+            cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, _progressTracker.CreateDetailReporter(operationId));
         }
         finally
         {

@@ -176,7 +176,7 @@ public class IterationControllerTest
         // Assert
         Assert.IsType<ViewResult>(result);
         Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
-        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations), Times.Once);
+        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations, It.IsAny<IProgress<string>?>()), Times.Once);
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class IterationControllerTest
         // Assert
         Assert.IsType<ViewResult>(result);
         Assert.Null(_controller.ViewBag.SuccessMessage);
-        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TreeStructureGroup>()), Times.Never);
+        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TreeStructureGroup>(), It.IsAny<IProgress<string>?>()), Times.Never);
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public class IterationControllerTest
         // Assert
         Assert.IsType<ViewResult>(result);
         Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
-        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas), Times.Once);
+        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas, It.IsAny<IProgress<string>?>()), Times.Once);
     }
 
     [Fact]
@@ -261,6 +261,6 @@ public class IterationControllerTest
         // Assert
         Assert.IsType<ViewResult>(result);
         Assert.Null(_controller.ViewBag.SuccessMessage);
-        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TreeStructureGroup>()), Times.Never);
+        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TreeStructureGroup>(), It.IsAny<IProgress<string>?>()), Times.Never);
     }
 }

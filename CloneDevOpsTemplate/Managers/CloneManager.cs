@@ -13,9 +13,11 @@ public class CloneManager(IProjectService projectService, IIterationService iter
     private readonly IRepositoryService _repositoryService = repositoryService;
     private readonly IServiceService _serviceService = serviceService;
 
-    public async Task<CloneProjectResult> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility)
+    public async Task<CloneProjectResult> CloneProjectAsync(Guid templateProjectId, string newProjectName, string description, Visibility visibility, IProgress<string>? progress = null)
     {
+        progress?.Report("Reading template project...");
         Project templateProject = await _projectService.GetProjectAsync(templateProjectId) ?? new();
+        progress?.Report($"Requesting creation of project '{newProjectName}' based on template '{templateProject.Name}'...");
         CreateProjectResponse createProjectResponse = await _projectService.CreateProjectAsync(
             newProjectName,
             description,
@@ -23,14 +25,17 @@ public class CloneManager(IProjectService projectService, IIterationService iter
             templateProject.Capabilities.Versioncontrol.SourceControlType,
             visibility
         ) ?? new();
-        Project project = await WaitForProjectCreationAsync(newProjectName);
+        progress?.Report($"Waiting for project '{newProjectName}' to be ready...");
+        Project project = await WaitForProjectCreationAsync(newProjectName, progress);
+        progress?.Report($"Project '{newProjectName}' is ready.");
 
         return new CloneProjectResult { Project = project, TemplateProject = templateProject, ErrorMessage = createProjectResponse.Message };
     }
 
-    private async Task<Project> WaitForProjectCreationAsync(string newProjectName)
+    private async Task<Project> WaitForProjectCreationAsync(string newProjectName, IProgress<string>? progress = null)
     {
         var timeout = DateTime.UtcNow.AddMinutes(5);
+        ProjectState? lastState = null;
 
         while (DateTime.UtcNow < timeout)
         {
@@ -40,18 +45,29 @@ public class CloneManager(IProjectService projectService, IIterationService iter
             {
                 return project;
             }
+
+            if (project is not null && project.State != lastState)
+            {
+                lastState = project.State;
+                progress?.Report($"Project '{newProjectName}' state: {project.State}");
+            }
         }
 
         throw new TimeoutException("Project creation timed out.");
     }
 
-    public async Task CloneClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup)
+    public async Task CloneClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup, IProgress<string>? progress = null)
     {
         var classificationNodes = await _iterationService.GetAllAsync(projectId, structureGroup) ?? new();
+        progress?.Report($"{structureGroup}: removing {CountChildNodes(classificationNodes)} default node(s)...");
         await _iterationService.DeleteAsync(projectId, structureGroup, classificationNodes);
         var templateClassificationNodes = await _iterationService.GetAllAsync(templateProjectId, structureGroup) ?? new();
+        progress?.Report($"{structureGroup}: creating {CountChildNodes(templateClassificationNodes)} node(s) from template...");
         await _iterationService.CreateAsync(projectId, templateClassificationNodes, structureGroup, "");
+        progress?.Report($"{structureGroup}: done.");
     }
+
+    private static int CountChildNodes(Iteration node) => node.Children.Sum(child => 1 + CountChildNodes(child));
 
     private async Task<Dictionary<Guid, Guid>> MapClassificationNodes(Guid templateProjectId, Guid projectId, TreeStructureGroup structureGroup)
     {
@@ -80,48 +96,86 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         }
     }
 
-    public async Task CloneTeamsAndSettingsAndBoardsAsync(Project templateProject, Project project)
+    public async Task CloneTeamsAndSettingsAndBoardsAsync(Project templateProject, Project project, IProgress<string>? progress = null)
     {
-        Dictionary<Guid, Guid> mapTeams = await CloneTeamsAsync(templateProject, project);
+        progress?.Report("Teams: cloning teams from template...");
+        Teams templateTeams = await _teamsService.GetTeamsAsync(templateProject.Id) ?? new();
+        Dictionary<Guid, Guid> mapTeams = await _teamsService.CreateTeamFromTemplateAsync(project.Id, templateTeams.Value, templateProject.DefaultTeam.Id, project.DefaultTeam.Id);
+        progress?.Report($"Teams: {mapTeams.Count} team(s) mapped.");
 
+        int index = 0;
         foreach (var mappedTeam in mapTeams)
         {
+            index++;
+            var teamName = templateTeams.Value.FirstOrDefault(t => t.Id == mappedTeam.Key)?.Name ?? mappedTeam.Key.ToString();
+            var prefix = $"Team '{teamName}' ({index}/{mapTeams.Count})";
+
+            progress?.Report($"{prefix}: cloning settings...");
             await CloneTeamSettingsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value);
+            progress?.Report($"{prefix}: cloning iterations...");
             await CloneTeamIterationsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value);
+            progress?.Report($"{prefix}: cloning area field values...");
             await CloneTeamFieldValuesAsync(templateProject, project, mappedTeam.Key, mappedTeam.Value);
+            progress?.Report($"{prefix}: cloning boards...");
             await CloneBoardsAsync(templateProject.Id, project.Id, mappedTeam.Key, mappedTeam.Value);
+            progress?.Report($"{prefix}: done.");
         }
     }
 
-    public async Task CloneRepositoriesAsync(Guid templateProjectId, Guid projectId)
+    public async Task CloneRepositoriesAsync(Guid templateProjectId, Guid projectId, IProgress<string>? progress = null)
     {
         var repositories = await _repositoryService.GetRepositoriesAsync(projectId) ?? new();
         var templateRepositories = await _repositoryService.GetRepositoriesAsync(templateProjectId) ?? new();
+        int total = templateRepositories.Value.Length;
+        int completed = 0;
+        progress?.Report($"Repositories: {total} repository(ies) to clone.");
 
         await Parallel.ForEachAsync(templateRepositories.Value, async (templateRepository, ct) =>
         {
-            var repository = repositories.Value.FirstOrDefault(r => r.Name == templateRepository.Name)
-                             ?? await _repositoryService.CreateRepositoryAsync(projectId, templateRepository.Name) ?? new();
+            var name = templateRepository.Name;
+            var repository = repositories.Value.FirstOrDefault(r => r.Name == name);
+            if (repository is null)
+            {
+                progress?.Report($"Repository '{name}': creating...");
+                repository = await _repositoryService.CreateRepositoryAsync(projectId, name) ?? new();
+            }
 
-            if (repository.Size > 0) return;
+            if (repository.Size > 0)
+            {
+                progress?.Report($"Repository '{name}': already has content, skipped ({Interlocked.Increment(ref completed)}/{total}).");
+                return;
+            }
 
             var serviceModel = (await _serviceService.GetServicesAsync(projectId) ?? new())
-                               .Value.FirstOrDefault(s => s.Name == templateRepository.Name)
-                               ?? await _serviceService.CreateServiceAsync(templateRepository.Name, templateRepository.RemoteUrl, templateRepository.Name, projectId) ?? new();
+                               .Value.FirstOrDefault(s => s.Name == name);
+            if (serviceModel is null)
+            {
+                progress?.Report($"Repository '{name}': creating service connection...");
+                serviceModel = await _serviceService.CreateServiceAsync(name, templateRepository.RemoteUrl, name, projectId) ?? new();
+            }
 
+            progress?.Report($"Repository '{name}': importing...");
             var importRequest = await _repositoryService.CreateImportRequestAsync(projectId, repository.Id, templateRepository.RemoteUrl, serviceModel.Id);
-            await WaitForImportAsync(projectId, repository.Id, importRequest?.ImportRequestId ?? 0);
+            await WaitForImportAsync(projectId, repository.Id, importRequest?.ImportRequestId ?? 0, name, progress);
+            progress?.Report($"Repository '{name}': imported ({Interlocked.Increment(ref completed)}/{total}).");
         });
 
-        await Parallel.ForEachAsync(repositories.Value.Where(r => r.Size == 0), async (repository, ct) =>
+        var emptyRepositories = repositories.Value.Where(r => r.Size == 0).ToArray();
+        if (emptyRepositories.Length > 0)
+        {
+            progress?.Report($"Repositories: removing {emptyRepositories.Length} empty default repository(ies)...");
+        }
+
+        await Parallel.ForEachAsync(emptyRepositories, async (repository, ct) =>
         {
             await _repositoryService.DeleteRepositoryAsync(projectId, repository.Id);
         });
     }
 
-    private async Task WaitForImportAsync(Guid projectId, Guid repositoryId, int importRequestId)
+    private async Task WaitForImportAsync(Guid projectId, Guid repositoryId, int importRequestId, string repositoryName, IProgress<string>? progress)
     {
         var timeout = DateTime.UtcNow.AddMinutes(5);
+        GitAsyncOperationStatus? lastStatus = null;
 
         while (DateTime.UtcNow < timeout)
         {
@@ -130,6 +184,12 @@ public class CloneManager(IProjectService projectService, IIterationService iter
             if (importRequest?.Status == GitAsyncOperationStatus.Completed)
             {
                 return;
+            }
+
+            if (importRequest is not null && importRequest.Status != lastStatus)
+            {
+                lastStatus = importRequest.Status;
+                progress?.Report($"Repository '{repositoryName}': import status {importRequest.Status}");
             }
         }
 
@@ -217,12 +277,18 @@ public class CloneManager(IProjectService projectService, IIterationService iter
         }
     }
 
-    public async Task CloneGitPullRequestsAsync(Guid templateProjectId, Guid projectId)
+    public async Task CloneGitPullRequestsAsync(Guid templateProjectId, Guid projectId, IProgress<string>? progress = null)
     {
         var templatePullRequests = await _repositoryService.GetGitPullRequestAsync(templateProjectId) ?? new();
         var mappedRespositories = await MapRepositories(templateProjectId, projectId);
+        int total = templatePullRequests.Value.Length;
+        progress?.Report($"Pull requests: {total} pull request(s) to clone.");
+
+        int index = 0;
         foreach (var templatePullRequest in templatePullRequests.Value)
         {
+            index++;
+            progress?.Report($"Pull request '{templatePullRequest.Title}' ({index}/{total}): creating...");
             var repository = mappedRespositories.GetValueOrDefault(templatePullRequest.Repository.Id);
             await _repositoryService.CreateGitPullRequestAsync(projectId, repository, templatePullRequest);
         }

@@ -523,4 +523,79 @@ public class CloneManagerTest
         _mockRepositoryService.Verify(s => s.GetGitPullRequestAsync(templateProjectId), Times.Once);
         _mockRepositoryService.Verify(s => s.CreateGitPullRequestAsync(projectId, mappedRepositoryId, It.IsAny<GitPullRequest>()), Times.Once);
     }
+    [Fact]
+    public async Task CloneGitPullRequestsAsync_ReportsProgressDetails()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var progress = new RecordingProgress();
+
+        _mockRepositoryService.Setup(s => s.GetGitPullRequestAsync(templateProjectId))
+            .ReturnsAsync(new GitPullRequests { Value = [new GitPullRequest { Repository = new Repository(), Title = "PR1" }] });
+
+        // Act
+        await _cloneManager.CloneGitPullRequestsAsync(templateProjectId, projectId, progress);
+
+        // Assert
+        Assert.Contains("Pull requests: 1 pull request(s) to clone.", progress.Messages);
+        Assert.Contains("Pull request 'PR1' (1/1): creating...", progress.Messages);
+    }
+
+    [Fact]
+    public async Task CloneClassificationNodes_ReportsNodeCounts()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var progress = new RecordingProgress();
+
+        _mockIterationService.Setup(s => s.GetAllAsync(projectId, TreeStructureGroup.Areas))
+            .ReturnsAsync(new Iteration { Children = [new Iteration()] });
+        _mockIterationService.Setup(s => s.GetAllAsync(templateProjectId, TreeStructureGroup.Areas))
+            .ReturnsAsync(new Iteration { Children = [new Iteration { Children = [new Iteration(), new Iteration()] }] });
+
+        // Act
+        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas, progress);
+
+        // Assert
+        Assert.Equal(
+            ["Areas: removing 1 default node(s)...", "Areas: creating 3 node(s) from template...", "Areas: done."],
+            progress.Messages);
+    }
+
+    [Fact]
+    public async Task CloneTeamsAndSettingsAndBoardsAsync_ReportsTeamNames()
+    {
+        // Arrange
+        var templateTeamId = Guid.NewGuid();
+        var templateProject = new Project { Id = Guid.NewGuid(), Name = "Template", DefaultTeam = new Team { Id = Guid.NewGuid() } };
+        var project = new Project { Id = Guid.NewGuid(), DefaultTeam = new Team { Id = Guid.NewGuid() } };
+        var templateTeams = new Teams { Value = [new Team { Id = templateTeamId, Name = "Alpha" }] };
+        var progress = new RecordingProgress();
+
+        _mockTeamsService.Setup(s => s.GetTeamsAsync(templateProject.Id)).ReturnsAsync(templateTeams);
+        _mockTeamsService.Setup(s => s.CreateTeamFromTemplateAsync(project.Id, templateTeams.Value, templateProject.DefaultTeam.Id, project.DefaultTeam.Id))
+            .ReturnsAsync(new Dictionary<Guid, Guid> { { templateTeamId, Guid.NewGuid() } });
+
+        // Act
+        await _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(templateProject, project, progress);
+
+        // Assert
+        Assert.Contains("Teams: 1 team(s) mapped.", progress.Messages);
+        Assert.Contains("Team 'Alpha' (1/1): cloning boards...", progress.Messages);
+        Assert.Contains("Team 'Alpha' (1/1): done.", progress.Messages);
+    }
+
+    private sealed class RecordingProgress : IProgress<string>
+    {
+        public List<string> Messages { get; } = [];
+        public void Report(string value)
+        {
+            lock (Messages)
+            {
+                Messages.Add(value);
+            }
+        }
+    }
 }

@@ -48,7 +48,12 @@
     <div class="progress" role="progressbar" aria-label="Migration progress">
         <div id="migrationProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
     </div>
-    <p id="migrationProgressMessage" class="mt-2" aria-live="polite">Starting...</p>
+    <p id="migrationProgressMessage" class="mt-2 mb-1 fw-semibold" aria-live="polite">Starting...</p>
+    <p id="migrationProgressDetail" class="small text-muted mb-2" aria-live="polite"></p>
+    <details id="migrationProgressLogContainer" open>
+        <summary>Details</summary>
+        <ol id="migrationProgressLog" class="list-unstyled small font-monospace border rounded p-2 mt-1 mb-0" style="max-height: 300px; overflow-y: auto;"></ol>
+    </details>
 </div>
 
 <script>
@@ -61,6 +66,10 @@
             document.getElementById('migrationProgress').hidden = false;
             const bar = document.getElementById('migrationProgressBar');
             const message = document.getElementById('migrationProgressMessage');
+            const detail = document.getElementById('migrationProgressDetail');
+            const log = document.getElementById('migrationProgressLog');
+            let renderedCount = 0;
+            let lastFirstTimestamp = null;
 
             setInterval(async function () {
                 try {
@@ -69,10 +78,37 @@
                     const progress = await response.json();
                     bar.style.width = Math.round(progress.step / progress.totalSteps * 100) + '%';
                     message.textContent = `Step ${progress.step} of ${progress.totalSteps}: ${progress.message}`;
+                    detail.textContent = progress.currentDetail ?? '';
+                    renderLog(progress.details ?? []);
                 } catch {
                     // Ignore transient polling errors.
                 }
             }, 1000);
+
+            function renderLog(details) {
+                // The server keeps a bounded log; re-render if older entries were trimmed.
+                const firstTimestamp = details.length > 0 ? details[0].timestamp : null;
+                if (firstTimestamp !== lastFirstTimestamp || details.length < renderedCount) {
+                    log.replaceChildren();
+                    renderedCount = 0;
+                    lastFirstTimestamp = firstTimestamp;
+                }
+
+                const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 5;
+                for (const entry of details.slice(renderedCount)) {
+                    const item = document.createElement('li');
+                    const time = new Date(entry.timestamp).toLocaleTimeString();
+                    item.textContent = `[${time}] ${entry.message}`;
+                    if (entry.message.startsWith('Step ')) {
+                        item.classList.add('fw-bold', 'mt-1');
+                    }
+                    log.appendChild(item);
+                }
+                renderedCount = details.length;
+                if (atBottom) {
+                    log.scrollTop = log.scrollHeight;
+                }
+            }
         });
     })();
 </script>
