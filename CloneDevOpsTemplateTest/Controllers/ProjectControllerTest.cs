@@ -215,6 +215,8 @@ public class ProjectControllerTest
         Assert.Empty(viewResult.Model as ProjectBase[] ?? []);
         Assert.True(_controller.ModelState.ContainsKey("ErrorMessage"));
         Assert.Equal(message, _controller.ModelState["ErrorMessage"]?.Errors?.FirstOrDefault()?.ErrorMessage);
+        _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TreeStructureGroup>(), It.IsAny<IProgress<string>?>()), Times.Never);
+        _mockCloneManager.Verify(manager => manager.CloneGitPullRequestsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IProgress<string>?>()), Times.Never);
     }
 
     [Fact]

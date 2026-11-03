@@ -9,8 +9,6 @@ namespace CloneDevOpsTemplate.Controllers;
 [Authorize]
 public class ProjectController(IProjectService projectService, ICloneManager cloneManager, IMigrationProgressTracker progressTracker) : Controller
 {
-    private const int CreateProjectTotalSteps = 4;
-
     private readonly IProjectService _projectService = projectService;
     private readonly ICloneManager _cloneManager = cloneManager;
     private readonly IMigrationProgressTracker _progressTracker = progressTracker;
@@ -67,30 +65,33 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
         try
         {
             var details = _progressTracker.CreateDetailReporter(operationId);
+            CloneProjectResult cloneProjectResult = null!;
 
-            _progressTracker.Report(operationId, 1, CreateProjectTotalSteps, "Creating project...");
-            var cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, details);
+            (string Message, Func<Task> Run)[] steps =
+            [
+                ("Creating project...", async () =>
+                    cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, details)),
+                ("Cloning iterations and areas...", () => Task.WhenAll(
+                    _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Iterations, details),
+                    _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Areas, details))),
+                ("Cloning teams, settings, boards and repositories...", () => Task.WhenAll(
+                    _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(cloneProjectResult.TemplateProject, cloneProjectResult.Project, details),
+                    _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id, details))),
+                ("Cloning pull requests...", () =>
+                    _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id, details)),
+            ];
 
-            if (cloneProjectResult.ErrorMessage is not null)
+            for (int i = 0; i < steps.Length; i++)
             {
-                ModelState.AddModelError("ErrorMessage", cloneProjectResult.ErrorMessage);
-                return await CreateProject();
+                _progressTracker.Report(operationId, i + 1, steps.Length, steps[i].Message);
+                await steps[i].Run();
+
+                if (cloneProjectResult.ErrorMessage is not null)
+                {
+                    ModelState.AddModelError("ErrorMessage", cloneProjectResult.ErrorMessage);
+                    return await CreateProject();
+                }
             }
-
-            _progressTracker.Report(operationId, 2, CreateProjectTotalSteps, "Cloning iterations and areas...");
-            await Task.WhenAll(
-                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Iterations, details),
-                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Areas, details)
-            );
-
-            _progressTracker.Report(operationId, 3, CreateProjectTotalSteps, "Cloning teams, settings, boards and repositories...");
-            await Task.WhenAll(
-                _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(cloneProjectResult.TemplateProject, cloneProjectResult.Project, details),
-                _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id, details)
-            );
-
-            _progressTracker.Report(operationId, 4, CreateProjectTotalSteps, "Cloning pull requests...");
-            await _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id, details);
 
             return RedirectToAction("Project", new { projectId = cloneProjectResult.Project.Id });
         }
