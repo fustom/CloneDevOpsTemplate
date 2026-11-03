@@ -9,7 +9,17 @@ public class MigrationProgressTracker : IMigrationProgressTracker
 
     private readonly ConcurrentDictionary<Guid, MigrationProgress> _progress = new();
 
-    public void Report(Guid operationId, int step, int totalSteps, string message)
+    public void Start(Guid operationId, int totalSteps)
+    {
+        if (operationId == Guid.Empty)
+        {
+            return;
+        }
+
+        _progress[operationId] = new MigrationProgress { TotalSteps = totalSteps };
+    }
+
+    public void Report(Guid operationId, int step, string message)
     {
         if (operationId == Guid.Empty)
         {
@@ -20,10 +30,11 @@ public class MigrationProgressTracker : IMigrationProgressTracker
         lock (progress)
         {
             progress.Step = step;
-            progress.TotalSteps = totalSteps;
+            // Guards against a missing or too small Start total so the UI never exceeds 100%.
+            progress.TotalSteps = Math.Max(progress.TotalSteps, step);
             progress.Message = message;
             progress.CurrentDetail = null;
-            AddDetail(progress, $"Step {step} of {totalSteps}: {message}");
+            AddDetail(progress, $"Step {step} of {progress.TotalSteps}: {message}");
         }
     }
 

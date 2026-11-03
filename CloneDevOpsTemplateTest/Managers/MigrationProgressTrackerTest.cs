@@ -11,9 +11,10 @@ public class MigrationProgressTrackerTest
     {
         var operationId = Guid.NewGuid();
 
-        _tracker.Report(operationId, 1, 4, "Creating project...");
+        _tracker.Start(operationId, 4);
+        _tracker.Report(operationId, 1, "Creating project...");
         _tracker.CreateDetailReporter(operationId).Report("Waiting...");
-        _tracker.Report(operationId, 2, 4, "Cloning iterations...");
+        _tracker.Report(operationId, 2, "Cloning iterations...");
 
         var progress = _tracker.Get(operationId);
         Assert.NotNull(progress);
@@ -28,11 +29,48 @@ public class MigrationProgressTrackerTest
     }
 
     [Fact]
+    public void Start_ResetsPreviousProgress()
+    {
+        var operationId = Guid.NewGuid();
+        _tracker.Start(operationId, 2);
+        _tracker.Report(operationId, 1, "Old");
+
+        _tracker.Start(operationId, 3);
+
+        var progress = _tracker.Get(operationId);
+        Assert.NotNull(progress);
+        Assert.Equal(0, progress.Step);
+        Assert.Equal(3, progress.TotalSteps);
+        Assert.Empty(progress.Details);
+    }
+
+    [Fact]
+    public void Report_WithoutStart_TotalStepsNeverLessThanStep()
+    {
+        var operationId = Guid.NewGuid();
+
+        _tracker.Report(operationId, 2, "Step two");
+
+        var progress = _tracker.Get(operationId);
+        Assert.NotNull(progress);
+        Assert.Equal(2, progress.TotalSteps);
+        Assert.Equal("Step 2 of 2: Step two", progress.Details[0].Message);
+    }
+
+    [Fact]
+    public void Start_EmptyOperationId_IsIgnored()
+    {
+        _tracker.Start(Guid.Empty, 3);
+
+        Assert.Null(_tracker.Get(Guid.Empty));
+    }
+
+    [Fact]
     public void ReportDetail_SetsCurrentDetail()
     {
         var operationId = Guid.NewGuid();
 
-        _tracker.Report(operationId, 1, 1, "Step");
+        _tracker.Report(operationId, 1, "Step");
         _tracker.ReportDetail(operationId, "Sub-step");
 
         Assert.Equal("Sub-step", _tracker.Get(operationId)?.CurrentDetail);

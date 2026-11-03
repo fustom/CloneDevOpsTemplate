@@ -81,9 +81,10 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
                     _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id, details)),
             ];
 
+            _progressTracker.Start(operationId, steps.Length);
             for (int i = 0; i < steps.Length; i++)
             {
-                _progressTracker.Report(operationId, i + 1, steps.Length, steps[i].Message);
+                _progressTracker.Report(operationId, i + 1, steps[i].Message);
                 await steps[i].Run();
 
                 if (cloneProjectResult.ErrorMessage is not null)
@@ -122,7 +123,8 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             return await Projects();
         }
 
-        _progressTracker.Report(operationId, 1, 1, "Creating project...");
+        _progressTracker.Start(operationId, 1);
+        _progressTracker.Report(operationId, 1, "Creating project...");
         CloneProjectResult cloneProjectResult;
         try
         {
