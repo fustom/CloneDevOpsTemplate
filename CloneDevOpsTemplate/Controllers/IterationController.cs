@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace CloneDevOpsTemplate.Controllers;
 
 [Authorize]
-public class IterationController(IIterationService iterationService, ICloneManager cloneManager, IProjectService projectService) : Controller
+public class IterationController(IIterationService iterationService, ICloneManager cloneManager, IProjectService projectService, IMigrationProgressTracker progressTracker) : Controller
 {
     private readonly IIterationService _iterationService = iterationService;
     private readonly ICloneManager _cloneManager = cloneManager;
     private readonly IProjectService _projectService = projectService;
+    private readonly IMigrationProgressTracker _progressTracker = progressTracker;
 
     public async Task<IActionResult> Iterations(Guid projectId)
     {
@@ -40,43 +41,46 @@ public class IterationController(IIterationService iterationService, ICloneManag
     }
 
     [HttpGet]
-    public async Task<IActionResult> CloneIterations()
+    public async Task<IActionResult> CloneIterations(Guid operationId = default)
     {
-        var projects = await _projectService.GetAllProjectsAsync() ?? new();
-        return View(projects.Value);
+        return await CloneFormView(nameof(CloneIterations), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
-    public async Task<IActionResult> CloneIterations(Guid templateProjectId, Guid projectId)
+    public async Task<IActionResult> CloneIterations(Guid templateProjectId, Guid projectId, Guid operationId = default)
     {
         if (!ModelState.IsValid)
         {
-            return await CloneIterations();
+            return await CloneFormView(nameof(CloneIterations));
         }
 
-        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations);
-        ViewBag.SuccessMessage = "Success";
-
-        return await CloneIterations();
+        operationId = await _progressTracker.RunAsync(operationId, "Cloning iterations...", "Iterations cloned successfully.",
+            progress => _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Iterations, progress));
+        return RedirectToAction(nameof(CloneIterations), new { operationId });
     }
 
     [HttpGet]
-    public async Task<IActionResult> CloneAreas()
+    public async Task<IActionResult> CloneAreas(Guid operationId = default)
     {
-        return await CloneIterations();
+        return await CloneFormView(nameof(CloneAreas), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
-    public async Task<IActionResult> CloneAreas(Guid templateProjectId, Guid projectId)
+    public async Task<IActionResult> CloneAreas(Guid templateProjectId, Guid projectId, Guid operationId = default)
     {
         if (!ModelState.IsValid)
         {
-            return await CloneIterations();
+            return await CloneFormView(nameof(CloneAreas));
         }
 
-        await _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas);
-        ViewBag.SuccessMessage = "Success";
+        operationId = await _progressTracker.RunAsync(operationId, "Cloning areas...", "Areas cloned successfully.",
+            progress => _cloneManager.CloneClassificationNodes(templateProjectId, projectId, TreeStructureGroup.Areas, progress));
+        return RedirectToAction(nameof(CloneAreas), new { operationId });
+    }
 
-        return await CloneIterations();
+    private async Task<ViewResult> CloneFormView(string action, MigrationProgress? finishedMigration = null)
+    {
+        Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
+        return View(action, new CloneFormViewModel<ProjectBase>(projects.Value, "Iteration", action, finishedMigration));
     }
 }

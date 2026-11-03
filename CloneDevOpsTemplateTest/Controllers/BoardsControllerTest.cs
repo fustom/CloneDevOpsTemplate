@@ -12,6 +12,7 @@ public class BoardsControllerTest
     private readonly Mock<IBoardService> _mockBoardService;
     private readonly Mock<ICloneManager> _mockCloneManager;
     private readonly Mock<ITeamsService> _mockTeamsService;
+    private readonly MigrationProgressTracker _progressTracker = new();
     private readonly BoardsController _controller;
 
     public BoardsControllerTest()
@@ -19,7 +20,7 @@ public class BoardsControllerTest
         _mockBoardService = new Mock<IBoardService>();
         _mockCloneManager = new Mock<ICloneManager>();
         _mockTeamsService = new Mock<ITeamsService>();
-        _controller = new BoardsController(_mockBoardService.Object, _mockCloneManager.Object, _mockTeamsService.Object);
+        _controller = new BoardsController(_mockBoardService.Object, _mockCloneManager.Object, _mockTeamsService.Object, _progressTracker);
     }
 
     [Fact]
@@ -243,95 +244,110 @@ public class BoardsControllerTest
     }
 
     [Fact]
-    public async Task CloneBoards_ReturnsTeamsView()
+    public async Task CloneBoards_Get_ReturnsCloneFormWithItems()
     {
         // Arrange
-        var mockTeams = new Teams
-        {
-            Value =
-            [
-                new Team { Id = Guid.NewGuid(), Name = "Team1" },
-                new Team { Id = Guid.NewGuid(), Name = "Team2" }
-            ]
-        };
-
-        _mockTeamsService.Setup(s => s.GetAllTeamsAsync())
-            .ReturnsAsync(mockTeams);
+        _mockTeamsService.Setup(s => s.GetAllTeamsAsync()).ReturnsAsync(new Teams { Value = [new Team { Name = "Source" }] });
 
         // Act
         var result = await _controller.CloneBoards();
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<Team[]>(viewResult.Model);
-        Assert.Equal(2, model.Length);
-        Assert.Equal("Team1", model[0].Name);
-        Assert.Equal("Team2", model[1].Name);
+        Assert.Equal(nameof(BoardsController.CloneBoards), viewResult.ViewName);
+        var model = Assert.IsType<CloneFormViewModel<Team>>(viewResult.Model);
+        Assert.Equal("Source", Assert.Single(model.Items).Name);
+        Assert.Equal("Boards", model.Controller);
+        Assert.Equal(nameof(BoardsController.CloneBoards), model.Action);
+        Assert.Null(model.FinishedMigration);
     }
 
     [Fact]
-    public async Task CloneBoards_NullTeams_ReturnsEmptyView()
+    public async Task CloneBoards_Get_NullItems_ReturnsEmptyCloneForm()
     {
         // Arrange
-        _mockTeamsService.Setup(s => s.GetAllTeamsAsync())
-            .ReturnsAsync((Teams)null!);
+        _mockTeamsService.Setup(s => s.GetAllTeamsAsync()).ReturnsAsync((Teams?)null);
 
         // Act
         var result = await _controller.CloneBoards();
 
         // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<Team[]>(viewResult.Model);
-        Assert.Empty(model);
+        var model = Assert.IsType<CloneFormViewModel<Team>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Empty(model.Items);
     }
 
     [Fact]
-    public async Task CloneBoards_InvalidModelState_ReturnsTeamsView()
+    public async Task CloneBoards_Get_WithFinishedOperation_ShowsItOnce()
     {
         // Arrange
+        var operationId = Guid.NewGuid();
+        _progressTracker.Fail(operationId, "Boom");
+
+        // Act
+        var result = await _controller.CloneBoards(operationId);
+
+        // Assert
+        var model = Assert.IsType<CloneFormViewModel<Team>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Equal(MigrationStatus.Failed, model.FinishedMigration?.Status);
+        Assert.Null(_progressTracker.Get(operationId));
+    }
+
+    [Fact]
+    public async Task CloneBoards_Post_InvalidModelState_ReturnsCloneFormWithoutCloning()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid(), templateTeamId = Guid.NewGuid(), projectTeamId = Guid.NewGuid();
         _controller.ModelState.AddModelError("Error", "Invalid model state");
-
-        // Act
-        var result = await _controller.CloneBoards(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-
-        // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<Team[]>(viewResult.Model);
-        Assert.Empty(model);
-    }
-
-    [Fact]
-    public async Task CloneBoards_ValidModelState_ClonesBoardsAndReturnsTeamsView()
-    {
-        // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var projectId = Guid.NewGuid();
-        var templateTeamId = Guid.NewGuid();
-        var projectTeamId = Guid.NewGuid();
-
-        var mockTeams = new Teams
-        {
-            Value =
-            [
-                new Team { Id = Guid.NewGuid(), Name = "Team1" },
-                new Team { Id = Guid.NewGuid(), Name = "Team2" }
-            ]
-        };
-
-        _mockTeamsService.Setup(s => s.GetAllTeamsAsync())
-            .ReturnsAsync(mockTeams);
 
         // Act
         var result = await _controller.CloneBoards(templateProjectId, projectId, templateTeamId, projectTeamId);
 
         // Assert
-        _mockCloneManager.Verify(m => m.CloneBoardsAsync(templateProjectId, projectId, templateTeamId, projectTeamId), Times.Once);
-
         var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<Team[]>(viewResult.Model);
-        Assert.Equal(2, model.Length);
-        Assert.Equal("Team1", model[0].Name);
-        Assert.Equal("Team2", model[1].Name);
-        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
+        Assert.Equal(nameof(BoardsController.CloneBoards), viewResult.ViewName);
+        Assert.IsType<CloneFormViewModel<Team>>(viewResult.Model);
+        Assert.Empty(_mockCloneManager.Invocations);
+    }
+
+    [Fact]
+    public async Task CloneBoards_Post_Success_CompletesProgressAndRedirects()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid(), templateTeamId = Guid.NewGuid(), projectTeamId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        _mockCloneManager.Setup(m => m.CloneBoardsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, It.IsAny<IProgress<string>?>())).ReturnsAsync(new CloneResult());
+
+        // Act
+        var result = await _controller.CloneBoards(templateProjectId, projectId, templateTeamId, projectTeamId, operationId);
+
+        // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(BoardsController.CloneBoards), redirectResult.ActionName);
+        Assert.Equal(operationId, redirectResult.RouteValues?["operationId"]);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Succeeded, progress?.Status);
+        Assert.Equal("Boards cloned successfully.", progress?.Message);
+        _mockCloneManager.Verify(m => m.CloneBoardsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, It.IsAny<IProgress<string>?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CloneBoards_Post_Failure_FailsProgressAndRedirects()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid(), templateTeamId = Guid.NewGuid(), projectTeamId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        var failure = new CloneResult();
+        failure.AddError("Boom");
+        _mockCloneManager.Setup(m => m.CloneBoardsAsync(templateProjectId, projectId, templateTeamId, projectTeamId, It.IsAny<IProgress<string>?>())).ReturnsAsync(failure);
+
+        // Act
+        var result = await _controller.CloneBoards(templateProjectId, projectId, templateTeamId, projectTeamId, operationId);
+
+        // Assert
+        Assert.IsType<RedirectToActionResult>(result);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Failed, progress?.Status);
+        Assert.Equal("Cloning boards failed: Boom", progress?.Message);
+        Assert.Equal(0, _controller.ModelState.ErrorCount);
     }
 }

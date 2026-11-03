@@ -1,4 +1,4 @@
-@model ProjectBase[]
+@model CloneFormViewModel<ProjectBase>
 @{
     ViewData["Title"] = "Clone areas";
 }
@@ -6,5 +6,5 @@
 <h1>Clone areas</h1>
 
 @{
-    await Html.RenderPartialAsync("_CloneByProject", Tuple.Create(Model, "Iteration", "CloneAreas"));
+    await Html.RenderPartialAsync("_CloneByProject", Model);
 }

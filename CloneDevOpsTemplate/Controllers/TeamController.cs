@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace CloneDevOpsTemplate.Controllers;
 
 [Authorize]
-public class TeamController(ITeamsService teamsService, ICloneManager cloneManager, IProjectService projectService) : Controller
+public class TeamController(ITeamsService teamsService, ICloneManager cloneManager, IProjectService projectService, IMigrationProgressTracker progressTracker) : Controller
 {
     private readonly ITeamsService _teamsService = teamsService;
     private readonly ICloneManager _cloneManager = cloneManager;
     private readonly IProjectService _projectService = projectService;
+    private readonly IMigrationProgressTracker _progressTracker = progressTracker;
 
     public async Task<IActionResult> Teams()
     {
@@ -46,43 +47,52 @@ public class TeamController(ITeamsService teamsService, ICloneManager cloneManag
     }
 
     [HttpGet]
-    public async Task<IActionResult> CloneTeams()
+    public async Task<IActionResult> CloneTeams(Guid operationId = default)
     {
-        var projects = await _projectService.GetAllProjectsAsync() ?? new();
-        return View(projects.Value);
+        return await ProjectCloneFormView(nameof(CloneTeams), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
-    public async Task<IActionResult> CloneTeams(Guid templateProjectId, Guid projectId)
+    public async Task<IActionResult> CloneTeams(Guid templateProjectId, Guid projectId, Guid operationId = default)
     {
         if (!ModelState.IsValid)
         {
-            return await CloneTeams();
+            return await ProjectCloneFormView(nameof(CloneTeams));
         }
 
-        await _cloneManager.CloneTeamsAsync(templateProjectId, projectId);
-        ViewBag.SuccessMessage = "Success";
-
-        return await CloneTeams();
+        operationId = await _progressTracker.RunAsync(operationId, "Cloning teams...", "Teams cloned successfully.",
+            async progress => await _cloneManager.CloneTeamsAsync(templateProjectId, projectId, progress));
+        return RedirectToAction(nameof(CloneTeams), new { operationId });
     }
 
     [HttpGet]
-    public async Task<IActionResult> CloneTeamFieldValues()
+    public async Task<IActionResult> CloneTeamFieldValues(Guid operationId = default)
     {
-        return await Teams();
+        return await TeamCloneFormView(nameof(CloneTeamFieldValues), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
-    public async Task<IActionResult> CloneTeamFieldValues(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId)
+    public async Task<IActionResult> CloneTeamFieldValues(Guid templateProjectId, Guid projectId, Guid templateTeamId, Guid projectTeamId, Guid operationId = default)
     {
         if (!ModelState.IsValid)
         {
-            return await CloneTeamFieldValues();
+            return await TeamCloneFormView(nameof(CloneTeamFieldValues));
         }
 
-        await _cloneManager.CloneTeamFieldValuesAsync(templateProjectId, projectId, templateTeamId, projectTeamId);
-        ViewBag.SuccessMessage = "Success";
+        operationId = await _progressTracker.RunAsync(operationId, "Cloning team field values...", "Team field values cloned successfully.",
+            progress => _cloneManager.CloneTeamFieldValuesAsync(templateProjectId, projectId, templateTeamId, projectTeamId, progress));
+        return RedirectToAction(nameof(CloneTeamFieldValues), new { operationId });
+    }
 
-        return await CloneTeamFieldValues();
+    private async Task<ViewResult> ProjectCloneFormView(string action, MigrationProgress? finishedMigration = null)
+    {
+        Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
+        return View(action, new CloneFormViewModel<ProjectBase>(projects.Value, "Team", action, finishedMigration));
+    }
+
+    private async Task<ViewResult> TeamCloneFormView(string action, MigrationProgress? finishedMigration = null)
+    {
+        Teams teams = await _teamsService.GetAllTeamsAsync() ?? new();
+        return View(action, new CloneFormViewModel<Team>(teams.Value, "Team", action, finishedMigration));
     }
 }

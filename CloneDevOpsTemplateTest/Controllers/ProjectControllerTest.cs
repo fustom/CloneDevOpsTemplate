@@ -146,7 +146,7 @@ public class ProjectControllerTest
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal(nameof(ProjectController.CreateProject), viewResult.ViewName);
-        var model = Assert.IsType<CreateProjectFormViewModel>(viewResult.Model);
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(viewResult.Model);
         Assert.Equal(nameof(ProjectController.CreateProject), model.Action);
     }
 
@@ -161,7 +161,7 @@ public class ProjectControllerTest
         var result = await _controller.CreateProject(operationId);
 
         // Assert
-        var model = Assert.IsType<CreateProjectFormViewModel>(Assert.IsType<ViewResult>(result).Model);
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(result).Model);
         Assert.NotNull(model.FinishedMigration);
         Assert.Equal(MigrationStatus.Failed, model.FinishedMigration.Status);
         Assert.Equal("Boom", model.FinishedMigration.Message);
@@ -187,19 +187,23 @@ public class ProjectControllerTest
 
         _mockCloneManager
             .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Iterations, It.IsAny<IProgress<string>?>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new CloneResult());
 
         _mockCloneManager
             .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Areas, It.IsAny<IProgress<string>?>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new CloneResult());
 
         _mockCloneManager
             .Setup(manager => manager.CloneTeamsAndSettingsAndBoardsAsync(templateProject, project, It.IsAny<IProgress<string>?>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new CloneResult());
 
         _mockCloneManager
             .Setup(manager => manager.CloneRepositoriesAsync(templateProjectId, project.Id, It.IsAny<IProgress<string>?>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new CloneResult());
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneGitPullRequestsAsync(templateProjectId, project.Id, It.IsAny<IProgress<string>?>()))
+            .ReturnsAsync(new CloneResult());
 
         var operationId = Guid.NewGuid();
 
@@ -244,9 +248,42 @@ public class ProjectControllerTest
         var progress = _progressTracker.Get(operationId);
         Assert.NotNull(progress);
         Assert.Equal(MigrationStatus.Failed, progress.Status);
-        Assert.Equal(message, progress.Message);
+        Assert.Equal($"Creating project failed: {message}", progress.Message);
         Assert.Equal(1, progress.Step);
         _mockCloneManager.Verify(manager => manager.CloneClassificationNodes(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TreeStructureGroup>(), It.IsAny<IProgress<string>?>()), Times.Never);
+        _mockCloneManager.Verify(manager => manager.CloneGitPullRequestsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IProgress<string>?>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateProject_StepReturnsErrors_FailsAtThatStepAndSkipsRemainingSteps()
+    {
+        // Arrange
+        var templateProjectId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        var project = new Project { Id = Guid.NewGuid() };
+
+        _mockCloneManager
+            .Setup(manager => manager.CloneProjectAsync(templateProjectId, "New Project", "Description", Visibility.Private, It.IsAny<IProgress<string>?>()))
+            .ReturnsAsync(new CloneProjectResult { Project = project, TemplateProject = new Project() });
+        _mockCloneManager
+            .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Iterations, It.IsAny<IProgress<string>?>()))
+            .ReturnsAsync(CloneResult.FromError("Iterations: could not read the template project's nodes."));
+        _mockCloneManager
+            .Setup(manager => manager.CloneClassificationNodes(templateProjectId, project.Id, TreeStructureGroup.Areas, It.IsAny<IProgress<string>?>()))
+            .ReturnsAsync(new CloneResult());
+
+        // Act
+        var result = await _controller.CreateProject(templateProjectId, "New Project", "Description", Visibility.Private, operationId);
+
+        // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(ProjectController.CreateProject), redirectResult.ActionName);
+        var progress = _progressTracker.Get(operationId);
+        Assert.NotNull(progress);
+        Assert.Equal(MigrationStatus.Failed, progress.Status);
+        Assert.Equal(2, progress.Step);
+        Assert.Equal("Cloning iterations and areas failed: Iterations: could not read the template project's nodes.", progress.Message);
+        _mockCloneManager.Verify(manager => manager.CloneTeamsAndSettingsAndBoardsAsync(It.IsAny<Project>(), It.IsAny<Project>(), It.IsAny<IProgress<string>?>()), Times.Never);
         _mockCloneManager.Verify(manager => manager.CloneGitPullRequestsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IProgress<string>?>()), Times.Never);
     }
 
@@ -262,8 +299,8 @@ public class ProjectControllerTest
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<CreateProjectFormViewModel>(viewResult.Model);
-        Assert.Equal(projects.Value, model.Projects);
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(viewResult.Model);
+        Assert.Equal(projects.Value, model.Items);
         Assert.Equal("Project", model.Controller);
         Assert.Equal(nameof(ProjectController.CloneProject), model.Action);
         Assert.Null(model.FinishedMigration);
@@ -279,14 +316,14 @@ public class ProjectControllerTest
 
         // Act
         var firstResult = await _controller.CloneProject(operationId);
-        var firstModel = Assert.IsType<CreateProjectFormViewModel>(Assert.IsType<ViewResult>(firstResult).Model);
+        var firstModel = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(firstResult).Model);
         var firstFinishedMigration = firstModel.FinishedMigration;
         var secondResult = await _controller.CloneProject(operationId);
 
         // Assert
         Assert.NotNull(firstFinishedMigration);
         Assert.Equal("Done", firstFinishedMigration.Message);
-        var secondModel = Assert.IsType<CreateProjectFormViewModel>(Assert.IsType<ViewResult>(secondResult).Model);
+        var secondModel = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(secondResult).Model);
         Assert.Null(secondModel.FinishedMigration);
     }
 
@@ -301,7 +338,7 @@ public class ProjectControllerTest
         var result = await _controller.CloneProject(operationId);
 
         // Assert
-        var model = Assert.IsType<CreateProjectFormViewModel>(Assert.IsType<ViewResult>(result).Model);
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(result).Model);
         Assert.Null(model.FinishedMigration);
         Assert.NotNull(_progressTracker.Get(operationId));
     }
@@ -319,7 +356,7 @@ public class ProjectControllerTest
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal(nameof(ProjectController.CloneProject), viewResult.ViewName);
         Assert.True(_controller.ModelState.ContainsKey("Error"));
-        Assert.IsType<CreateProjectFormViewModel>(viewResult.Model);
+        Assert.IsType<CloneFormViewModel<ProjectBase>>(viewResult.Model);
         _mockCloneManager.Verify(manager => manager.CloneProjectAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Visibility>(), It.IsAny<IProgress<string>?>()), Times.Never);
     }
 
@@ -349,7 +386,7 @@ public class ProjectControllerTest
         var progress = _progressTracker.Get(operationId);
         Assert.NotNull(progress);
         Assert.Equal(MigrationStatus.Failed, progress.Status);
-        Assert.Equal(message, progress.Message);
+        Assert.Equal($"Creating project failed: {message}", progress.Message);
     }
 
     [Fact]

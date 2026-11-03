@@ -62,20 +62,23 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             return await ProjectFormView(nameof(CreateProject));
         }
 
-        operationId = EnsureOperationId(operationId);
+        operationId = MigrationProgressTrackerExtensions.EnsureOperationId(operationId);
         var details = _progressTracker.CreateDetailReporter(operationId);
         CloneProjectResult cloneProjectResult = null!;
 
-        (string Message, Func<Task> Run)[] steps =
+        (string Message, Func<Task<CloneResult>> Run)[] steps =
         [
             ("Creating project...", async () =>
-                cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, details)),
-            ("Cloning iterations and areas...", () => Task.WhenAll(
+            {
+                cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, details);
+                return CloneResult.FromError(cloneProjectResult.ErrorMessage);
+            }),
+            ("Cloning iterations and areas...", async () => CloneResult.Combine(await Task.WhenAll(
                 _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Iterations, details),
-                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Areas, details))),
-            ("Cloning teams, settings, boards and repositories...", () => Task.WhenAll(
+                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Areas, details)))),
+            ("Cloning teams, settings, boards and repositories...", async () => CloneResult.Combine(await Task.WhenAll(
                 _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(cloneProjectResult.TemplateProject, cloneProjectResult.Project, details),
-                _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id, details))),
+                _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id, details)))),
             ("Cloning pull requests...", () =>
                 _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id, details)),
         ];
@@ -86,11 +89,11 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             for (int i = 0; i < steps.Length; i++)
             {
                 _progressTracker.Report(operationId, i + 1, steps[i].Message);
-                await steps[i].Run();
+                var stepResult = await steps[i].Run();
 
-                if (cloneProjectResult.ErrorMessage is not null)
+                if (!stepResult.Succeeded)
                 {
-                    _progressTracker.Fail(operationId, cloneProjectResult.ErrorMessage);
+                    _progressTracker.Fail(operationId, $"{steps[i].Message.TrimEnd('.')} failed: {stepResult.ErrorMessage}");
                     return RedirectToAction(nameof(CreateProject), new { operationId });
                 }
             }
@@ -126,38 +129,18 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
             return await ProjectFormView(nameof(CloneProject));
         }
 
-        operationId = EnsureOperationId(operationId);
-        _progressTracker.Start(operationId, 1);
-        _progressTracker.Report(operationId, 1, "Creating project...");
-        CloneProjectResult cloneProjectResult;
-        try
-        {
-            cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, _progressTracker.CreateDetailReporter(operationId));
-        }
-        catch
-        {
-            _progressTracker.Remove(operationId);
-            throw;
-        }
-
-        if (cloneProjectResult.ErrorMessage is not null)
-        {
-            _progressTracker.Fail(operationId, cloneProjectResult.ErrorMessage);
-        }
-        else
-        {
-            _progressTracker.Complete(operationId, $"Project '{newProjectName}' cloned successfully.");
-        }
-
+        operationId = await _progressTracker.RunAsync(operationId, "Creating project...", $"Project '{newProjectName}' cloned successfully.",
+            async progress =>
+            {
+                var cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, progress);
+                return CloneResult.FromError(cloneProjectResult.ErrorMessage);
+            });
         return RedirectToAction(nameof(CloneProject), new { operationId });
     }
-
-    // The result page reads the outcome from the tracker, so every POST needs an operation id.
-    private static Guid EnsureOperationId(Guid operationId) => operationId == Guid.Empty ? Guid.NewGuid() : operationId;
 
     private async Task<ViewResult> ProjectFormView(string action, MigrationProgress? finishedMigration = null)
     {
         Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
-        return View(action, new CreateProjectFormViewModel(projects.Value, "Project", action, finishedMigration));
+        return View(action, new CloneFormViewModel<ProjectBase>(projects.Value, "Project", action, finishedMigration));
     }
 }

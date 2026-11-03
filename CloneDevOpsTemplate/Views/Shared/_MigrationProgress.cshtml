@@ -1,0 +1,110 @@
+@model MigrationProgressPanelViewModel
+
+<div id="migrationProgress" class="mt-3" hidden>
+    <div id="migrationProgressBarContainer" class="progress" role="progressbar" aria-label="Migration progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Starting...">
+        <div id="migrationProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+    </div>
+    <p id="migrationProgressMessage" class="mt-2 mb-1 fw-semibold" aria-live="polite">Starting...</p>
+    <p id="migrationProgressDetail" class="small text-muted mb-2" aria-live="polite"></p>
+    <details id="migrationProgressLogContainer" open>
+        <summary>Details</summary>
+        <ol id="migrationProgressLog" class="list-unstyled small font-monospace border rounded p-2 mt-1 mb-0" style="max-height: 300px; overflow-y: auto;"></ol>
+    </details>
+</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('@Model.FormId');
+        const progressUrl = '@Url.Action("MigrationProgress", "Project", new { operationId = Model.OperationId })';
+        const finishedMigration = @Json.Serialize(Model.FinishedMigration);
+        const panel = document.getElementById('migrationProgress');
+        const bar = document.getElementById('migrationProgressBar');
+        const barContainer = document.getElementById('migrationProgressBarContainer');
+        const message = document.getElementById('migrationProgressMessage');
+        const detail = document.getElementById('migrationProgressDetail');
+        const log = document.getElementById('migrationProgressLog');
+        let renderedCount = 0;
+        let lastFirstTimestamp = null;
+
+        if (finishedMigration) {
+            showFinished(finishedMigration);
+        }
+
+        form.addEventListener('submit', function () {
+            document.getElementById('@Model.SubmitButtonId').disabled = true;
+            panel.hidden = false;
+            resetPanel();
+
+            setInterval(async function () {
+                try {
+                    const response = await fetch(progressUrl, { cache: 'no-store' });
+                    if (response.status !== 200) return;
+                    const progress = await response.json();
+                    const stepText = `Step ${progress.step} of ${progress.totalSteps}: ${progress.message}`;
+                    setBar(Math.round(progress.step / progress.totalSteps * 100), stepText);
+                    message.textContent = stepText;
+                    detail.textContent = progress.currentDetail ?? '';
+                    renderLog(progress.details ?? []);
+                } catch {
+                    // Ignore transient polling errors.
+                }
+            }, 1000);
+        });
+
+        function showFinished(progress) {
+            const succeeded = progress.status === 'Succeeded';
+            panel.hidden = false;
+            bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+            bar.classList.add(succeeded ? 'bg-success' : 'bg-danger');
+            const percent = succeeded ? 100 : Math.round(progress.step / Math.max(progress.totalSteps, 1) * 100);
+            setBar(percent, progress.message);
+            message.classList.add(succeeded ? 'text-success' : 'text-danger');
+            message.setAttribute('role', succeeded ? 'status' : 'alert');
+            message.textContent = progress.message;
+            detail.textContent = '';
+            renderLog(progress.details ?? []);
+        }
+
+        function resetPanel() {
+            bar.classList.add('progress-bar-striped', 'progress-bar-animated');
+            bar.classList.remove('bg-success', 'bg-danger');
+            setBar(0, 'Starting...');
+            message.classList.remove('text-success', 'text-danger');
+            message.removeAttribute('role');
+            message.textContent = 'Starting...';
+            detail.textContent = '';
+            renderLog([]);
+        }
+
+        function setBar(percent, text) {
+            bar.style.width = percent + '%';
+            barContainer.setAttribute('aria-valuenow', percent);
+            barContainer.setAttribute('aria-valuetext', text);
+        }
+
+        function renderLog(details) {
+            // The server keeps a bounded log; re-render if older entries were trimmed.
+            const firstTimestamp = details.length > 0 ? details[0].timestamp : null;
+            if (firstTimestamp !== lastFirstTimestamp || details.length < renderedCount) {
+                log.replaceChildren();
+                renderedCount = 0;
+                lastFirstTimestamp = firstTimestamp;
+            }
+
+            const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 5;
+            for (const entry of details.slice(renderedCount)) {
+                const item = document.createElement('li');
+                const time = new Date(entry.timestamp).toLocaleTimeString();
+                item.textContent = `[${time}] ${entry.message}`;
+                if (entry.message.startsWith('Step ')) {
+                    item.classList.add('fw-bold', 'mt-1');
+                }
+                log.appendChild(item);
+            }
+            renderedCount = details.length;
+            if (atBottom) {
+                log.scrollTop = log.scrollHeight;
+            }
+        }
+    })();
+</script>

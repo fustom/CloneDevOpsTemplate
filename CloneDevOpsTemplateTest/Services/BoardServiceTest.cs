@@ -759,7 +759,7 @@ public class BoardServiceTest
                 ItExpr.Is<HttpRequestMessage>(req => req.RequestUri != null && req.RequestUri.ToString().Contains("/cardrulesettings")),
                 ItExpr.IsAny<CancellationToken>()
             )
-            .ReturnsAsync(new HttpResponseMessage
+            .ReturnsAsync(() => new HttpResponseMessage
             {
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = JsonContent.Create(templateCardStyles)
@@ -793,5 +793,55 @@ public class BoardServiceTest
             ItExpr.Is<HttpRequestMessage>(req => req.RequestUri != null && req.RequestUri.ToString().Contains("/cardrulesettings") && req.Method == HttpMethod.Patch),
             ItExpr.IsAny<CancellationToken>()
         );
+    }
+
+    [Fact]
+    public async Task MoveBoardRowsAsync_UpdateFails_ReturnsErrorWithBoardName()
+    {
+        // Arrange
+        var projectBoards = new Boards { Value = [new BoardValue { Id = Guid.NewGuid(), Name = "Stories" }] };
+        var templateBoards = new Boards { Value = [new BoardValue { Id = Guid.NewGuid(), Name = "stories" }] };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+            {
+                if (req.Method == HttpMethod.Put)
+                {
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.Forbidden) { ReasonPhrase = "Forbidden" };
+                }
+
+                return req.RequestUri!.AbsolutePath.EndsWith("/rows")
+                    ? new HttpResponseMessage { Content = JsonContent.Create(new BoardRows()) }
+                    : new HttpResponseMessage { Content = JsonContent.Create(templateBoards) };
+            });
+
+        // Act
+        var result = await _boardService.MoveBoardRowsAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), projectBoards);
+
+        // Assert
+        Assert.Equal(["Board 'stories': updating rows failed (403 Forbidden)."], result.Errors);
+    }
+
+    [Fact]
+    public async Task ForAllMatchingBoards_AwaitsEachMoveBeforeReturning()
+    {
+        // Arrange
+        var projectBoards = new Boards { Value = [new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }] };
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage { Content = JsonContent.Create(new Boards { Value = [new BoardValue { Id = Guid.NewGuid(), Name = "Board1" }] }) });
+        var finished = false;
+
+        // Act
+        var result = await _boardService.ForAllMatchingBoards(Guid.NewGuid(), Guid.NewGuid(), projectBoards, async (_, _, _) =>
+        {
+            await Task.Delay(20);
+            finished = true;
+        });
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.True(finished);
     }
 }

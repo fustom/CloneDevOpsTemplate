@@ -12,6 +12,7 @@ public class RepositoryControllerTest
     private readonly Mock<IRepositoryService> _mockRepositoryService;
     private readonly Mock<ICloneManager> _mockCloneManager;
     private readonly Mock<IProjectService> _mockProjectService;
+    private readonly MigrationProgressTracker _progressTracker = new();
     private readonly RepositoryController _controller;
 
     public RepositoryControllerTest()
@@ -19,7 +20,7 @@ public class RepositoryControllerTest
         _mockRepositoryService = new Mock<IRepositoryService>();
         _mockCloneManager = new Mock<ICloneManager>();
         _mockProjectService = new Mock<IProjectService>();
-        _controller = new RepositoryController(_mockRepositoryService.Object, _mockCloneManager.Object, _mockProjectService.Object);
+        _controller = new RepositoryController(_mockRepositoryService.Object, _mockCloneManager.Object, _mockProjectService.Object, _progressTracker);
     }
 
     [Fact]
@@ -124,79 +125,6 @@ public class RepositoryControllerTest
     }
 
     [Fact]
-    public async Task CloneRepository_ReturnsViewWithProjects()
-    {
-        // Arrange
-        var mockProjects = new Projects { Value = Array.Empty<Project>() };
-        _mockProjectService
-            .Setup(service => service.GetAllProjectsAsync())
-            .ReturnsAsync(mockProjects);
-
-        // Act
-        var result = await _controller.CloneRepository();
-
-        // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(mockProjects.Value, viewResult.Model);
-    }
-
-    [Fact]
-    public async Task CloneRepository_ReturnsViewWithEmptyProjects_WhenServiceReturnsNull()
-    {
-        // Arrange
-        _mockProjectService
-            .Setup(service => service.GetAllProjectsAsync())
-            .ReturnsAsync((Projects?)null);
-
-        // Act
-        var result = await _controller.CloneRepository();
-
-        // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var viewModel = Assert.IsType<ProjectBase[]>(viewResult.Model);
-        Assert.Empty(viewModel);
-    }
-
-    [Fact]
-    public async Task CloneRepository_InvalidModelState_ReturnsViewWithProjects()
-    {
-        // Arrange
-        _controller.ModelState.AddModelError("Error", "Invalid model state");
-        var mockProjects = new Projects { Value = [] };
-        _mockProjectService
-            .Setup(service => service.GetAllProjectsAsync())
-            .ReturnsAsync(mockProjects);
-
-        // Act
-        var result = await _controller.CloneRepository(Guid.NewGuid(), Guid.NewGuid());
-
-        // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(mockProjects.Value, viewResult.Model);
-    }
-
-    [Fact]
-    public async Task CloneRepository_ValidModelState_ClonesRepositoriesAndReturnsViewWithProjects()
-    {
-        // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var projectId = Guid.NewGuid();
-        var mockProjects = new Projects { Value = [] };
-        _mockProjectService
-            .Setup(service => service.GetAllProjectsAsync())
-            .ReturnsAsync(mockProjects);
-
-        // Act
-        var result = await _controller.CloneRepository(templateProjectId, projectId);
-
-        // Assert
-        _mockCloneManager.Verify(manager => manager.CloneRepositoriesAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>()), Times.Once);
-        var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(mockProjects.Value, viewResult.Model);
-        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
-    }
-
-    [Fact]
     public async Task PullRequests_InvalidModelState_ReturnsDefaultView()
     {
         // Arrange
@@ -248,75 +176,218 @@ public class RepositoryControllerTest
     }
 
     [Fact]
-    public async Task ClonePullRequests_Get_ReturnsViewWithProjects()
+    public async Task CloneRepository_Get_ReturnsCloneFormWithItems()
     {
         // Arrange
-        var mockProjects = new Projects { Value = Array.Empty<Project>() };
-        _mockProjectService
-            .Setup(service => service.GetAllProjectsAsync())
-            .ReturnsAsync(mockProjects);
+        _mockProjectService.Setup(s => s.GetAllProjectsAsync()).ReturnsAsync(new Projects { Value = [new ProjectBase { Name = "Source" }] });
 
         // Act
-        var result = await _controller.ClonePullRequests();
+        var result = await _controller.CloneRepository();
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(mockProjects.Value, viewResult.Model);
+        Assert.Equal(nameof(RepositoryController.CloneRepository), viewResult.ViewName);
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(viewResult.Model);
+        Assert.Equal("Source", Assert.Single(model.Items).Name);
+        Assert.Equal("Repository", model.Controller);
+        Assert.Equal(nameof(RepositoryController.CloneRepository), model.Action);
+        Assert.Null(model.FinishedMigration);
     }
 
     [Fact]
-    public async Task ClonePullRequests_Get_ReturnsViewWithEmptyProjects_WhenServiceReturnsNull()
+    public async Task CloneRepository_Get_NullItems_ReturnsEmptyCloneForm()
     {
         // Arrange
-        _mockProjectService
-            .Setup(service => service.GetAllProjectsAsync())
-            .ReturnsAsync((Projects?)null);
+        _mockProjectService.Setup(s => s.GetAllProjectsAsync()).ReturnsAsync((Projects?)null);
 
         // Act
-        var result = await _controller.ClonePullRequests();
+        var result = await _controller.CloneRepository();
 
         // Assert
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var viewModel = Assert.IsType<ProjectBase[]>(viewResult.Model);
-        Assert.Empty(viewModel);
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Empty(model.Items);
     }
 
     [Fact]
-    public async Task ClonePullRequests_Post_InvalidModelState_ReturnsViewWithProjects()
+    public async Task CloneRepository_Get_WithFinishedOperation_ShowsItOnce()
     {
         // Arrange
+        var operationId = Guid.NewGuid();
+        _progressTracker.Fail(operationId, "Boom");
+
+        // Act
+        var result = await _controller.CloneRepository(operationId);
+
+        // Assert
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Equal(MigrationStatus.Failed, model.FinishedMigration?.Status);
+        Assert.Null(_progressTracker.Get(operationId));
+    }
+
+    [Fact]
+    public async Task CloneRepository_Post_InvalidModelState_ReturnsCloneFormWithoutCloning()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid();
         _controller.ModelState.AddModelError("Error", "Invalid model state");
-        var mockProjects = new Projects { Value = Array.Empty<Project>() };
-        _mockProjectService
-            .Setup(service => service.GetAllProjectsAsync())
-            .ReturnsAsync(mockProjects);
 
         // Act
-        var result = await _controller.ClonePullRequests(Guid.NewGuid(), Guid.NewGuid());
+        var result = await _controller.CloneRepository(templateProjectId, projectId);
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(mockProjects.Value, viewResult.Model);
+        Assert.Equal(nameof(RepositoryController.CloneRepository), viewResult.ViewName);
+        Assert.IsType<CloneFormViewModel<ProjectBase>>(viewResult.Model);
+        Assert.Empty(_mockCloneManager.Invocations);
     }
 
     [Fact]
-    public async Task ClonePullRequests_Post_ValidModelState_ClonesPullRequestsAndReturnsViewWithProjects()
+    public async Task CloneRepository_Post_Success_CompletesProgressAndRedirects()
     {
         // Arrange
-        var templateProjectId = Guid.NewGuid();
-        var projectId = Guid.NewGuid();
-        var mockProjects = new Projects { Value = Array.Empty<Project>() };
-        _mockProjectService
-            .Setup(service => service.GetAllProjectsAsync())
-            .ReturnsAsync(mockProjects);
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        _mockCloneManager.Setup(m => m.CloneRepositoriesAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>())).ReturnsAsync(new CloneResult());
+
+        // Act
+        var result = await _controller.CloneRepository(templateProjectId, projectId, operationId);
+
+        // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RepositoryController.CloneRepository), redirectResult.ActionName);
+        Assert.Equal(operationId, redirectResult.RouteValues?["operationId"]);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Succeeded, progress?.Status);
+        Assert.Equal("Repositories cloned successfully.", progress?.Message);
+        _mockCloneManager.Verify(m => m.CloneRepositoriesAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CloneRepository_Post_Failure_FailsProgressAndRedirects()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        var failure = new CloneResult();
+        failure.AddError("Boom");
+        _mockCloneManager.Setup(m => m.CloneRepositoriesAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>())).ReturnsAsync(failure);
+
+        // Act
+        var result = await _controller.CloneRepository(templateProjectId, projectId, operationId);
+
+        // Assert
+        Assert.IsType<RedirectToActionResult>(result);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Failed, progress?.Status);
+        Assert.Equal("Cloning repositories failed: Boom", progress?.Message);
+        Assert.Equal(0, _controller.ModelState.ErrorCount);
+    }
+
+    [Fact]
+    public async Task ClonePullRequests_Get_ReturnsCloneFormWithItems()
+    {
+        // Arrange
+        _mockProjectService.Setup(s => s.GetAllProjectsAsync()).ReturnsAsync(new Projects { Value = [new ProjectBase { Name = "Source" }] });
+
+        // Act
+        var result = await _controller.ClonePullRequests();
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(nameof(RepositoryController.ClonePullRequests), viewResult.ViewName);
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(viewResult.Model);
+        Assert.Equal("Source", Assert.Single(model.Items).Name);
+        Assert.Equal("Repository", model.Controller);
+        Assert.Equal(nameof(RepositoryController.ClonePullRequests), model.Action);
+        Assert.Null(model.FinishedMigration);
+    }
+
+    [Fact]
+    public async Task ClonePullRequests_Get_NullItems_ReturnsEmptyCloneForm()
+    {
+        // Arrange
+        _mockProjectService.Setup(s => s.GetAllProjectsAsync()).ReturnsAsync((Projects?)null);
+
+        // Act
+        var result = await _controller.ClonePullRequests();
+
+        // Assert
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Empty(model.Items);
+    }
+
+    [Fact]
+    public async Task ClonePullRequests_Get_WithFinishedOperation_ShowsItOnce()
+    {
+        // Arrange
+        var operationId = Guid.NewGuid();
+        _progressTracker.Fail(operationId, "Boom");
+
+        // Act
+        var result = await _controller.ClonePullRequests(operationId);
+
+        // Assert
+        var model = Assert.IsType<CloneFormViewModel<ProjectBase>>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Equal(MigrationStatus.Failed, model.FinishedMigration?.Status);
+        Assert.Null(_progressTracker.Get(operationId));
+    }
+
+    [Fact]
+    public async Task ClonePullRequests_Post_InvalidModelState_ReturnsCloneFormWithoutCloning()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid();
+        _controller.ModelState.AddModelError("Error", "Invalid model state");
 
         // Act
         var result = await _controller.ClonePullRequests(templateProjectId, projectId);
 
         // Assert
-        _mockCloneManager.Verify(manager => manager.CloneGitPullRequestsAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>()), Times.Once);
         var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(mockProjects.Value, viewResult.Model);
-        Assert.Equal("Success", _controller.ViewBag.SuccessMessage);
+        Assert.Equal(nameof(RepositoryController.ClonePullRequests), viewResult.ViewName);
+        Assert.IsType<CloneFormViewModel<ProjectBase>>(viewResult.Model);
+        Assert.Empty(_mockCloneManager.Invocations);
+    }
+
+    [Fact]
+    public async Task ClonePullRequests_Post_Success_CompletesProgressAndRedirects()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        _mockCloneManager.Setup(m => m.CloneGitPullRequestsAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>())).ReturnsAsync(new CloneResult());
+
+        // Act
+        var result = await _controller.ClonePullRequests(templateProjectId, projectId, operationId);
+
+        // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RepositoryController.ClonePullRequests), redirectResult.ActionName);
+        Assert.Equal(operationId, redirectResult.RouteValues?["operationId"]);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Succeeded, progress?.Status);
+        Assert.Equal("Pull requests cloned successfully.", progress?.Message);
+        _mockCloneManager.Verify(m => m.CloneGitPullRequestsAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ClonePullRequests_Post_Failure_FailsProgressAndRedirects()
+    {
+        // Arrange
+        Guid templateProjectId = Guid.NewGuid(), projectId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+        var failure = new CloneResult();
+        failure.AddError("Boom");
+        _mockCloneManager.Setup(m => m.CloneGitPullRequestsAsync(templateProjectId, projectId, It.IsAny<IProgress<string>?>())).ReturnsAsync(failure);
+
+        // Act
+        var result = await _controller.ClonePullRequests(templateProjectId, projectId, operationId);
+
+        // Assert
+        Assert.IsType<RedirectToActionResult>(result);
+        var progress = _progressTracker.Get(operationId);
+        Assert.Equal(MigrationStatus.Failed, progress?.Status);
+        Assert.Equal("Cloning pull requests failed: Boom", progress?.Message);
+        Assert.Equal(0, _controller.ModelState.ErrorCount);
     }
 }

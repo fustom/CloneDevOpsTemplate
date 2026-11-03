@@ -27,12 +27,24 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         return await _client.PostAsJsonAsync($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{path}?api-version=7.1", classificationNode);
     }
 
-    public async Task CreateAsync(Guid projectId, Iteration classificationNodes, TreeStructureGroup structureGroup, string path)
+    public async Task<CloneResult> CreateAsync(Guid projectId, Iteration classificationNodes, TreeStructureGroup structureGroup, string path)
+    {
+        var result = new CloneResult();
+        await CreateChildrenAsync(projectId, classificationNodes, structureGroup, path, result);
+        return result;
+    }
+
+    private async Task CreateChildrenAsync(Guid projectId, Iteration classificationNodes, TreeStructureGroup structureGroup, string path, CloneResult result)
     {
         foreach (var classificationNode in classificationNodes.Children)
         {
-            await CreateAsync(projectId, structureGroup, classificationNode, path);
-            await CreateAsync(projectId, classificationNode, structureGroup, classificationNode.Name);
+            var nodePath = string.IsNullOrEmpty(path) ? classificationNode.Name : $"{path}/{classificationNode.Name}";
+            var response = await CreateAsync(projectId, structureGroup, classificationNode, path);
+            // Children of a node that could not be created would fail too, so skip them.
+            if (await result.CheckResponseAsync(response, $"Creating '{nodePath}'"))
+            {
+                await CreateChildrenAsync(projectId, classificationNode, structureGroup, nodePath, result);
+            }
         }
     }
 
@@ -41,11 +53,14 @@ public class IterationService(IHttpClientFactory httpClientFactory) : IIteration
         return await _client.DeleteAsync($"{projectId}/_apis/wit/classificationNodes/{structureGroup}/{name}?api-version=7.1");
     }
 
-    public async Task DeleteAsync(Guid projectId, TreeStructureGroup structureGroup, Iteration classificationNodes)
+    public async Task<CloneResult> DeleteAsync(Guid projectId, TreeStructureGroup structureGroup, Iteration classificationNodes)
     {
+        var result = new CloneResult();
         foreach (var classificationNode in classificationNodes.Children)
         {
-            await DeleteAsync(projectId, structureGroup, classificationNode.Name);
+            var response = await DeleteAsync(projectId, structureGroup, classificationNode.Name);
+            await result.CheckResponseAsync(response, $"Removing '{classificationNode.Name}'");
         }
+        return result;
     }
 }

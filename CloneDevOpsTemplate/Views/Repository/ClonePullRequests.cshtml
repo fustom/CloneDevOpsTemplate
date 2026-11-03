@@ -1,4 +1,4 @@
-@model ProjectBase[]
+@model CloneFormViewModel<ProjectBase>
 @{
     ViewData["Title"] = "Clone pull requests";
 }
@@ -6,5 +6,5 @@
 <h1>Clone pull requests</h1>
 
 @{
-    await Html.RenderPartialAsync("_CloneByProject", Tuple.Create(Model, "Repository", "ClonePullRequests"));
+    await Html.RenderPartialAsync("_CloneByProject", Model);
 }
