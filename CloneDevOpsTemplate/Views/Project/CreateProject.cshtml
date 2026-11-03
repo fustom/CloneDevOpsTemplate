@@ -1,8 +1,8 @@
-@model ProjectBase[]
+@model CreateProjectFormViewModel
 @{
     ViewData["Title"] = "Create project from template";
 }
 
 <h1>Create project from template</h1>
 
-@{ await Html.RenderPartialAsync("_CreateProjectForm", Tuple.Create(Model, "Project", "CreateProject")); }
+@{ await Html.RenderPartialAsync("_CreateProjectForm", Model); }

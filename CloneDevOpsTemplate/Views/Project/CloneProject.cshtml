@@ -1,10 +1,8 @@
-@model ProjectBase[]
+@model CreateProjectFormViewModel
 @{
     ViewData["Title"] = "Clone project";
 }
 
 <h1>Clone project</h1>
 
-<h2 class="text-success">@ViewBag.SuccessMessage</h2>
-
-@{ await Html.RenderPartialAsync("_CreateProjectForm", Tuple.Create(Model, "Project", "CloneProject")); }
+@{ await Html.RenderPartialAsync("_CreateProjectForm", Model); }

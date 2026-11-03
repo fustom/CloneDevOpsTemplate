@@ -1,4 +1,5 @@
 using CloneDevOpsTemplate.Managers;
+using CloneDevOpsTemplate.Models;
 
 namespace CloneDevOpsTemplateTest.Managers;
 
@@ -122,5 +123,87 @@ public class MigrationProgressTrackerTest
         _tracker.Remove(operationId);
 
         Assert.Null(_tracker.Get(operationId));
+    }
+
+    [Fact]
+    public void Complete_MarksSucceededAndAppendsMessage()
+    {
+        var operationId = Guid.NewGuid();
+        _tracker.Start(operationId, 3);
+        _tracker.Report(operationId, 1, "First");
+        _tracker.ReportDetail(operationId, "Working");
+
+        _tracker.Complete(operationId, "All done");
+
+        var progress = _tracker.Get(operationId);
+        Assert.NotNull(progress);
+        Assert.Equal(MigrationStatus.Succeeded, progress.Status);
+        Assert.Equal(3, progress.Step);
+        Assert.Equal("All done", progress.Message);
+        Assert.Null(progress.CurrentDetail);
+        Assert.NotNull(progress.FinishedAt);
+        Assert.Equal("All done", progress.Details[^1].Message);
+    }
+
+    [Fact]
+    public void TakeFinished_ReturnsAndRemovesSucceededRun()
+    {
+        var operationId = Guid.NewGuid();
+        _tracker.Complete(operationId, "Done");
+
+        var progress = _tracker.TakeFinished(operationId);
+
+        Assert.NotNull(progress);
+        Assert.Equal("Done", progress.Message);
+        Assert.Null(_tracker.Get(operationId));
+        Assert.Null(_tracker.TakeFinished(operationId));
+    }
+
+    [Fact]
+    public void TakeFinished_RunningOperation_ReturnsNullAndKeepsIt()
+    {
+        var operationId = Guid.NewGuid();
+        _tracker.Start(operationId, 2);
+
+        Assert.Null(_tracker.TakeFinished(operationId));
+        Assert.NotNull(_tracker.Get(operationId));
+    }
+
+    [Fact]
+    public void Fail_MarksFailedAndKeepsCurrentStep()
+    {
+        var operationId = Guid.NewGuid();
+        _tracker.Start(operationId, 4);
+        _tracker.Report(operationId, 2, "Second");
+
+        _tracker.Fail(operationId, "Broken");
+
+        var progress = _tracker.Get(operationId);
+        Assert.NotNull(progress);
+        Assert.Equal(MigrationStatus.Failed, progress.Status);
+        Assert.Equal(2, progress.Step);
+        Assert.Equal("Broken", progress.Message);
+        Assert.NotNull(progress.FinishedAt);
+        Assert.Equal("Broken", progress.Details[^1].Message);
+    }
+
+    [Fact]
+    public void TakeFinished_ReturnsAndRemovesFailedRun()
+    {
+        var operationId = Guid.NewGuid();
+        _tracker.Fail(operationId, "Broken");
+
+        var progress = _tracker.TakeFinished(operationId);
+
+        Assert.Equal(MigrationStatus.Failed, progress?.Status);
+        Assert.Null(_tracker.Get(operationId));
+    }
+
+    [Fact]
+    public void Complete_EmptyOperationId_IsIgnored()
+    {
+        _tracker.Complete(Guid.Empty, "Ignored");
+
+        Assert.Null(_tracker.Get(Guid.Empty));
     }
 }

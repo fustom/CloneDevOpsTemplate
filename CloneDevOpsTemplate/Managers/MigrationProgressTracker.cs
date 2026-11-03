@@ -6,6 +6,7 @@ namespace CloneDevOpsTemplate.Managers;
 public class MigrationProgressTracker : IMigrationProgressTracker
 {
     public const int MaxDetails = 200;
+    public static readonly TimeSpan FinishedRetention = TimeSpan.FromMinutes(10);
 
     private readonly ConcurrentDictionary<Guid, MigrationProgress> _progress = new();
 
@@ -53,6 +54,34 @@ public class MigrationProgressTracker : IMigrationProgressTracker
         }
     }
 
+    public void Complete(Guid operationId, string message) => Finish(operationId, MigrationStatus.Succeeded, message);
+
+    public void Fail(Guid operationId, string message) => Finish(operationId, MigrationStatus.Failed, message);
+
+    private void Finish(Guid operationId, MigrationStatus status, string message)
+    {
+        if (operationId == Guid.Empty)
+        {
+            return;
+        }
+
+        var progress = _progress.GetOrAdd(operationId, _ => new MigrationProgress());
+        lock (progress)
+        {
+            progress.Status = status;
+            if (status == MigrationStatus.Succeeded)
+            {
+                progress.Step = progress.TotalSteps;
+            }
+            progress.Message = message;
+            progress.CurrentDetail = null;
+            progress.FinishedAt = DateTimeOffset.UtcNow;
+            AddDetail(progress, message);
+        }
+
+        RemoveExpiredFinished();
+    }
+
     public IProgress<string> CreateDetailReporter(Guid operationId) => new DetailReporter(this, operationId);
 
     public MigrationProgress? Get(Guid operationId)
@@ -66,16 +95,43 @@ public class MigrationProgressTracker : IMigrationProgressTracker
         {
             return new MigrationProgress
             {
+                Status = progress.Status,
                 Step = progress.Step,
                 TotalSteps = progress.TotalSteps,
                 Message = progress.Message,
                 CurrentDetail = progress.CurrentDetail,
+                FinishedAt = progress.FinishedAt,
                 Details = [.. progress.Details]
             };
         }
     }
 
+    public MigrationProgress? TakeFinished(Guid operationId)
+    {
+        var progress = Get(operationId);
+        if (progress is null || progress.Status == MigrationStatus.Running)
+        {
+            return null;
+        }
+
+        Remove(operationId);
+        return progress;
+    }
+
     public void Remove(Guid operationId) => _progress.TryRemove(operationId, out _);
+
+    // Finished runs are kept until the result page reads them; drop the ones that were never picked up.
+    private void RemoveExpiredFinished()
+    {
+        var expiredBefore = DateTimeOffset.UtcNow - FinishedRetention;
+        foreach (var (operationId, progress) in _progress)
+        {
+            if (progress.FinishedAt < expiredBefore)
+            {
+                _progress.TryRemove(operationId, out _);
+            }
+        }
+    }
 
     private static void AddDetail(MigrationProgress progress, string message)
     {

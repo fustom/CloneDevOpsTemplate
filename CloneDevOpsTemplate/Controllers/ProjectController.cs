@@ -49,9 +49,9 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
     }
 
     [HttpGet]
-    public async Task<IActionResult> CreateProject()
+    public async Task<IActionResult> CreateProject(Guid operationId = default)
     {
-        return await Projects();
+        return await ProjectFormView(nameof(CreateProject), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
@@ -59,28 +59,29 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
     {
         if (!ModelState.IsValid)
         {
-            return await CreateProject();
+            return await ProjectFormView(nameof(CreateProject));
         }
+
+        operationId = EnsureOperationId(operationId);
+        var details = _progressTracker.CreateDetailReporter(operationId);
+        CloneProjectResult cloneProjectResult = null!;
+
+        (string Message, Func<Task> Run)[] steps =
+        [
+            ("Creating project...", async () =>
+                cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, details)),
+            ("Cloning iterations and areas...", () => Task.WhenAll(
+                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Iterations, details),
+                _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Areas, details))),
+            ("Cloning teams, settings, boards and repositories...", () => Task.WhenAll(
+                _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(cloneProjectResult.TemplateProject, cloneProjectResult.Project, details),
+                _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id, details))),
+            ("Cloning pull requests...", () =>
+                _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id, details)),
+        ];
 
         try
         {
-            var details = _progressTracker.CreateDetailReporter(operationId);
-            CloneProjectResult cloneProjectResult = null!;
-
-            (string Message, Func<Task> Run)[] steps =
-            [
-                ("Creating project...", async () =>
-                    cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, details)),
-                ("Cloning iterations and areas...", () => Task.WhenAll(
-                    _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Iterations, details),
-                    _cloneManager.CloneClassificationNodes(templateProjectId, cloneProjectResult.Project.Id, TreeStructureGroup.Areas, details))),
-                ("Cloning teams, settings, boards and repositories...", () => Task.WhenAll(
-                    _cloneManager.CloneTeamsAndSettingsAndBoardsAsync(cloneProjectResult.TemplateProject, cloneProjectResult.Project, details),
-                    _cloneManager.CloneRepositoriesAsync(templateProjectId, cloneProjectResult.Project.Id, details))),
-                ("Cloning pull requests...", () =>
-                    _cloneManager.CloneGitPullRequestsAsync(templateProjectId, cloneProjectResult.Project.Id, details)),
-            ];
-
             _progressTracker.Start(operationId, steps.Length);
             for (int i = 0; i < steps.Length; i++)
             {
@@ -89,17 +90,19 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
 
                 if (cloneProjectResult.ErrorMessage is not null)
                 {
-                    ModelState.AddModelError("ErrorMessage", cloneProjectResult.ErrorMessage);
-                    return await CreateProject();
+                    _progressTracker.Fail(operationId, cloneProjectResult.ErrorMessage);
+                    return RedirectToAction(nameof(CreateProject), new { operationId });
                 }
             }
-
-            return RedirectToAction("Project", new { projectId = cloneProjectResult.Project.Id });
         }
-        finally
+        catch
         {
             _progressTracker.Remove(operationId);
+            throw;
         }
+
+        _progressTracker.Remove(operationId);
+        return RedirectToAction("Project", new { projectId = cloneProjectResult.Project.Id });
     }
 
     [HttpGet]
@@ -110,9 +113,9 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
     }
 
     [HttpGet]
-    public async Task<IActionResult> CloneProject()
+    public async Task<IActionResult> CloneProject(Guid operationId = default)
     {
-        return await Projects();
+        return await ProjectFormView(nameof(CloneProject), _progressTracker.TakeFinished(operationId));
     }
 
     [HttpPost]
@@ -120,9 +123,10 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
     {
         if (!ModelState.IsValid)
         {
-            return await Projects();
+            return await ProjectFormView(nameof(CloneProject));
         }
 
+        operationId = EnsureOperationId(operationId);
         _progressTracker.Start(operationId, 1);
         _progressTracker.Report(operationId, 1, "Creating project...");
         CloneProjectResult cloneProjectResult;
@@ -130,19 +134,30 @@ public class ProjectController(IProjectService projectService, ICloneManager clo
         {
             cloneProjectResult = await _cloneManager.CloneProjectAsync(templateProjectId, newProjectName, description, visibility, _progressTracker.CreateDetailReporter(operationId));
         }
-        finally
+        catch
         {
             _progressTracker.Remove(operationId);
+            throw;
         }
+
         if (cloneProjectResult.ErrorMessage is not null)
         {
-            ModelState.AddModelError("ErrorMessage", cloneProjectResult.ErrorMessage);
+            _progressTracker.Fail(operationId, cloneProjectResult.ErrorMessage);
         }
         else
         {
-            ViewBag.SuccessMessage = "Success";
+            _progressTracker.Complete(operationId, $"Project '{newProjectName}' cloned successfully.");
         }
 
-        return await Projects();
+        return RedirectToAction(nameof(CloneProject), new { operationId });
+    }
+
+    // The result page reads the outcome from the tracker, so every POST needs an operation id.
+    private static Guid EnsureOperationId(Guid operationId) => operationId == Guid.Empty ? Guid.NewGuid() : operationId;
+
+    private async Task<ViewResult> ProjectFormView(string action, MigrationProgress? finishedMigration = null)
+    {
+        Projects projects = await _projectService.GetAllProjectsAsync() ?? new();
+        return View(action, new CreateProjectFormViewModel(projects.Value, "Project", action, finishedMigration));
     }
 }
