@@ -7,9 +7,9 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS publish
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-COPY . .
-RUN dotnet restore CloneDevOpsTemplate/CloneDevOpsTemplate.csproj
-RUN dotnet publish CloneDevOpsTemplate/CloneDevOpsTemplate.csproj \
+COPY CloneDevOpsTemplate .
+RUN dotnet restore CloneDevOpsTemplate.csproj
+RUN dotnet publish CloneDevOpsTemplate.csproj \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
     /p:UseAppHost=false
