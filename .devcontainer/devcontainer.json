@@ -1,6 +1,10 @@
 {
 	"name": "C# (.NET)",
-	"image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
+	"build": {
+		"dockerfile": "../Dockerfile",
+		"context": "..",
+		"target": "dev"
+	},
 	"features": {
 		"ghcr.io/devcontainers/features/github-cli:1": {
 			"installDirectlyFromGitHubRelease": true,

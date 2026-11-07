@@ -1,0 +1,29 @@
+# Git version control
+.git
+.gitignore
+.gitattributes
+.github/
+
+# .NET Build outputs and local caches
+**/bin/
+**/obj/
+**/publish/
+.vs/
+.vscode/
+
+# Environment variables and secrets
+.env
+*.user
+*.suo
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*
+.devcontainer/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+CloneDevOpsTemplateTest/
