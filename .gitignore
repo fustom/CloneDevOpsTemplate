@@ -3,3 +3,4 @@ obj/
 .vs/
 *.csproj.user
 *.http
+CloneDevOpsTemplate/wwwroot/lib/
